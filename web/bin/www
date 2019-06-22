@@ -1,0 +1,24 @@
+#!/usr/bin/env node
+const app = require('../app');
+const http = require('http');
+const db = require('../database/db');
+const log4js = require('log4js');
+log4js.configure('./config/log4js.json');
+const config = require('config');
+
+const port = config.get('app').port || 3000;
+app.set('port', port);
+
+const server = http.createServer(app);
+server.on('listening', onListening);
+
+db(() => {
+  console.log('Connect to mongodb successfully');
+  server.listen(port);
+  const io = require('socket.io').listen(server);
+  require('../utils/Socket').init(io);
+});
+
+function onListening() {
+  console.log('Server is running on port ', port);
+}

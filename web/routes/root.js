@@ -1,0 +1,36 @@
+const express = require('express');
+const router = express.Router({});
+const users = require('../routes/users');
+const index = require('../routes/index');
+const sales = require('../routes/sales');
+const buys = require('../routes/buys');
+const projects = require('../routes/projects');
+const script = require('../routes/script');
+const news = require('../routes/news');
+const admin = require('../routes/admin');
+const tags = require('../routes/tags');
+const vips = require('../routes/vips');
+const notify = require('../routes/notify');
+const system = require('../routes/system');
+const postRouter = require('../routes/posts');
+const searchRouter = require('../routes/search');
+
+router.use('/', index);
+router.use('/files/js/', express.static('files/js'));
+router.use('/api/v1/users', users);
+router.use('/api/v1/sales', sales);
+router.use('/api/v1/buys', buys);
+router.use('/api/v1/projects', projects);
+router.use('/api/v1/tags', tags);
+router.use('/api/v1/script', script);
+router.use('/api/v1/news', news);
+router.use('/api/v1/vips', vips);
+router.use('/api/v1/notifies', notify);
+router.use('/api/v1/systems', system);
+router.use('/api/v1/posts', postRouter);
+router.use('/api/v1/search', searchRouter);
+router.use('/api/v1/rule-alert-lead', require('./rule-alert-lead.route'));
+router.use('/api/v1/leads', require('./lead'));
+router.use('/admin/v1/', admin);
+
+module.exports = router;
