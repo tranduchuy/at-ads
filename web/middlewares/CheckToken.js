@@ -1,5 +1,5 @@
 const TokenModel = require('../models/TokenModel');
-const UserModel = require('../models/UserModel');
+const UserModel = require('../modules/user/UserModel');
 const {get} = require('../utils/Request');
 const CDP_APIS = require('../config/cdp-url-api.constant');
 

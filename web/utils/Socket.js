@@ -1,4 +1,4 @@
-const {encrypt} = require('./Encrypt');
+const { encrypt } = require('./Encrypt');
 let io = null;
 const SocketEvents = require('../config/socket-event');
 
@@ -11,7 +11,7 @@ const onConnectFn = (socket) => {
   socket.on(SocketEvents.JOIN, (data) => {
     console.log(data);
     socket.join(data.userId);//using room of socket io
-    pushToUser(data.userId, JSON.stringify({title: "Hello"}));
+    pushToUser(data.userId, JSON.stringify({ title: "Hello" }));
   });
 
   socket.on('disconnection', () => {

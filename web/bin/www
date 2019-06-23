@@ -15,8 +15,6 @@ server.on('listening', onListening);
 db(() => {
   console.log('Connect to mongodb successfully');
   server.listen(port);
-  const io = require('socket.io').listen(server);
-  require('../utils/Socket').init(io);
 });
 
 function onListening() {

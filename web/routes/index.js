@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router({});
-const CityController = require('../controller/user/CityController');
 
-router['get']('/selector', CityController.list);
+router.use('/users', require('../modules/user/user.route'));
+router.use('/admin/users', require('../modules/user/admin-user.route'));
 
 module.exports = router;
