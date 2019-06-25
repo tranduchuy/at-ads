@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router({});
 const UserController = require('./user.controller');
+const CheckTokenMiddleware = require('../../middlewares/check-token');
 
-router.post('/check', UserController.check);
+router.post('/check', CheckTokenMiddleware, UserController.check);
 router.post('/login', UserController.login);
 router.post('/login-by-google', UserController.loginByGoogle);
 router.post('/register', UserController.register);

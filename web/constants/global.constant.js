@@ -1,5 +1,5 @@
 module.exports = {
-  ApiTokenName: 'ctoken',
+  ApiTokenName: 'accesstoken',
   LoggerTargets: {
     App: 'App',
     Controller: 'Controllers',
@@ -7,13 +7,5 @@ module.exports = {
     Middleware: 'Middleware',
     Model: 'Models',
     Util: 'Utils'
-  },
-  Pagination: {
-    DefaultLimit: 10,
-    DefaultPage: 1
-  },
-  DelFlag: {
-    True: 1,
-    False: 0
   }
 };

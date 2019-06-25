@@ -218,11 +218,13 @@ const register = async (request, res, next) => {
       const messages = error.details.map(detail => {
         return detail.message;
       });
+
       const result = {
         status: HttpStatus.BAD_REQUEST,
         messages: messages,
         data: {}
       };
+
       return res.json(result);
     }
 
@@ -236,15 +238,7 @@ const register = async (request, res, next) => {
       };
       return res.json(result);
     }
-    const duplicatedPhones = await UserModel.find({ phone: phone });
-    if (duplicatedPhones.length !== 0) {
-      const result = {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        messages: [messages.ResponseMessages.User.Register.PHONE_DUPLICATED],
-        data: {}
-      };
-      return res.json(result);
-    }
+
     if (password !== confirmedPassword) {
       const result = {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -253,6 +247,7 @@ const register = async (request, res, next) => {
       };
       return res.json(result);
     }
+
     const duplicatedUsers = await UserModel.find({ email: email });
     if (duplicatedUsers.length !== 0) {
       const result = {
@@ -262,21 +257,18 @@ const register = async (request, res, next) => {
       };
       return res.json(result);
     }
-    const otpCode = UserService.generateOTPCode();
+
     const newUserData = {
       email,
       name,
       password,
-      type: UserTypes.TYPE_CUSTOMER,
       role: null,
       phone: phone,
       gender,
       city: city || null,
       district: district || null,
       ward: ward || null,
-      registerBy: RegisterByTypes.NORMAL,
       address,
-      otpCode
     };
     const newUser = await UserService.createUser(newUserData);
     if (request.user && [UserRoles.USER_ROLE_MASTER, UserRoles.USER_ROLE_ADMIN].some(request.user.role)) {
@@ -615,7 +607,6 @@ const getLoggedInInfo = async (req, res, next) => {
 
 module.exports = {
   login,
-  balance,
   confirm,
   register,
   forgetPassword,
