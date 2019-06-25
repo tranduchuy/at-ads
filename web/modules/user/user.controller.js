@@ -271,24 +271,17 @@ const register = async (request, res, next) => {
       address,
     };
     const newUser = await UserService.createUser(newUserData);
-    if (request.user && [UserRoles.USER_ROLE_MASTER, UserRoles.USER_ROLE_ADMIN].some(request.user.role)) {
-      newUser.status = Status.ACTIVE;
-      newUser.tokenEmailConfirm = '';
-      await newUser.save();
-    } else {
-      // Send email
-      Mailer.sendConfirmEmail(email, name, newUser.tokenEmailConfirm);
-      // this.smsService.sendSMS([phone], `Mã xác thục tài khoản: ${otpCode}`, '');
-    }
+    Mailer.sendConfirmEmail(email, name, newUser.tokenEmailConfirm);
+
     const result = {
-      status: HttpStatus.OK,
       messages: [messages.ResponseMessages.User.Register.REGISTER_SUCCESS],
       data: {
         meta: {},
         entries: [{ email, name, username, phone, address, gender, city, district, ward }]
       }
     };
-    res.json(result);
+
+    res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::register::error', e);
     return next(e);
@@ -482,6 +475,7 @@ const resendConfirm = async (req, res, next) => {
       };
       return res.json(result);
     }
+
     const user = await UserService.findByEmail(req.body.email);
     if (!user || user.status !== Status.PENDING_OR_WAIT_CONFIRM) {
       const result = {
@@ -490,6 +484,7 @@ const resendConfirm = async (req, res, next) => {
       };
       return res.json(result);
     }
+
     const tokenEmailConfirm = randomString.generate({
       length: UserConstant.tokenConfirmEmailLength,
       charset: 'alphabetic'
@@ -532,19 +527,19 @@ const update = async (req, res, next) => {
     if (avatar)
       ImageService.postConfirmImage([avatar]);
 
-    const apiUrl = CDP_APIS.USER.UPDATE_USER_INFO.replace(':id', req.user.id);
-    put(apiUrl, postData, req.user.token)
-      .then((r) => {
-        return res.json({
-          status: HTTP_CODE.SUCCESS,
-          data: r.data.entries[0],
-          message: 'Success'
-        });
-      })
-      .catch(err => {
-        logger.error('UserController::update::error', err);
-        return next(err);
-      });
+    // const apiUrl = CDP_APIS.USER.UPDATE_USER_INFO.replace(':id', req.user.id);
+    // put(apiUrl, postData, req.user.token)
+    //   .then((r) => {
+    //     return res.json({
+    //       status: HTTP_CODE.SUCCESS,
+    //       data: r.data.entries[0],
+    //       message: 'Success'
+    //     });
+    //   })
+    //   .catch(err => {
+    //     logger.error('UserController::update::error', err);
+    //     return next(err);
+    //   });
   } catch (e) {
     logger.error('UserController::update::error', e);
     return next(e);
@@ -557,25 +552,7 @@ const check = async (req, res, next) => {
   const email = req.body.email || '';
 
   try {
-    get(`${CDP_APIS.USER.CHECK_DUP_USERNAME_EMAIL}?email=${email}&username=${username}`)
-      .then(r => {
-        if (r.data.meta.isDuplicate) {
-          return res.json({
-            status: HTTP_CODE.SUCCESS,
-            data: false,
-            message: (username ? 'username' : 'email') + ' duplicated'
-          });
-        }
-
-        return res.json({
-          status: HTTP_CODE.SUCCESS,
-          data: true,
-          message: (username ? 'username' : 'email') + ' available'
-        });
-      })
-      .catch(err => {
-        return next(err);
-      });
+    // TODO
   } catch (e) {
     logger.error('UserController::check:error', e);
     return next(e);

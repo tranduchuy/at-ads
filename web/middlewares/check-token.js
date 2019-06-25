@@ -2,10 +2,10 @@ const UserModel = require('../modules/user/user.model');
 const config = require('config');
 const jwt = require('jsonwebtoken');
 const GlobalConstant = require('../constants/global.constant');
+const HttpStatus = require('http-status-codes');
 
 const returnInvalidToken = function (req, res) {
-  return res.json({
-    status: 401,
+  return res.status(HttpStatus.UNAUTHORIZED).json({
     message: 'Invalid token',
     data: {}
   });
