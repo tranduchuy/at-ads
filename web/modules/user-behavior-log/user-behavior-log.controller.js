@@ -27,7 +27,6 @@ const logTrackingBehavior = async (req, res, next) => {
     const hrefURL = new Url(href);
     const hrefQuery = queryString.parse(hrefURL.query);
     const ua = parser(userAgent);
-    console.log(hrefURL);
     const data = {
       ip,
       referrer,
