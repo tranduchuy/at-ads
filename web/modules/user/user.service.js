@@ -36,18 +36,11 @@ const isValidHashPassword = (hashed, plainText) => {
  * @param type
  * @param name
  * @param username
- * @param phone
- * @param address
- * @param city
- * @param district
- * @param ward
- * @param {number} gender
  * @returns {Promise<this|Errors.ValidationError>|*|void}
  */
 const createUser = async ({
-                            email, password, type, name, phone, address,
-                            city, district, ward, registerBy, gender,
-                            role, otpCode
+                            email, password, type,
+                            name, registerBy, role, otpCode
                           }) => {
   const salt = bcrypt.genSaltSync(UserConstant.saltLength);
   const tokenEmailConfirm = RandomString.generate({
@@ -61,17 +54,10 @@ const createUser = async ({
     passwordSalt: salt,
     type,
     name,
-    username: '',
-    phone,
     tokenEmailConfirm,
     registerBy,
     status: Status.PENDING_OR_WAIT_CONFIRM,
-    address: address || '',
-    city: city || null,
-    district: district || null,
-    ward: ward || null,
-    gender: gender || null,
-    role: role || UserRoles.EndUser,
+    role: role || UserConstant.role.endUser,
     otpCodeConfirmAccount: otpCode
   });
 
@@ -107,13 +93,11 @@ const isExpiredTokenResetPassword = (expiredOn) => {
   return moment(expiredOn).isBefore(moment());
 };
 
-const findByEmailOrPhone = async (email, phone) => {
-  const userByEmail = await findByEmail(email);
-  const userByPhone = await findByPhone(phone);
-
-  return userByEmail || userByPhone || null;
-};
-
+/**
+ *
+ * @param email
+ * @returns {Promise<*>}
+ */
 const findByEmail = async (email) => {
   return await UserModel.findOne({ email: email });
 };
@@ -122,34 +106,21 @@ const findByGoogleId = async (googleId) => {
   return await UserModel.findOne({ googleId: googleId });
 };
 
-const findByPhone = async (phone) => {
-  return await UserModel.findOne({ phone });
-};
-
 const updateGoogleId = async (user, googleId) => {
   user.googleId = googleId;
   return await user.save();
 };
 
 const createUserByGoogle = async ({ email, name, googleId }) => {
-  const username = email.split('@')[0];
   const newUser = new UserModel({
     email,
     passwordHash: null,
     passwordSalt: null,
-    type: UserTypes.TYPE_CUSTOMER,
     name,
-    username: username,
-    phone: null,
     tokenEmailConfirm: null,
-    registerBy: RegisterByTypes.GOOGLE,
+    registerBy: UserConstant.registerByTypes.google,
     status: Status.PENDING_OR_WAIT_CONFIRM,
-    address: null,
-    city: null,
-    district: null,
-    ward: null,
-    gender: null,
-    role: UserRoles.USER_ROLE_ENDUSER,
+    role: UserConstant.role.endUser,
     googleId
   });
   return await newUser.save();
@@ -179,18 +150,32 @@ const findUserByPasswordReminderToken = async (passwordReminderToken) => {
   });
 };
 
+const updateUser = async ( { password, name, phone,
+                          birthday, gender, avatar, email} ) =>  {
+  const updateUser = await UserModel.findOne({ email: email });
+  const salt = bcrypt.genSaltSync(UserConstant.saltLength);
+  return updateUser.update({
+    passwordHash: bcrypt.hashSync(password, salt),
+    passwordSalt: salt,
+    name,
+    phone,
+    birthday,
+    gender,
+    avatar
+  });
+};
 module.exports = {
   createUser,
   generateToken,
   isExpiredTokenResetPassword,
   isValidHashPassword,
   generateOTPCode,
-  findByEmailOrPhone,
   findByGoogleId,
   updateGoogleId,
   findByEmail,
   createUserByGoogle,
   resetPassword,
   generateForgetPasswordToken,
-  findUserByPasswordReminderToken
+  findUserByPasswordReminderToken,
+  updateUser
 };

@@ -25,5 +25,9 @@ module.exports = {
     master: 1,
     admin: 2,
     endUser: 3
+  },
+  registerByTypes: {
+    normal: 1,
+    google: 2
   }
 };

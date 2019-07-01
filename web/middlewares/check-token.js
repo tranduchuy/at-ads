@@ -14,7 +14,7 @@ const returnInvalidToken = function (req, res) {
 module.exports = async function (req, res, next) {
   const token = req.headers[GlobalConstant.ApiTokenName] || req.query[GlobalConstant.ApiTokenName];
 
-  if (token == null || typeof token === undefined || type === '') {
+  if (token === null || token === undefined || token === '') {
     returnInvalidToken(req, res, next);
     return;
   }
