@@ -1,6 +1,5 @@
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
-const ImageService = require('../../services/image.service');
 const Mailer = require('../../utils/mailer');
 const randomString = require('randomstring');
 const Joi = require('@hapi/joi');
@@ -430,11 +429,20 @@ const update = async (req, res, next) => {
         };
         return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
-    // TODO: Confirm validate and save avatar.
-    // if (avatar)
-    //   ImageService.postConfirmImage([avatar]);
 
-    await UserService.updateUser({ email: user.email, password, name, phone, birthday, gender, avatar });
+    const updateData = {
+      email: user.email,
+      password,
+      name,
+      phone,
+      birthday,
+      gender
+    };
+    if (req.file) {
+      updateData.avatar = req.file.path;
+    }
+
+    await UserService.updateUser(updateData);
 
     const result = {
       messages: [messages.ResponseMessages.SUCCESS],
