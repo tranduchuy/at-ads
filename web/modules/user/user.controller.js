@@ -411,36 +411,34 @@ const update = async (req, res, next) => {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
-    let { password, name, phone, birthday, gender, avatar, oldPassword, confirmedPassword } = req.body;
-    const isCorrectPassword = await UserService.isValidHashPassword(user.passwordHash, oldPassword);
+    let { password, name, phone, birthday, gender, oldPassword, confirmedPassword } = req.body;
+    const updateData = { email: user.email};
+    if (oldPassword && password && confirmedPassword) {
+      const isCorrectPassword = await UserService.isValidHashPassword(user.passwordHash, oldPassword);
 
-    if (!isCorrectPassword) {
-      const result = {
-        messages: [messages.ResponseMessages.User.Login.WRONG_PASSWORD],
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
-    }
-
-    if (password !== confirmedPassword) {
+      if (!isCorrectPassword) {
         const result = {
-            messages: [messages.ResponseMessages.User.Register.PASSWORD_DONT_MATCH],
-            data: {}
+          messages: [messages.ResponseMessages.User.Login.WRONG_PASSWORD],
+          data: {}
         };
         return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
+
+      if (password !== confirmedPassword) {
+        const result = {
+          messages: [messages.ResponseMessages.User.Register.PASSWORD_DONT_MATCH],
+          data: {}
+        };
+        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
+      updateData.password = password;
     }
 
-    const updateData = {
-      email: user.email,
-      password,
-      name,
-      phone,
-      birthday,
-      gender
-    };
-    if (req.file) {
-      updateData.avatar = req.file.path;
-    }
+    if (req.file) updateData.avatar = req.file.path;
+    if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
+    if (birthday) updateData.birthday = birthday;
+    if (gender) updateData.gender = gender;
 
     await UserService.updateUser(updateData);
 
@@ -448,7 +446,7 @@ const update = async (req, res, next) => {
       messages: [messages.ResponseMessages.SUCCESS],
       data: {
         meta: {},
-        entries: [{ name, phone, birthday, gender, avatar }]
+        entries: [req.body]
       }
     };
 

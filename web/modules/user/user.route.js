@@ -12,7 +12,7 @@ router.post('/login-by-google', UserController.loginByGoogle);
 router.post('/register', UserController.register);
 router.post('/confirm', UserController.confirm);
 router.post('/confirm/resend', UserController.resendConfirm);
-router.post('/update', upload.single('avatar'), CheckTokenMiddleware, UserController.update);
+router.post('/update', CheckTokenMiddleware, upload.single('avatar'), UserController.update);
 router.post('/forget-password', UserController.forgetPassword);
 router.post('/reset-password', UserController.resetPassword);
 router.get('/info', CheckTokenMiddleware, UserController.getLoggedInInfo);

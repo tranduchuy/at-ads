@@ -152,17 +152,20 @@ const findUserByPasswordReminderToken = async (passwordReminderToken) => {
 
 const updateUser = async ( { password, name, phone,
                           birthday, gender, avatar, email} ) =>  {
+  const dataForUpdating = {};
   const updateUser = await UserModel.findOne({ email: email });
-  const salt = bcrypt.genSaltSync(UserConstant.saltLength);
-  return updateUser.update({
-    passwordHash: bcrypt.hashSync(password, salt),
-    passwordSalt: salt,
-    name,
-    phone,
-    birthday,
-    gender,
-    avatar
-  });
+  if (password) {
+    const salt = bcrypt.genSaltSync(UserConstant.saltLength);
+    dataForUpdating.passwordHash = bcrypt.hashSync(password, salt);
+    dataForUpdating.passwordSalt = salt;
+  }
+  if (avatar) dataForUpdating.avatar = avatar;
+  if (name) dataForUpdating.name = name;
+  if (phone) dataForUpdating.phone = phone;
+  if (birthday) dataForUpdating.birthday = birthday;
+  if (gender) dataForUpdating.gender = gender;
+
+  return updateUser.update(dataForUpdating);
 };
 module.exports = {
   createUser,
