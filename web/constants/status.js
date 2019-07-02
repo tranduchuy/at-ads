@@ -1,5 +1,5 @@
 "use strict";
-exports.status = {
+exports.Status = {
     ACTIVE: 1,
     PENDING_OR_WAIT_CONFIRM: 2,
     BLOCKED: 3,

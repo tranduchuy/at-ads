@@ -1,6 +1,5 @@
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
-const ImageService = require('../../services/image.service');
 const Mailer = require('../../utils/mailer');
 const randomString = require('randomstring');
 const Joi = require('@hapi/joi');
@@ -13,6 +12,8 @@ const { ResendConfirm } = require('./validations/resend-confirm-email.schema');
 const { ResetPasswordValidationSchema } = require('./validations/reset-password.schema');
 const { ForgetPasswordValidationSchema } = require('./validations/forget-password.schema');
 const { LoginGoogleValidationSchema } = require('./validations/login-google.schema');
+const { CheckValidationSchema } = require("./validations/check.schema");
+const { UpdateValidationSchema } = require("./validations/update.schema");
 const HttpStatus = require("http-status-codes");
 const UserService = require('./user.service');
 const UserModel = require('./user.model');
@@ -27,11 +28,10 @@ const forgetPassword = async (request, res, next) => {
         return detail.message;
       });
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: messages,
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     const { email } = request.query;
@@ -39,32 +39,29 @@ const forgetPassword = async (request, res, next) => {
 
     if (!user) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.Login.USER_NOT_FOUND],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
-    if (user.registerBy !== RegisterByTypes.NORMAL) {
+    if (user.registerBy !== UserConstant.registerByTypes.normal) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.ForgetPassword.INVALID_REGISTER_TYPE],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     await UserService.generateForgetPasswordToken(user);
     await Mailer.sendResetPassword(user.email, user.name, user.passwordReminderToken);
     const result = {
-      status: HttpStatus.OK,
       messages: [messages.ResponseMessages.User.ForgetPassword.FORGET_PASSWORD_SUCCESS],
       data: {
         meta: {},
         entries: []
       }
     };
-    return res.json(result);
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::forgetPassword error: ', e);
     return next(e);
@@ -80,98 +77,45 @@ const resetPassword = async (request, res, next) => {
         return detail.message;
       });
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: messages,
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     const { token, password, confirmedPassword } = request.body;
     if (password !== confirmedPassword) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.Register.PASSWORD_DONT_MATCH],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     const user = await UserService.findUserByPasswordReminderToken(token);
     if (!user) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.USER_NOT_FOUND],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     if (UserService.isExpiredTokenResetPassword(user.passwordReminderExpire)) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.ResetPassword.EXPIRED_TOKEN],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     await UserService.resetPassword(password, user);
     const result = {
-      status: HttpStatus.OK,
       messages: [messages.ResponseMessages.User.ResetPassword.RESET_PASSWORD_SUCCESS],
       data: {
         meta: {},
         entries: []
       }
     };
-    return res.json(result);
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::resetPassword error', e);
-    return next(e);
-  }
-};
-
-const balance = async (req, res, next) => {
-  logger.info('UserController::balance is called');
-  try {
-    const user = req.user;
-    let account = await AccountModel.findOne({ owner: user._id });
-
-    if (!account) {
-      account = new AccountModel({ owner: user._id });
-      account = await account.save();
-    }
-
-    const accountInfo = {
-      main: account.main,
-      promo: account.promo
-    };
-
-    if (user.type === global.USER_TYPE_COMPANY) {
-      let creditTransferred = 0;
-      const children = await ChildModel.find({ companyId: user._id });
-
-      if (children && children.length > 0) {
-        children.forEach(child => {
-          creditTransferred += (child.credit - child.creditUsed);
-        });
-      }
-
-      accountInfo.creditTransferred = creditTransferred;
-    }
-
-    if (user.type === global.USER_TYPE_PERSONAL) {
-      const child = await ChildModel.find({ personalId: user._id, status: global.STATUS.CHILD_ACCEPTED });
-      if (child) {
-        accountInfo.credit = child.credit;
-        accountInfo.creditUsed = child.creditUsed;
-      }
-    }
-
-    return res.json({
-      status: HTTP_CODE.SUCCESS,
-      data: accountInfo,
-      message: 'request success'
-    });
-  } catch (e) {
-    logger.error('UserController::balance::error', e);
     return next(e);
   }
 };
@@ -185,24 +129,22 @@ const confirm = async (request, res, next) => {
     });
     if (!user) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.Confirm.INVALID_TOKEN],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     user.status = Status.ACTIVE;
     user.tokenEmailConfirm = '';
     await user.save();
     const result = {
-      status: HttpStatus.OK,
       messages: [messages.ResponseMessages.User.Confirm.CONFIRM_SUCCESS],
       data: {
         meta: {},
         entries: []
       }
     };
-    return res.json(result);
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::register::error', e);
     return next(e);
@@ -220,42 +162,29 @@ const register = async (request, res, next) => {
       });
 
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: messages,
         data: {}
       };
 
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
-    const { email, password, confirmedPassword, name, username, phone, address, gender, city, district, ward } = request.body;
+    const { email, password, confirmedPassword, name} = request.body;
     const duplicatedEmail = await UserModel.find({ email: email });
     if (duplicatedEmail.length !== 0) {
       const result = {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
         messages: [messages.ResponseMessages.User.Register.EMAIL_DUPLICATED],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(result);
     }
 
     if (password !== confirmedPassword) {
       const result = {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
         messages: [messages.ResponseMessages.User.Register.PASSWORD_DONT_MATCH],
         data: {}
       };
-      return res.json(result);
-    }
-
-    const duplicatedUsers = await UserModel.find({ email: email });
-    if (duplicatedUsers.length !== 0) {
-      const result = {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
-        messages: [messages.ResponseMessages.User.Register.EMAIL_DUPLICATED],
-        data: {}
-      };
-      return res.json(result);
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(result);
     }
 
     const newUserData = {
@@ -263,12 +192,7 @@ const register = async (request, res, next) => {
       name,
       password,
       role: null,
-      phone: phone,
-      gender,
-      city: city || null,
-      district: district || null,
-      ward: ward || null,
-      address,
+      registerBy: UserConstant.registerByTypes.normal
     };
     const newUser = await UserService.createUser(newUserData);
     Mailer.sendConfirmEmail(email, name, newUser.tokenEmailConfirm);
@@ -277,7 +201,7 @@ const register = async (request, res, next) => {
       messages: [messages.ResponseMessages.User.Register.REGISTER_SUCCESS],
       data: {
         meta: {},
-        entries: [{ email, name, username, phone, address, gender, city, district, ward }]
+        entries: [{ email, name }]
       }
     };
 
@@ -296,11 +220,10 @@ const loginByGoogle = async (request, res, next) => {
         return detail.message;
       });
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: messages,
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     const { email, googleId, name } = request.body;
     let user = await UserService.findByGoogleId(googleId);
@@ -316,48 +239,36 @@ const loginByGoogle = async (request, res, next) => {
         };
         user = await UserService.createUserByGoogle(newUser);
         const result = {
-          status: HttpStatus.CREATED,
           messages: [messages.ResponseMessages.User.Login.NEW_USER_BY_GOOGLE],
           data: {
             meta: {},
             entries: []
           }
         };
-        return res.json(result);
+        return res.status(HttpStatus.CREATED).json(result);
       }
     }
     if (user.status === Status.PENDING_OR_WAIT_CONFIRM) {
       const result = {
-        status: HttpStatus.CREATED,
         messages: [messages.ResponseMessages.User.Login.NEW_USER_BY_GOOGLE],
         data: {
           meta: {},
           entries: []
         }
       };
-      return res.json(result);
+      return res.status(HttpStatus.CREATED).json(result);
     }
     const userInfoResponse = {
       _id: user.id,
       role: user.role,
       email: user.email,
-      username: user.username,
       name: user.name,
-      phone: user.phone,
-      address: user.address,
-      type: user.type,
       status: user.status,
-      avatar: user.avatar,
-      gender: user.gender,
-      city: user.city,
-      district: user.district,
-      ward: user.ward,
       registerBy: user.registerBy,
       googleId: user.googleId
     };
     const token = UserService.generateToken({ _id: user._id });
     const result = {
-      status: HttpStatus.OK,
       messages: [messages.ResponseMessages.User.Login.LOGIN_SUCCESS],
       data: {
         meta: {
@@ -366,7 +277,7 @@ const loginByGoogle = async (request, res, next) => {
         entries: [userInfoResponse]
       }
     };
-    return res.json(result);
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::loginByGoogle::error', e);
     return next(e);
@@ -382,68 +293,52 @@ const login = async (request, res, next) => {
         return detail.message;
       });
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: messages,
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     const { email, password } = request.body;
-    const emailOrPhone = email;
-    const user = await UserService.findByEmailOrPhone(emailOrPhone, emailOrPhone);
+    const user = await UserService.findByEmail(email);
 
     if (!user) {
       const result = {
-        status: HttpStatus.NOT_FOUND,
         messages: [messages.ResponseMessages.User.USER_NOT_FOUND],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.NOT_FOUND).json(result);
     }
-
-    console.log(JSON.stringify(user));
 
     if (!UserService.isValidHashPassword(user.passwordHash, password)) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.Login.WRONG_PASSWORD],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     if (user.status !== Status.ACTIVE) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.Login.INACTIVE_USER],
         data: {}
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     const userInfoResponse = {
         _id: user._id,
         role: user.role,
         email: user.email,
-        username: user.username,
         name: user.name,
-        phone: user.phone,
-        address: user.address,
         type: user.type,
         status: user.status,
-        avatar: user.avatar,
-        gender: user.gender,
-        city: user.city,
-        district: user.district,
-        ward: user.ward,
         registerBy: user.registerBy
       }
     ;
     const token = UserService.generateToken({ _id: user._id });
 
     const result = {
-      status: HttpStatus.OK,
       messages: [messages.ResponseMessages.User.Login.LOGIN_SUCCESS],
       data: {
         meta: {
@@ -453,7 +348,7 @@ const login = async (request, res, next) => {
       }
     };
 
-    return res.json(result);
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::login::error', e);
     return next(e);
@@ -470,19 +365,17 @@ const resendConfirm = async (req, res, next) => {
         return detail.message;
       });
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: messages
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     const user = await UserService.findByEmail(req.body.email);
     if (!user || user.status !== Status.PENDING_OR_WAIT_CONFIRM) {
       const result = {
-        status: HttpStatus.BAD_REQUEST,
         messages: [messages.ResponseMessages.User.USER_NOT_FOUND]
       };
-      return res.json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     const tokenEmailConfirm = randomString.generate({
@@ -493,10 +386,9 @@ const resendConfirm = async (req, res, next) => {
     await user.save();
     Mailer.sendConfirmEmail(user.email, user.name, tokenEmailConfirm);
     const result = {
-      status: HttpStatus.OK,
       messages: [messages.ResponseMessages.User.Confirm.CONFIRM_SUCCESS]
     };
-    return res.json(result);
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::resendConfirm::error', e);
     return next(e);
@@ -508,38 +400,57 @@ const update = async (req, res, next) => {
 
   try {
     const user = req.user;
-    let { password, name, phone, birthday, gender, city, district, ward, type, avatar, oldPassword, confirmedPassword } = req.body;
-    const postData = {
-      password,
-      name,
-      phone,
-      birthday,
-      gender,
-      city,
-      district,
-      ward,
-      type,
-      avatar,
-      oldPassword,
-      confirmedPassword
+    const { error } = Joi.validate(req.body, UpdateValidationSchema);
+    if (error) {
+      const messages = error.details.map(detail => {
+        return detail.message;
+      });
+      const result = {
+        messages: messages
+      };
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+
+    let { password, name, phone, birthday, gender, oldPassword, confirmedPassword } = req.body;
+    const updateData = { email: user.email};
+    if (oldPassword && password && confirmedPassword) {
+      const isCorrectPassword = await UserService.isValidHashPassword(user.passwordHash, oldPassword);
+
+      if (!isCorrectPassword) {
+        const result = {
+          messages: [messages.ResponseMessages.User.Login.WRONG_PASSWORD],
+          data: {}
+        };
+        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
+
+      if (password !== confirmedPassword) {
+        const result = {
+          messages: [messages.ResponseMessages.User.Register.PASSWORD_DONT_MATCH],
+          data: {}
+        };
+        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
+      updateData.password = password;
+    }
+
+    if (req.file) updateData.avatar = req.file.path;
+    if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
+    if (birthday) updateData.birthday = birthday;
+    if (gender) updateData.gender = gender;
+
+    await UserService.updateUser(updateData);
+
+    const result = {
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        meta: {},
+        entries: [req.body]
+      }
     };
 
-    if (avatar)
-      ImageService.postConfirmImage([avatar]);
-
-    // const apiUrl = CDP_APIS.USER.UPDATE_USER_INFO.replace(':id', req.user.id);
-    // put(apiUrl, postData, req.user.token)
-    //   .then((r) => {
-    //     return res.json({
-    //       status: HTTP_CODE.SUCCESS,
-    //       data: r.data.entries[0],
-    //       message: 'Success'
-    //     });
-    //   })
-    //   .catch(err => {
-    //     logger.error('UserController::update::error', err);
-    //     return next(err);
-    //   });
+    res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::update::error', e);
     return next(e);
@@ -548,11 +459,32 @@ const update = async (req, res, next) => {
 
 const check = async (req, res, next) => {
   logger.info('UserController::check::called');
-  const username = req.body.username || '';
-  const email = req.body.email || '';
 
   try {
-    // TODO
+    const { error } = Joi.validate(req.body, CheckValidationSchema);
+    if (error) {
+      const messages = error.details.map(detail => {
+        return detail.message;
+      });
+      const result = {
+        messages: messages
+      };
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+
+    const user = await UserService.findByEmail(req.body.email);
+
+    if (!user) {
+      const result = {
+        messages: [messages.ResponseMessages.SUCCESS],
+        data: {}
+      };
+      return res.status(HttpStatus.OK).json(result);
+    }
+    const result = {
+      messages: [messages.ResponseMessages.User.Register.EMAIL_DUPLICATED],
+    };
+    return res.status(HttpStatus.BAD_REQUEST).json(result);
   } catch (e) {
     logger.error('UserController::check:error', e);
     return next(e);
@@ -562,20 +494,24 @@ const check = async (req, res, next) => {
 const getLoggedInInfo = async (req, res, next) => {
   logger.info('UserController::getLoggedInInfo::called');
   try {
-    get(CDP_APIS.USER.INFO, req.user.token)
-      .then((response) => {
-        return res.json({
-          status: HTTP_CODE.SUCCESS,
-          message: 'Success',
-          data: {
-            user: response.data.entries[0]
-          }
-        })
-      })
-      .catch(e => {
-        logger.error('UserController::getLoggedInInfo::error', e);
-        return next(e);
-      });
+    const { _id, name, email, phone, birthday, gender, avatar } = req.user;
+    const userInfoResponse = {
+      _id,
+      name,
+      email,
+      phone,
+      birthday,
+      gender,
+      avatar
+    };
+    const result = {
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        meta: {},
+        entries: [userInfoResponse]
+      }
+    };
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::getLoggedInInfo::error', e);
     return next(e);
