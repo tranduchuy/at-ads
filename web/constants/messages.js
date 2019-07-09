@@ -54,6 +54,15 @@ var ResponseMessages;
           Register.REGISTER_SUCCESS = 'Đăng kí thành công';
         })(Register = AccountAds.Register || (AccountAds.Register = {}));
     })(AccountAds = ResponseMessages.AccountAds || (ResponseMessages.AccountAds = {}));
+    let Website;
+    (function (Website) {
+        let Register;
+        (function (Register) {
+            Register.DOMAIN_DUPLICATE = 'Domain đã tồn tại trong hệ thống';
+            Register.ACCOUNT_ID_NOT_FOUND = 'Không thể tìm thấy account id';
+            Register.REGISTER_SUCCESS = 'Thêm tên miền thành công';
+        })(Register = Website.Register || (Website.Register = {}));
+    })(Website = ResponseMessages.Website || (ResponseMessages.Website = {}));
     let Product;
     (function (Product) {
         Product.PRODUCT_NOT_FOUND = 'Không tìm thấy sản phẩm';
