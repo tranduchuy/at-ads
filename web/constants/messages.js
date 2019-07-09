@@ -46,6 +46,14 @@ var ResponseMessages;
             ResetPassword.RESET_PASSWORD_SUCCESS = 'Khôi phục mật tài khoản thành công';
         })(ResetPassword = User.ResetPassword || (User.ResetPassword = {}));
     })(User = ResponseMessages.User || (ResponseMessages.User = {}));
+    let AccountAds;
+    (function (AccountAds) {
+        let Register;
+        (function (Register) {
+          Register.ACCOUNT_ADS_DUPLICATE = 'Tài khoản đã có trong hệ thống';
+          Register.REGISTER_SUCCESS = 'Đăng kí thành công';
+        })(Register = AccountAds.Register || (AccountAds.Register = {}));
+    })(AccountAds = ResponseMessages.AccountAds || (ResponseMessages.AccountAds = {}));
     let Product;
     (function (Product) {
         Product.PRODUCT_NOT_FOUND = 'Không tìm thấy sản phẩm';
