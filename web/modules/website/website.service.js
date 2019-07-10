@@ -1,4 +1,5 @@
 const WebsiteModel = require('./website.model');
+const crypto = require('crypto');
 /**
  *
  * @param {string} domain
@@ -9,9 +10,8 @@ const createDomain = async ({ domain, accountId }) => {
   const newDomain = new WebsiteModel({
     domain,
     accountId,
-    code: '3'
+    code: crypto.randomBytes(3).toString('hex')
   });
-  // TODO: Confirm rule when generate field code.
   return await newDomain.save();
 };
 
