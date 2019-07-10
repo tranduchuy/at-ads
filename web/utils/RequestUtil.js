@@ -1,3 +1,5 @@
+const HttpStatus = require('http-status-codes');
+
 const extractPaginationCondition = (req) => {
   const cond = {
     page: 1,
@@ -21,7 +23,19 @@ const extractUserAgent = (userAgent) => {
   return {};
 };
 
+const joiValidationResponse = (err, res) => {
+  const messages = err.details.map(detail => {
+    return detail.message;
+  });
+  const result = {
+    messages: messages,
+    data: {}
+  };
+  return res.status(HttpStatus.BAD_REQUEST).json(result);
+};
+
 module.exports = {
   extractPaginationCondition,
-  extractUserAgent
+  extractUserAgent,
+  joiValidationResponse
 };
