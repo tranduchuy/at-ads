@@ -15,6 +15,16 @@ const createDomain = async ({ domain, accountId }) => {
   return await newDomain.save();
 };
 
+/**
+ *
+ * @param accountId
+ * @returns list website.
+ */
+const getWebsitesByAccountId = async (accountId) => {
+  return await WebsiteModel.find({ accountId: accountId }).select('domain code expiredAt status');
+};
+
 module.exports = {
-  createDomain
+  createDomain,
+  getWebsitesByAccountId
 };

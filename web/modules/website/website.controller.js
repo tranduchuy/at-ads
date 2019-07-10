@@ -8,6 +8,7 @@ const WebsiteModel = require('./website.model');
 const AccountAdsModel = require('../account-adwords/account-ads.model');
 const WebsiteService = require('./website.service');
 
+const { GetWebsitesValidationSchema } = require("./validations/get-websites.schema");
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
 
 const addDomainForAccountAds = async (req, res, next) => {
@@ -51,6 +52,39 @@ const addDomainForAccountAds = async (req, res, next) => {
   }
 };
 
+const getWebsitesByAccountId = async (req, res, next) => {
+  logger.info('WebsiteController::getWebsitesByAccountId is called');
+  try {
+    const { error } = Joi.validate(req.params, GetWebsitesValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+    const accountId = req.params.accountId;
+    const accountAds = await AccountAdsModel.find({ _id: accountId });
+    if (accountAds.length === 0) {
+      const result = {
+        messages: [messages.ResponseMessages.Website.ACCOUNT_ID_NOT_FOUND],
+        data: {}
+      };
+      return res.status(HttpStatus.NOT_FOUND).json(result);
+    }
+
+    const result = {
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        website: await WebsiteService.getWebsitesByAccountId(accountId)
+      }
+    };
+    return res.status(HttpStatus.OK).json(result);
+
+  } catch (e) {
+    logger.error('WebsiteController::getWebsitesByAccountId::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
-  addDomainForAccountAds
+  addDomainForAccountAds,
+  getWebsitesByAccountId
 };
