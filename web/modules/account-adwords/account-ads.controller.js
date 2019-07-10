@@ -14,7 +14,7 @@ const addAccountAds = async (req, res, next) => {
     const { error } = Joi.validate(req.body, AddAccountAdsValidationSchema);
 
     if (error) {
-       return requestUtil.joiValidationResponse(error, res);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const { adWordId } = req.body;
@@ -28,7 +28,7 @@ const addAccountAds = async (req, res, next) => {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
-    await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
+    await AccountAdsService.createAccountAds({ userId: _id, adsId: adWordId });
     const response = {
       messages: [messages.ResponseMessages.AccountAds.Register.REGISTER_SUCCESS],
       data: {}
@@ -41,7 +41,34 @@ const addAccountAds = async (req, res, next) => {
   }
 };
 
+const getAccountsAds = async (req, res, next) => {
+  logger.info('AccountAdsController::getAccountsAds is called');
+  try {
+    const accounts = await AccountAdsService.getAccountsAdsByUserId(req.params.userId);
+    if (accounts !== null) {
+      const response = {
+        messages: [messages.ResponseMessages.SUCCESS],
+        data: {
+          accounts: accounts
+        }
+      };
+      return res.status(HttpStatus.OK).json(response);
+    }
+
+    const response = {
+      messages: [messages.ResponseMessages.AccountAds.USER_ID_NOT_FOUND],
+      data: {}
+    };
+    return res.status(HttpStatus.NOT_FOUND).json(response);
+
+  } catch (e) {
+    logger.error('AccountAdsController::getAccountsAds::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
+  getAccountsAds
 };
 
