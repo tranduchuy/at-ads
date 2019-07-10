@@ -7,6 +7,7 @@ const requestUtil = require('../../utils/RequestUtil');
 const WebsiteModel = require('./website.model');
 const AccountAdsModel = require('../account-adwords/account-ads.model');
 const WebsiteService = require('./website.service');
+const { EditDomainValidationSchema } = require("./validations/edit-domain.schema");
 
 const { GetWebsitesValidationSchema } = require("./validations/get-websites.schema");
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
@@ -84,7 +85,39 @@ const getWebsitesByAccountId = async (req, res, next) => {
   }
 };
 
+const editDomain = async (req, res, next) => {
+  logger.info('WebsiteController::editDomain is called');
+  try {
+    const { error } = Joi.validate(req.params, EditDomainValidationSchema);
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+    let website = await WebsiteModel.findOne({ _id: req.params.websiteId });
+    if (website === null) {
+      const result = {
+        messages: [messages.ResponseMessages.Website.Edit.WEBSITE_NOT_FOUND]
+      };
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+    const { domain, status } = req.body;
+    const dataForUpdating = {};
+    if (domain) dataForUpdating.domain = domain;
+    if (status) dataForUpdating.status = status;
+
+    await website.update(dataForUpdating);
+
+    const result = {
+      messages: [messages.ResponseMessages.Website.Edit.EDIT_SUCCESS]
+    };
+    return res.status(HttpStatus.OK).json(result);
+  } catch (e) {
+    logger.error('WebsiteController::editDomain::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   addDomainForAccountAds,
-  getWebsitesByAccountId
+  getWebsitesByAccountId,
+  editDomain
 };
