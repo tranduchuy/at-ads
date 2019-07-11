@@ -139,14 +139,13 @@ const confirm = async (request, res, next) => {
     await user.save();
     const result = {
       messages: [messages.ResponseMessages.User.Confirm.CONFIRM_SUCCESS],
-      data: {
-        meta: {},
-        entries: []
-      }
+      data: {}
     };
+    logger.info('UserController::confirm::success', JSON.stringify(user));
+
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
-    logger.error('UserController::register::error', e);
+    logger.error('UserController::confirm::error', e);
     return next(e);
   }
 };
