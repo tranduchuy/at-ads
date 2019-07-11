@@ -342,7 +342,7 @@ const login = async (request, res, next) => {
         meta: {
           token
         },
-        entries: [userInfoResponse]
+        user: userInfoResponse
       }
     };
 
