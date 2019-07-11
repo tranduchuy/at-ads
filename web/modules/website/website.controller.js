@@ -64,7 +64,7 @@ const getWebsitesByAccountId = async (req, res, next) => {
     }
     const accountId = req.params.accountId;
     const accountAds = await AccountAdsModel.findOne({ _id: accountId });
-    if (!accountAds.length) {
+    if (!accountAds) {
       const result = {
         messages: [messages.ResponseMessages.Website.ACCOUNT_ID_NOT_FOUND],
         data: {}
