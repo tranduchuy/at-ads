@@ -18,20 +18,14 @@ const HttpStatus = require("http-status-codes");
 const UserService = require('./user.service');
 const UserModel = require('./user.model');
 const messages = require("../../constants/messages");
+const requestUtil = require('../../utils/RequestUtil');
 
 const forgetPassword = async (request, res, next) => {
   logger.info('UserController::forgetPassword is called');
   try {
     const { error } = Joi.validate(request.query, ForgetPasswordValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages,
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const { email } = request.query;
@@ -73,14 +67,7 @@ const resetPassword = async (request, res, next) => {
   try {
     const { error } = Joi.validate(request.body, ResetPasswordValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages,
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
     const { token, password, confirmedPassword } = request.body;
     if (password !== confirmedPassword) {
@@ -139,14 +126,13 @@ const confirm = async (request, res, next) => {
     await user.save();
     const result = {
       messages: [messages.ResponseMessages.User.Confirm.CONFIRM_SUCCESS],
-      data: {
-        meta: {},
-        entries: []
-      }
+      data: {}
     };
+    logger.info('UserController::confirm::success', JSON.stringify(user));
+
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
-    logger.error('UserController::register::error', e);
+    logger.error('UserController::confirm::error', e);
     return next(e);
   }
 };
@@ -157,16 +143,7 @@ const register = async (request, res, next) => {
   try {
     const { error } = Joi.validate(request.body, RegisterValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-
-      const result = {
-        messages: messages,
-        data: {}
-      };
-
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const { email, password, confirmedPassword, name} = request.body;
@@ -176,7 +153,7 @@ const register = async (request, res, next) => {
         messages: [messages.ResponseMessages.User.Register.EMAIL_DUPLICATED],
         data: {}
       };
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     if (password !== confirmedPassword) {
@@ -184,7 +161,7 @@ const register = async (request, res, next) => {
         messages: [messages.ResponseMessages.User.Register.PASSWORD_DONT_MATCH],
         data: {}
       };
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     const newUserData = {
@@ -199,13 +176,11 @@ const register = async (request, res, next) => {
 
     const result = {
       messages: [messages.ResponseMessages.User.Register.REGISTER_SUCCESS],
-      data: {
-        meta: {},
-        entries: [{ email, name }]
-      }
+      data: { email, name }
     };
 
-    res.status(HttpStatus.OK).json(result);
+    logger.info('UserController:;register::success', JSON.stringify(newUser));
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::register::error', e);
     return next(e);
@@ -216,14 +191,7 @@ const loginByGoogle = async (request, res, next) => {
   try {
     const { error } = Joi.validate(request.body, LoginGoogleValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages,
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
     const { email, googleId, name } = request.body;
     let user = await UserService.findByGoogleId(googleId);
@@ -289,14 +257,7 @@ const login = async (request, res, next) => {
   try {
     const { error } = Joi.validate(request.body, LoginValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages,
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const { email, password } = request.body;
@@ -344,7 +305,7 @@ const login = async (request, res, next) => {
         meta: {
           token
         },
-        entries: [userInfoResponse]
+        user: userInfoResponse
       }
     };
 
@@ -361,13 +322,7 @@ const resendConfirm = async (req, res, next) => {
   try {
     const { error } = Joi.validate(req.body, ResendConfirm);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const user = await UserService.findByEmail(req.body.email);
@@ -386,8 +341,10 @@ const resendConfirm = async (req, res, next) => {
     await user.save();
     Mailer.sendConfirmEmail(user.email, user.name, tokenEmailConfirm);
     const result = {
-      messages: [messages.ResponseMessages.User.Confirm.CONFIRM_SUCCESS]
+      messages: [messages.ResponseMessages.User.RESEND_CONFIRM_EMAIL]
     };
+    logger.error('UserController::resendConfirm::success', JSON.stringify({email: req.body.email}));
+
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::resendConfirm::error', e);
@@ -402,13 +359,7 @@ const update = async (req, res, next) => {
     const user = req.user;
     const { error } = Joi.validate(req.body, UpdateValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     let { password, name, phone, birthday, gender, oldPassword, confirmedPassword } = req.body;
@@ -463,13 +414,7 @@ const check = async (req, res, next) => {
   try {
     const { error } = Joi.validate(req.body, CheckValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const user = await UserService.findByEmail(req.body.email);
