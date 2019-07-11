@@ -4,6 +4,6 @@ const WebsiteController = require('./website.controller');
 const CheckTokenMiddleware = require('../../middlewares/check-token');
 
 router.post('/', CheckTokenMiddleware, WebsiteController.addDomainForAccountAds);
-router.get('/:accountId', CheckTokenMiddleware, WebsiteController.getWebsitesByAccountId);
+router.get('/', CheckTokenMiddleware, WebsiteController.getWebsitesByAccountId);
 
 module.exports = router;

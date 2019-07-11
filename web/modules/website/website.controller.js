@@ -60,7 +60,7 @@ const getWebsitesByAccountId = async (req, res, next) => {
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
-    const accountId = req.params.accountId;
+    const accountId = req.query.accountId;
     const accountAds = await AccountAdsModel.find({ _id: accountId });
     if (accountAds.length === 0) {
       const result = {
