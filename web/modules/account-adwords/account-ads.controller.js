@@ -7,6 +7,7 @@ const messages = require("../../constants/messages");
 const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
+const GoogleAdwordsService = require('../../services/GoogleAds.service');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -28,15 +29,31 @@ const addAccountAds = async (req, res, next) => {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
-    await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
-    const response = {
-      messages: [messages.ResponseMessages.AccountAds.Register.REGISTER_SUCCESS],
-      data: {}
-    };
+    GoogleAdwordsService.sendManagerRequest(adWordId)
+      .then(async result => {
+        if (!result || !result.links) {
+          logger.error('AccountAdsController::addAccountAds::error', JSON.stringify(result));
 
-    return res.status(HttpStatus.OK).json(response);
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: ['Gửi request quản lý tài khoản adword không thành công']
+          });
+        }
+
+        await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
+        logger.info('AccountAdsController::addAccountAds::success', JSON.stringify(result));
+        return res.status(HttpStatus.OK).json({
+          messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+          data: {}
+        });
+      })
+      .catch(error => {
+        const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: [message]
+        });
+      });
   } catch (e) {
-    logger.error('AccountAdsController::addAccountAds::error', e);
+    logger.error('AccountAdsController::addAccountAds::error', JSON.stringify(e));
     return next(e);
   }
 };
