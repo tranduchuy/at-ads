@@ -48,7 +48,7 @@ var ResponseMessages;
     })(User = ResponseMessages.User || (ResponseMessages.User = {}));
     let AccountAds;
     (function (AccountAds) {
-        AccountAds.USER_ID_NOT_FOUND = 'User id không tồn tại';
+        AccountAds.ACCOUNT_NOT_FOUND = 'Tài khoản không tồn tại';
         let Register;
         (function (Register) {
           Register.ACCOUNT_ADS_DUPLICATE = 'Tài khoản đã có trong hệ thống';
