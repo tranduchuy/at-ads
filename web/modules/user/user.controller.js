@@ -176,7 +176,7 @@ const register = async (request, res, next) => {
         messages: [messages.ResponseMessages.User.Register.EMAIL_DUPLICATED],
         data: {}
       };
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     if (password !== confirmedPassword) {
@@ -184,7 +184,7 @@ const register = async (request, res, next) => {
         messages: [messages.ResponseMessages.User.Register.PASSWORD_DONT_MATCH],
         data: {}
       };
-      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     const newUserData = {
@@ -199,13 +199,11 @@ const register = async (request, res, next) => {
 
     const result = {
       messages: [messages.ResponseMessages.User.Register.REGISTER_SUCCESS],
-      data: {
-        meta: {},
-        entries: [{ email, name }]
-      }
+      data: { email, name }
     };
 
-    res.status(HttpStatus.OK).json(result);
+    logger.info('UserController:;register::success', JSON.stringify(newUser));
+    return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::register::error', e);
     return next(e);
