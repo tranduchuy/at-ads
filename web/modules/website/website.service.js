@@ -7,12 +7,21 @@ const crypto = require('crypto');
  * @returns {Promise<void>}
  */
 const createDomain = async ({ domain, accountId }) => {
-  const newDomain = new WebsiteModel({
-    domain,
-    accountId,
-    code: crypto.randomBytes(3).toString('hex')
-  });
-  return await newDomain.save();
+  let flag = true;
+  while (flag) {
+    const code = crypto.randomBytes(3).toString('hex');
+    const website = await WebsiteModel.findOne({ code: code });
+    if (!website) {
+      flag = false;
+      const newDomain = new WebsiteModel({
+        domain,
+        accountId,
+        code
+      });
+      return await newDomain.save();
+    }
+  }
+
 };
 
 /**
