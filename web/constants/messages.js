@@ -26,7 +26,7 @@ var ResponseMessages;
             Login.INACTIVE_USER = 'Tài khoản chưa được kích hoạt';
             Login.LOGIN_SUCCESS = 'Đăng nhập thành công';
             Login.PERMISSION_DENIED = 'Không có quyền truy cập';
-            Login.INVALID_TOKEN = 'accessToken không hợp lệ';
+            Login.INVALID_TOKEN = 'Token không hợp lệ';
             Login.NEW_USER_BY_GOOGLE = 'Tài khoản mới đã được tạo vui lòng xác nhận số điện thoại của bạn';
             Login.NEW_USER_BY_FACEBOOK = 'Tài khoản mới đã được tạo vui lòng xác nhận số điện thoại của bạn';
         })(Login = User.Login || (User.Login = {}));
