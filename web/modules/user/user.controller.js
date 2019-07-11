@@ -383,8 +383,10 @@ const resendConfirm = async (req, res, next) => {
     await user.save();
     Mailer.sendConfirmEmail(user.email, user.name, tokenEmailConfirm);
     const result = {
-      messages: [messages.ResponseMessages.User.Confirm.CONFIRM_SUCCESS]
+      messages: [messages.ResponseMessages.User.RESEND_CONFIRM_EMAIL]
     };
+    logger.error('UserController::resendConfirm::success', JSON.stringify({email: req.body.email}));
+
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::resendConfirm::error', e);
