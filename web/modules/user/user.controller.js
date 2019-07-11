@@ -18,20 +18,14 @@ const HttpStatus = require("http-status-codes");
 const UserService = require('./user.service');
 const UserModel = require('./user.model');
 const messages = require("../../constants/messages");
+const requestUtil = require('../../utils/RequestUtil');
 
 const forgetPassword = async (request, res, next) => {
   logger.info('UserController::forgetPassword is called');
   try {
     const { error } = Joi.validate(request.query, ForgetPasswordValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages,
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const { email } = request.query;
@@ -73,14 +67,7 @@ const resetPassword = async (request, res, next) => {
   try {
     const { error } = Joi.validate(request.body, ResetPasswordValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages,
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
     const { token, password, confirmedPassword } = request.body;
     if (password !== confirmedPassword) {
@@ -156,16 +143,7 @@ const register = async (request, res, next) => {
   try {
     const { error } = Joi.validate(request.body, RegisterValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-
-      const result = {
-        messages: messages,
-        data: {}
-      };
-
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const { email, password, confirmedPassword, name} = request.body;
@@ -213,14 +191,7 @@ const loginByGoogle = async (request, res, next) => {
   try {
     const { error } = Joi.validate(request.body, LoginGoogleValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages,
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
     const { email, googleId, name } = request.body;
     let user = await UserService.findByGoogleId(googleId);
@@ -286,14 +257,7 @@ const login = async (request, res, next) => {
   try {
     const { error } = Joi.validate(request.body, LoginValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages,
-        data: {}
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const { email, password } = request.body;
@@ -358,13 +322,7 @@ const resendConfirm = async (req, res, next) => {
   try {
     const { error } = Joi.validate(req.body, ResendConfirm);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const user = await UserService.findByEmail(req.body.email);
@@ -401,13 +359,7 @@ const update = async (req, res, next) => {
     const user = req.user;
     const { error } = Joi.validate(req.body, UpdateValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     let { password, name, phone, birthday, gender, oldPassword, confirmedPassword } = req.body;
@@ -462,13 +414,7 @@ const check = async (req, res, next) => {
   try {
     const { error } = Joi.validate(req.body, CheckValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        messages: messages
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const user = await UserService.findByEmail(req.body.email);

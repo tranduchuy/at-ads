@@ -6,24 +6,17 @@ const HttpStatus = require("http-status-codes");
 const parser = require('ua-parser-js');
 const Url = require('url-parse');
 const queryString = require('query-string');
-
+const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
+
 const logTrackingBehavior = async (req, res, next) => {
   try {
     const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
     if (error) {
-      const messages = error.details.map(detail => {
-        return detail.message;
-      });
-      const result = {
-        status: HttpStatus.BAD_REQUEST,
-        messages: messages,
-        data: {}
-      };
-      return res.json(result);
+      return requestUtil.joiValidationResponse(error, res);
     }
-    const {ip, userAgent, referrer, href} = req.body;
 
+    const {ip, userAgent, referrer, href} = req.body;
     const hrefURL = new Url(href);
     const hrefQuery = queryString.parse(hrefURL.query);
     const ua = parser(userAgent);
