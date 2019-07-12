@@ -455,8 +455,7 @@ const getLoggedInInfo = async (req, res, next) => {
     const result = {
       messages: [messages.ResponseMessages.SUCCESS],
       data: {
-        meta: {},
-        entries: [userInfoResponse]
+        user: userInfoResponse
       }
     };
     return res.status(HttpStatus.OK).json(result);
