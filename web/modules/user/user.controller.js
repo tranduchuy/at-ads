@@ -206,26 +206,29 @@ const loginByGoogle = async (request, res, next) => {
           googleId
         };
         user = await UserService.createUserByGoogle(newUser);
+        const token = UserService.generateToken({ _id: user._id });
         const result = {
           messages: [messages.ResponseMessages.User.Login.NEW_USER_BY_GOOGLE],
           data: {
-            meta: {},
-            entries: []
+            meta: {
+              token
+            },
+            user: {
+              _id: user._id,
+              role: user.role,
+              email: user.email,
+              name: user.name,
+              type: user.type,
+              status: user.status,
+              registerBy: user.registerBy
+            }
           }
         };
+
         return res.status(HttpStatus.CREATED).json(result);
       }
     }
-    if (user.status === Status.PENDING_OR_WAIT_CONFIRM) {
-      const result = {
-        messages: [messages.ResponseMessages.User.Login.NEW_USER_BY_GOOGLE],
-        data: {
-          meta: {},
-          entries: []
-        }
-      };
-      return res.status(HttpStatus.CREATED).json(result);
-    }
+
     const userInfoResponse = {
       _id: user.id,
       role: user.role,
@@ -242,7 +245,7 @@ const loginByGoogle = async (request, res, next) => {
         meta: {
           token
         },
-        entries: [userInfoResponse]
+        user: userInfoResponse
       }
     };
     return res.status(HttpStatus.OK).json(result);
