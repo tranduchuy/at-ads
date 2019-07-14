@@ -48,7 +48,7 @@ var ResponseMessages;
     })(User = ResponseMessages.User || (ResponseMessages.User = {}));
     let AccountAds;
     (function (AccountAds) {
-        AccountAds.USER_ID_NOT_FOUND = 'User id không tồn tại';
+        AccountAds.ACCOUNT_NOT_FOUND = 'Tài khoản không tồn tại';
         let Register;
         (function (Register) {
           Register.ACCOUNT_ADS_DUPLICATE = 'Tài khoản đã có trong hệ thống';
@@ -64,6 +64,11 @@ var ResponseMessages;
             Register.ACCOUNT_ID_NOT_FOUND = 'Không thể tìm thấy account id';
             Register.REGISTER_SUCCESS = 'Thêm tên miền thành công';
         })(Register = Website.Register || (Website.Register = {}));
+        let Edit;
+        (function (Edit) {
+          Edit.WEBSITE_NOT_FOUND = 'Không tìm thấy website';
+          Edit.EDIT_SUCCESS = 'Thêm tên miền thành công';
+        })(Edit = Website.Edit || (Website.Edit = {}));
     })(Website = ResponseMessages.Website || (ResponseMessages.Website = {}));
     let Product;
     (function (Product) {

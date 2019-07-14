@@ -7,7 +7,9 @@ const requestUtil = require('../../utils/RequestUtil');
 const WebsiteModel = require('./website.model');
 const AccountAdsModel = require('../account-adwords/account-ads.model');
 const WebsiteService = require('./website.service');
+const mongoose = require('mongoose');
 
+const { EditDomainValidationSchema } = require("./validations/edit-domain.schema");
 const { GetWebsitesValidationSchema } = require("./validations/get-websites.schema");
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
 
@@ -21,16 +23,16 @@ const addDomainForAccountAds = async (req, res, next) => {
     }
 
     const { domain, accountId } = req.body;
-    const duplicateDomain = await WebsiteModel.find({ domain: domain });
-    if (duplicateDomain.length !== 0) {
+    const duplicateDomain = await WebsiteModel.findOne({ domain: domain });
+    if (duplicateDomain !== null) {
       const result = {
         messages: [messages.ResponseMessages.Website.Register.DOMAIN_DUPLICATE],
         data: {}
       };
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
-    const accountAds = await AccountAdsModel.find({ _id: accountId });
-    if (accountAds.length === 0) {
+    const accountAds = await AccountAdsModel.findById(mongoose.Types.ObjectId(accountId));
+    if (!accountAds) {
       const result = {
         messages: [messages.ResponseMessages.Website.Register.ACCOUNT_ID_NOT_FOUND],
         data: {}
@@ -60,9 +62,10 @@ const getWebsitesByAccountId = async (req, res, next) => {
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
+
     const accountId = req.query.accountId;
-    const accountAds = await AccountAdsModel.find({ _id: accountId });
-    if (accountAds.length === 0) {
+    const accountAds = await AccountAdsModel.findOne({ _id: accountId });
+    if (!accountAds) {
       const result = {
         messages: [messages.ResponseMessages.Website.ACCOUNT_ID_NOT_FOUND],
         data: {}
@@ -84,7 +87,39 @@ const getWebsitesByAccountId = async (req, res, next) => {
   }
 };
 
+const editDomain = async (req, res, next) => {
+  logger.info('WebsiteController::editDomain is called');
+  try {
+    const { error } = Joi.validate(Object.assign({}, req.params, req.body), EditDomainValidationSchema);
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+    let website = await WebsiteModel.findById(mongoose.Types.ObjectId(req.params.websiteId));
+    if (!website) {
+      const result = {
+        messages: [messages.ResponseMessages.Website.Edit.WEBSITE_NOT_FOUND]
+      };
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
+    }
+    const { domain, status } = req.body;
+    const dataForUpdating = {};
+    if (domain) dataForUpdating.domain = domain;
+    if (status) dataForUpdating.status = status;
+
+    await website.update(dataForUpdating);
+
+    const result = {
+      messages: [messages.ResponseMessages.Website.Edit.EDIT_SUCCESS]
+    };
+    return res.status(HttpStatus.OK).json(result);
+  } catch (e) {
+    logger.error('WebsiteController::editDomain::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   addDomainForAccountAds,
-  getWebsitesByAccountId
+  getWebsitesByAccountId,
+  editDomain
 };

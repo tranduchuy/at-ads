@@ -61,7 +61,8 @@ const addAccountAds = async (req, res, next) => {
 const getAccountsAds = async (req, res, next) => {
   logger.info('AccountAdsController::getAccountsAds is called');
   try {
-    const accounts = await AccountAdsService.getAccountsAdsByUserId(req.params.userId);
+    const userId = req.query.userId;
+    const accounts = await AccountAdsService.getAccountsAdsByUserId(userId);
     if (accounts !== null) {
       const response = {
         messages: [messages.ResponseMessages.SUCCESS],
@@ -73,7 +74,7 @@ const getAccountsAds = async (req, res, next) => {
     }
 
     const response = {
-      messages: [messages.ResponseMessages.AccountAds.USER_ID_NOT_FOUND],
+      messages: [messages.ResponseMessages.AccountAds.ACCOUNT_NOT_FOUND],
       data: {}
     };
     return res.status(HttpStatus.NOT_FOUND).json(response);
