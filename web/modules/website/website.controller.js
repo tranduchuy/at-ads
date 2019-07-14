@@ -55,7 +55,7 @@ const addDomainForAccountAds = async (req, res, next) => {
 const getWebsitesByAccountId = async (req, res, next) => {
   logger.info('WebsiteController::getWebsitesByAccountId is called');
   try {
-    const { error } = Joi.validate(req.params, GetWebsitesValidationSchema);
+    const { error } = Joi.validate(req.query, GetWebsitesValidationSchema);
 
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
