@@ -7,21 +7,30 @@ const crypto = require('crypto');
  * @returns {Promise<void>}
  */
 const createDomain = async ({ domain, accountId }) => {
-  const newDomain = new WebsiteModel({
-    domain,
-    accountId,
-    code: crypto.randomBytes(3).toString('hex')
-  });
-  return await newDomain.save();
+  let flag = true;
+  while (flag) {
+    const code = crypto.randomBytes(3).toString('hex');
+    const website = await WebsiteModel.findOne({ code });
+    if (!website) {
+      flag = false;
+      const newDomain = new WebsiteModel({
+        domain,
+        accountId,
+        code
+      });
+      return await newDomain.save();
+    }
+  }
+
 };
 
 /**
  *
- * @param accountId
- * @returns list website.
+ * @param {string} accountId
+ * @returns {Promise<[{domain: string, code: string, expiredAt: Date, status: number}]>} list website.
  */
 const getWebsitesByAccountId = async (accountId) => {
-  return await WebsiteModel.find({ accountId: accountId }).select('domain code expiredAt status');
+  return await WebsiteModel.find({ accountId }).select('domain code expiredAt status');
 };
 
 module.exports = {
