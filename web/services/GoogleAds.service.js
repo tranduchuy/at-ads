@@ -58,12 +58,12 @@ const sendManagerRequest = function (accountAdsId) {
 
 /**
  * Get list campaign of an adword id
- * @param {string} accountAdsId
+ * @param {string} adwordId
  * @return {Promise<any>}
  */
-const getListCampaigns = function (accountAdsId) {
+const getListCampaigns = function (adwordId) {
   return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::getListCampaigns', accountAdsId);
+    logger.info('GoogleAdsService::getListCampaigns', adwordId);
 
     const user = new AdwordsUser({
       developerToken: adwordConfig.developerToken,
@@ -71,7 +71,7 @@ const getListCampaigns = function (accountAdsId) {
       client_id: adwordConfig.client_id,
       client_secret: adwordConfig.client_secret,
       refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: accountAdsId,
+      clientCustomerId: adwordId,
     });
 
     let campaignService = user.getService('CampaignService', adwordConfig.version);
@@ -95,14 +95,14 @@ const getListCampaigns = function (accountAdsId) {
 
 /**
  * Add an ip to blacklist
- * @param {string} accountAdsId
+ * @param {string} adwordId
  * @param {string} campaignId
  * @param {string} ipAddress
  * @return {Promise<any>}
  */
-const addIpBlackList = function (accountAdsId, campaignId, ipAddress) {
+const addIpBlackList = function (adwordId, campaignId, ipAddress) {
   return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::addIpBlackList', accountAdsId, campaignId, ipAddress);
+    logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignId, ipAddress);
 
     const user = new AdwordsUser({
       developerToken: adwordConfig.developerToken,
@@ -110,7 +110,7 @@ const addIpBlackList = function (accountAdsId, campaignId, ipAddress) {
       client_id: adwordConfig.client_id,
       client_secret: adwordConfig.client_secret,
       refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: accountAdsId,
+      clientCustomerId: adwordId,
     });
 
     const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
@@ -141,15 +141,15 @@ const addIpBlackList = function (accountAdsId, campaignId, ipAddress) {
 
 /**
  * Remove ip from blacklist
- * @param {string} accountAdsId
+ * @param {string} adwordId
  * @param {string} campaignId
  * @param {string} ipAddress
  * @param {string} idCriterion
  * @return {Promise<any>}
  */
-const removeIpBlackList = function (accountAdsId, campaignId, ipAddress, idCriterion) {
+const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion) {
   return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::removeIpBlackList', accountAdsId, campaignId, ipAddress);
+    logger.info('GoogleAdsService::removeIpBlackList', adwordId, campaignId, ipAddress);
 
     const user = new AdwordsUser({
       developerToken: adwordConfig.developerToken,
@@ -157,7 +157,7 @@ const removeIpBlackList = function (accountAdsId, campaignId, ipAddress, idCrite
       client_id: adwordConfig.client_id,
       client_secret: adwordConfig.client_secret,
       refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: accountAdsId,
+      clientCustomerId: adwordId,
     });
     const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
     const operation = {
@@ -185,7 +185,53 @@ const removeIpBlackList = function (accountAdsId, campaignId, ipAddress, idCrite
   });
 };
 
-const getPendingInvitation = (adWordId) => {
+/**
+ * @typedef {Object} InvitationPendingPersonInfo
+ * @property {string} name
+ * @property {string} customerId
+ * @property {boolean} canManageClients
+ *
+ * @typedef {Object} InvitationPending
+ * @property {InvitationPendingPersonInfo} manager
+ * @property {InvitationPendingPersonInfo} client
+ * @property {Date} creationDate
+ * @property {Date} expirationDate
+ */
+
+/**
+ * @description Get list pending (not expired) invitations.
+ * Example result:
+ * [{
+      "manager": {
+            "name": "APPNET - MCC",
+            "customerId": "5837626610",
+            "canManageClients": true
+      },
+      "client": {
+          "name": "Appnet Technology muốn quản lý các chiến dịch Ads của bạn",
+          "customerId": "6668385722",
+          "canManageClients": false
+      },
+      "creationDate": "20190713 215231 Asia/Ho_Chi_Minh",
+      "expirationDate": "20190812 215231 Asia/Ho_Chi_Minh"
+    },
+ {
+      "manager": {
+          "name": "APPNET - MCC",
+          "customerId": "5837626610",
+          "canManageClients": true
+      },
+      "client": {
+          "name": "Appnet Technology muốn quản lý các chiến dịch Ads của bạn",
+          "customerId": "8062361209",
+          "canManageClients": true
+      },
+      "creationDate": "20190713 215527 Asia/Ho_Chi_Minh",
+      "expirationDate": "20190812 215527 Asia/Ho_Chi_Minh"
+    }]
+ * @return {Promise<[InvitationPending]>}
+ */
+const getPendingInvitations = () => {
   return new Promise((resolve, reject) => {
     const user = new AdwordsUser({
       developerToken: adwordConfig.developerToken,
@@ -193,16 +239,10 @@ const getPendingInvitation = (adWordId) => {
       client_id: adwordConfig.client_id,
       client_secret: adwordConfig.client_secret,
       refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordConfig.clientCustomerId,
     });
 
     const ManagedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
-    const selector = {
-      managerCustomerIds: [adwordConfig.managerCustomerId],
-      clientCustomerIds: [adWordId]
-    };
-
-    ManagedCustomerService.getPendingInvitations(selector, (error, result) => {
+    ManagedCustomerService.getPendingInvitations({selector: {}}, (error, result) => {
       if (error) {
         return reject(error);
       }
@@ -240,6 +280,6 @@ module.exports = {
   getListCampaigns,
   addIpBlackList,
   removeIpBlackList,
-  getPendingInvitation,
+  getPendingInvitations,
   mapManageCustomerErrorMessage
 };
