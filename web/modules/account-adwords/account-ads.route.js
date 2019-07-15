@@ -4,6 +4,6 @@ const AccountAdsController = require('./account-ads.controller');
 const CheckTokenMiddleware = require('../../middlewares/check-token');
 
 router.post('/', CheckTokenMiddleware, AccountAdsController.addAccountAds);
-router.get('/:userId', CheckTokenMiddleware, AccountAdsController.getAccountsAds);
+router.get('/', CheckTokenMiddleware, AccountAdsController.getAccountsAds);
 
 module.exports = router;

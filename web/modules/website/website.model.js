@@ -6,7 +6,7 @@ const websiteSchema = new Schema({
   code: { type : String , unique : true, required : true, dropDups: true },
   status: { type: Number, default: StatusConstant.Status.ACTIVE},
   domain: String,
-  accountId: String,
+  accountAd: Schema.Types.ObjectId,
   expiredAt: { type: Date, default: WebsiteConstant.expiredAt}
 
 }, { timestamps: true });
