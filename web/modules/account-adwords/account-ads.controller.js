@@ -61,8 +61,7 @@ const addAccountAds = async (req, res, next) => {
 const getAccountsAds = async (req, res, next) => {
   logger.info('AccountAdsController::getAccountsAds is called');
   try {
-    const userId = req.query.userId;
-    const accounts = await AccountAdsService.getAccountsAdsByUserId(userId);
+    const accounts = await AccountAdsService.getAccountsAdsByUserId(req.user._id);
     if (accounts !== null) {
       const response = {
         messages: [messages.ResponseMessages.SUCCESS],

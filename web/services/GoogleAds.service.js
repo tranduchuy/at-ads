@@ -59,7 +59,7 @@ const sendManagerRequest = function (accountAdsId) {
 /**
  * Get list campaign of an adword id
  * @param {string} adwordId
- * @return {Promise<any>}
+ * @return {Promise<[{id: string, name: string}]>}
  */
 const getListCampaigns = function (adwordId) {
   return new Promise((resolve, reject) => {
@@ -88,7 +88,11 @@ const getListCampaigns = function (adwordId) {
       }
 
       logger.info('GoogleAdsService::getListCampaigns::success', result);
-      return resolve(resolve);
+      if (result.entries) {
+        return resolve(result.entries);
+      }
+
+      return resolve([]);
     });
   });
 };
