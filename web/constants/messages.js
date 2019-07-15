@@ -69,6 +69,12 @@ var ResponseMessages;
           Edit.WEBSITE_NOT_FOUND = 'Không tìm thấy website';
           Edit.EDIT_SUCCESS = 'Thêm tên miền thành công';
         })(Edit = Website.Edit || (Website.Edit = {}));
+        let Delete;
+        (function (Delete) {
+            Delete.WEBSITE_NOT_FOUND = 'Không tìm thấy website';
+            Delete.IS_NOT_OWN_DOMAIN = 'Từ chối tác vụ';
+            Delete.DELETE_SUCCESS = 'Xoá tên miền thành công';
+        })(Delete = Website.Delete || (Website.Delete = {}));
     })(Website = ResponseMessages.Website || (ResponseMessages.Website = {}));
     let Product;
     (function (Product) {
