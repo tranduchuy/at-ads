@@ -1,5 +1,6 @@
 const AccountAdsModel = require('./account-ads.model');
 const WebsiteModel = require('../website/website.model');
+const mongoose = require('mongoose');
 const log4js = require('log4js');
 
 /**
@@ -26,7 +27,7 @@ const getAccountsAdsByUserId = async (userId) => {
   const accountsAds = await AccountAdsModel.find({ user: userId.toString() });
   if (accountsAds.length !== 0) {
     const promises = accountsAds.map(async (account) => {
-      const numberOfWebsites = await WebsiteModel.countDocuments({ accountId: account._id });
+      const numberOfWebsites = await WebsiteModel.countDocuments({ accountAd: mongoose.Types.ObjectId(account._id) });
       return {
         adsId: account.adsId,
         createdAt: account.createdAt,

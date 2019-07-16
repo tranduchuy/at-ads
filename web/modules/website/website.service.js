@@ -1,4 +1,5 @@
 const WebsiteModel = require('./website.model');
+const mongoose = require('mongoose');
 const crypto = require('crypto');
 /**
  *
@@ -15,7 +16,7 @@ const createDomain = async ({ domain, accountId }) => {
       flag = false;
       const newDomain = new WebsiteModel({
         domain,
-        accountId,
+        accountAd: mongoose.Types.ObjectId(accountId),
         code
       });
       return await newDomain.save();
@@ -30,7 +31,7 @@ const createDomain = async ({ domain, accountId }) => {
  * @returns {Promise<[{domain: string, code: string, expiredAt: Date, status: number}]>} list website.
  */
 const getWebsitesByAccountId = async (accountId) => {
-  return await WebsiteModel.find({ accountId }).select('domain code expiredAt status');
+  return await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(accountId) }).select('domain code expiredAt status');
 };
 
 module.exports = {

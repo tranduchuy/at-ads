@@ -279,11 +279,53 @@ const mapManageCustomerErrorMessage = (error) => {
   return ManagerCustomerMsgs[reason];
 };
 
+/**
+ * Get list campaign of an adword id
+ * @param {string} adwordId
+ * @return {Promise<[{id: string, name: string}]>}
+ */
+const getAccountHierachy = function (adwordId) {
+  return new Promise((resolve, reject) => {
+    logger.info('GoogleAdsService::getAccountHierachy', adwordId);
+    
+    const user = new AdwordsUser({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+    
+    let managedCustomerService = user.getService('managedCustomerService', adwordConfig.version);
+    const selector = {
+      fields: ['CustomerId', 'Name'],
+      ordering: [{field: 'CustomerId', sortOrder: 'ASCENDING'}],
+      paging: { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
+    };
+  
+    managedCustomerService.get({ serviceSelector: selector }, (error, result) => {
+      if (error) {
+        logger.error('GoogleAdsService::getAccountHierachy::error', error);
+        return reject(error);
+      }
+      
+      logger.info('GoogleAdsService::getAccountHierachy::success', result);
+      if (result.entries) {
+        return resolve(result.entries);
+      }
+      
+      return resolve([]);
+    });
+  });
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
   addIpBlackList,
   removeIpBlackList,
   getPendingInvitations,
-  mapManageCustomerErrorMessage
+  mapManageCustomerErrorMessage,
+  getAccountHierachy
 };
