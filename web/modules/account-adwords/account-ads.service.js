@@ -23,7 +23,7 @@ const createAccountAds = async ({ userId, adsId }) => {
  * @returns {array} account | null
  */
 const getAccountsAdsByUserId = async (userId) => {
-  const accountsAds = await AccountAdsModel.find({ user: userId });
+  const accountsAds = await AccountAdsModel.find({ user: userId.toString() });
   if (accountsAds.length !== 0) {
     const promises = accountsAds.map(async (account) => {
       const numberOfWebsites = await WebsiteModel.countDocuments({ accountId: account._id });
