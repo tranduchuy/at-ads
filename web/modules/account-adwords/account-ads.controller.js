@@ -4,10 +4,13 @@ const Joi = require('@hapi/joi');
 const HttpStatus = require('http-status-codes');
 const AccountAdsModel = require('./account-ads.model');
 const messages = require("../../constants/messages");
+const ActionConstant = require('../../constants/action.constant');
 const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
+const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
+const async = require('async');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -58,7 +61,77 @@ const addAccountAds = async (req, res, next) => {
   }
 };
 
+const handleManipulationGoogleAds = async(req, res, next) => {
+  logger.info('AccountAdsController::handleManipulationGoogleAds is called');
+  try{
+
+    const { error } = Joi.validate(Object.assign({}, req.body), blockIpsValidationSchema);
+    const {action, ips} = req.body;
+
+    if (error) {
+       return requestUtil.joiValidationResponse(error, res);
+    }
+
+    //block ips
+    if(action === ActionConstant.ADD)
+    {
+      const ipsArr = AccountAdsService.detectIpsShouldBeUpdated(req.adsAccount.setting.customBackList, ips);
+
+      if(!ipsArr || ipsArr.length === 0)
+      {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ['Ip đã có trong backlist.']
+        });
+      }
+
+      const campaignIds = req.adsAccount.campaignIds || [];
+
+      async.eachSeries(campaignIds, (campaignId, callback)=>{
+        AccountAdsService.addIpsToBlackListOfOneCampaign(req.adsAccount.adsId, campaignId, ipsArr, callback);
+      },err => {
+        if(err)
+        {
+          logger.info('AccountAdsController::handleManipulationGoogleAds::error', JSON.stringify(logData));
+        }
+      });
+
+      const queryUpdate = {'adsId': req.adsAccount.adsId};
+      const updateingData = {
+        $push: {
+          'setting.customBackList': {$each: ipsArr}
+        }
+      };
+      AccountAdsModel
+        .update(queryUpdate, updateingData)
+        .exec((err)=>{
+          if(err)
+          {
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: ['Thêm ips vào backlist không thành công.']
+            });
+          }
+
+          return res.status(HttpStatus.OK).json({
+            messages: ['Thêm ips vào backlist thành công.']
+          });
+      }); 
+    }
+    //remove ips to blacklist
+    else
+    {
+      //TODO DELETE IPS BACKLIST
+    }
+  }
+  catch(e)
+  {
+    console.log(e + '');
+    logger.error('AccountAdsController::handleManipulationGoogleAds::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
+  handleManipulationGoogleAds,
 };
 
