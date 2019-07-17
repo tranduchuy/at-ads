@@ -161,13 +161,14 @@ const getAccountsAds = async (req, res, next) => {
 const autoBlockIp = (req, res, next) => {
   logger.info('AccountAdsController::autoBlockIp is called');
   try{
-    const { error } = Joi.validate(Object.assign({}, req.body), AutoBlockingIpValidationSchema);
+    const { error } = Joi.validate(req.body, AutoBlockingIpValidationSchema);
    
     if (error) {
        return requestUtil.joiValidationResponse(error, res);
     }
 
-    const {maxClick, autoRemove} = req.body;
+    let {maxClick, autoRemove} = req.body;
+    maxClick = Number(maxClick);
 
     if(maxClick == 0 || maxClick == -1)
     {
@@ -204,10 +205,10 @@ const autoBlockIp = (req, res, next) => {
 const autoBlocking3g4g = (req, res, next) => {
   logger.info('AccountAdsController::autoBlock3g4g is called');
   try{
-    const { error } = Joi.validate(Object.assign({}, req.body), AutoBlocking3g4gValidationSchema);
+    const { error } = Joi.validate(req.body, AutoBlocking3g4gValidationSchema);
    
     if (error) {
-       return requestUtil.joiValidationResponse(error, res);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const {viettel, mobifone, vinafone, vietnammobile} = req.body;
