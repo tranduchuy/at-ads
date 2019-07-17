@@ -9,6 +9,7 @@ const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
+const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
 
@@ -155,9 +156,54 @@ const getAccountsAds = async (req, res, next) => {
   }
 };
 
+const autoBlockIp = (req, res, next) => {
+  logger.info('AccountAdsController::autoBlockIp is called');
+  try{
+    const { error } = Joi.validate(req.body, AutoBlockingIpValidationSchema);
+   
+    if (error) {
+       return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let {maxClick, autoRemove} = req.body;
+    maxClick = Number(maxClick);
+
+    if(maxClick === 0 || maxClick === -1)
+    {
+      req.adsAccount.setting.autoBlockByMaxClick = -1;
+      req.adsAccount.setting.autoRemoveBlocking = false;
+    }
+    else
+    {
+      req.adsAccount.setting.autoBlockByMaxClick = maxClick;
+      req.adsAccount.setting.autoRemoveBlocking = autoRemove;
+    }
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::autoBlockingIp::error', JSON.stringify(e));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập block ip tự động không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::autoBlockingIp::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập block ip tự động thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::autoBlockingIp::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
-  getAccountsAds
+  getAccountsAds,
+  autoBlockIp
 };
 
