@@ -204,10 +204,10 @@ const autoBlockIp = (req, res, next) => {
 const autoBlocking3g4g = (req, res, next) => {
   logger.info('AccountAdsController::autoBlock3g4g is called');
   try{
-    const { error } = Joi.validate(Object.assign({}, req.body), AutoBlocking3g4gValidationSchema);
+    const { error } = Joi.validate(req.body, AutoBlocking3g4gValidationSchema);
    
     if (error) {
-       return requestUtil.joiValidationResponse(error, res);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const {viettel, mobifone, vinafone, vietnammobile} = req.body;
