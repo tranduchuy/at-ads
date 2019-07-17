@@ -10,6 +10,7 @@ const requestUtil = require('../../utils/RequestUtil');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
+const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blocking-3g4g.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
 
@@ -168,7 +169,7 @@ const autoBlockIp = (req, res, next) => {
     let {maxClick, autoRemove} = req.body;
     maxClick = Number(maxClick);
 
-    if(maxClick === 0 || maxClick === -1)
+    if(maxClick == 0 || maxClick == -1)
     {
       req.adsAccount.setting.autoBlockByMaxClick = -1;
       req.adsAccount.setting.autoRemoveBlocking = false;
@@ -200,10 +201,46 @@ const autoBlockIp = (req, res, next) => {
   }
 };
 
+const autoBlocking3g4g = (req, res, next) => {
+  logger.info('AccountAdsController::autoBlock3g4g is called');
+  try{
+    const { error } = Joi.validate(req.body, AutoBlocking3g4gValidationSchema);
+   
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {viettel, mobifone, vinafone, vietnammobile} = req.body;
+    const mobiNetworks = {viettel, mobifone, vinafone, vietnammobile};
+
+    req.adsAccount.setting.mobileNetworks = mobiNetworks;
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::autoBlocking3g4g::error', JSON.stringify(e));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập chặn ip theo 3G/4G không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::autoBlocking3g4g::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập chặn ip theo 3G/4G thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::autoBlocking3g4g::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
   getAccountsAds,
-  autoBlockIp
+  autoBlockIp,
+  autoBlocking3g4g
 };
 
