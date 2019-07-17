@@ -159,13 +159,14 @@ const getAccountsAds = async (req, res, next) => {
 const autoBlockIp = (req, res, next) => {
   logger.info('AccountAdsController::autoBlockIp is called');
   try{
-    const { error } = Joi.validate(Object.assign({}, req.body), AutoBlockingIpValidationSchema);
+    const { error } = Joi.validate(req.body, AutoBlockingIpValidationSchema);
    
     if (error) {
        return requestUtil.joiValidationResponse(error, res);
     }
 
-    const {maxClick, autoRemove} = req.body;
+    let {maxClick, autoRemove} = req.body;
+    maxClick = Number(maxClick);
 
     if(maxClick === 0 || maxClick === -1)
     {
