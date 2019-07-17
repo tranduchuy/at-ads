@@ -59,7 +59,7 @@ const sendManagerRequest = function (accountAdsId) {
 /**
  * Get list campaign of an adword id
  * @param {string} adwordId
- * @return {Promise<any>}
+ * @return {Promise<[{id: string, name: string}]>}
  */
 const getListCampaigns = function (adwordId) {
   return new Promise((resolve, reject) => {
@@ -88,7 +88,11 @@ const getListCampaigns = function (adwordId) {
       }
 
       logger.info('GoogleAdsService::getListCampaigns::success', result);
-      return resolve(resolve);
+      if (result.entries) {
+        return resolve(result.entries);
+      }
+
+      return resolve([]);
     });
   });
 };
@@ -185,7 +189,53 @@ const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion
   });
 };
 
-const getPendingInvitation = (adWordId) => {
+/**
+ * @typedef {Object} InvitationPendingPersonInfo
+ * @property {string} name
+ * @property {string} customerId
+ * @property {boolean} canManageClients
+ *
+ * @typedef {Object} InvitationPending
+ * @property {InvitationPendingPersonInfo} manager
+ * @property {InvitationPendingPersonInfo} client
+ * @property {Date} creationDate
+ * @property {Date} expirationDate
+ */
+
+/**
+ * @description Get list pending (not expired) invitations.
+ * Example result:
+ * [{
+      "manager": {
+            "name": "APPNET - MCC",
+            "customerId": "5837626610",
+            "canManageClients": true
+      },
+      "client": {
+          "name": "Appnet Technology muốn quản lý các chiến dịch Ads của bạn",
+          "customerId": "6668385722",
+          "canManageClients": false
+      },
+      "creationDate": "20190713 215231 Asia/Ho_Chi_Minh",
+      "expirationDate": "20190812 215231 Asia/Ho_Chi_Minh"
+    },
+ {
+      "manager": {
+          "name": "APPNET - MCC",
+          "customerId": "5837626610",
+          "canManageClients": true
+      },
+      "client": {
+          "name": "Appnet Technology muốn quản lý các chiến dịch Ads của bạn",
+          "customerId": "8062361209",
+          "canManageClients": true
+      },
+      "creationDate": "20190713 215527 Asia/Ho_Chi_Minh",
+      "expirationDate": "20190812 215527 Asia/Ho_Chi_Minh"
+    }]
+ * @return {Promise<[InvitationPending]>}
+ */
+const getPendingInvitations = () => {
   return new Promise((resolve, reject) => {
     const user = new AdwordsUser({
       developerToken: adwordConfig.developerToken,
@@ -193,16 +243,10 @@ const getPendingInvitation = (adWordId) => {
       client_id: adwordConfig.client_id,
       client_secret: adwordConfig.client_secret,
       refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordConfig.clientCustomerId,
     });
 
     const ManagedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
-    const selector = {
-      managerCustomerIds: [adwordConfig.managerCustomerId],
-      clientCustomerIds: [adWordId]
-    };
-
-    ManagedCustomerService.getPendingInvitations(selector, (error, result) => {
+    ManagedCustomerService.getPendingInvitations({selector: {}}, (error, result) => {
       if (error) {
         return reject(error);
       }
@@ -235,11 +279,53 @@ const mapManageCustomerErrorMessage = (error) => {
   return ManagerCustomerMsgs[reason];
 };
 
+/**
+ * Get list campaign of an adword id
+ * @param {string} adwordId
+ * @return {Promise<[{id: string, name: string}]>}
+ */
+const getAccountHierachy = function (adwordId) {
+  return new Promise((resolve, reject) => {
+    logger.info('GoogleAdsService::getAccountHierachy', adwordId);
+    
+    const user = new AdwordsUser({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+    
+    let managedCustomerService = user.getService('managedCustomerService', adwordConfig.version);
+    const selector = {
+      fields: ['CustomerId', 'Name'],
+      ordering: [{field: 'CustomerId', sortOrder: 'ASCENDING'}],
+      paging: { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
+    };
+  
+    managedCustomerService.get({ serviceSelector: selector }, (error, result) => {
+      if (error) {
+        logger.error('GoogleAdsService::getAccountHierachy::error', error);
+        return reject(error);
+      }
+      
+      logger.info('GoogleAdsService::getAccountHierachy::success', result);
+      if (result.entries) {
+        return resolve(result.entries);
+      }
+      
+      return resolve([]);
+    });
+  });
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
   addIpBlackList,
   removeIpBlackList,
-  getPendingInvitation,
-  mapManageCustomerErrorMessage
+  getPendingInvitations,
+  mapManageCustomerErrorMessage,
+  getAccountHierachy
 };

@@ -48,12 +48,28 @@ var ResponseMessages;
     })(User = ResponseMessages.User || (ResponseMessages.User = {}));
     let AccountAds;
     (function (AccountAds) {
+        AccountAds.ACCOUNT_NOT_FOUND = 'Tài khoản không tồn tại';
         let Register;
         (function (Register) {
           Register.ACCOUNT_ADS_DUPLICATE = 'Tài khoản đã có trong hệ thống';
           Register.REGISTER_SUCCESS = 'Đăng kí thành công';
         })(Register = AccountAds.Register || (AccountAds.Register = {}));
     })(AccountAds = ResponseMessages.AccountAds || (ResponseMessages.AccountAds = {}));
+    let Website;
+    (function (Website) {
+        Website.ACCOUNT_ID_NOT_FOUND = 'Không tìm thấy thông tin adword';
+        let Register;
+        (function (Register) {
+            Register.DOMAIN_DUPLICATE = 'Domain đã tồn tại trong hệ thống';
+            Register.ACCOUNT_ID_NOT_FOUND = 'Không thể tìm thấy account id';
+            Register.REGISTER_SUCCESS = 'Thêm tên miền thành công';
+        })(Register = Website.Register || (Website.Register = {}));
+        let Edit;
+        (function (Edit) {
+          Edit.WEBSITE_NOT_FOUND = 'Không tìm thấy website';
+          Edit.EDIT_SUCCESS = 'Thêm tên miền thành công';
+        })(Edit = Website.Edit || (Website.Edit = {}));
+    })(Website = ResponseMessages.Website || (ResponseMessages.Website = {}));
     let Product;
     (function (Product) {
         Product.PRODUCT_NOT_FOUND = 'Không tìm thấy sản phẩm';

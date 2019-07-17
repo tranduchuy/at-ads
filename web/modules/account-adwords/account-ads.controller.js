@@ -18,7 +18,7 @@ const addAccountAds = async (req, res, next) => {
     const { error } = Joi.validate(req.body, AddAccountAdsValidationSchema);
 
     if (error) {
-       return requestUtil.joiValidationResponse(error, res);
+      return requestUtil.joiValidationResponse(error, res);
     }
 
     const { adWordId } = req.body;
@@ -126,6 +126,31 @@ const handleManipulationGoogleAds = async(req, res, next) => {
   {
     console.log(e + '');
     logger.error('AccountAdsController::handleManipulationGoogleAds::error', JSON.stringify(e));
+  }
+};
+
+const getAccountsAds = async (req, res, next) => {
+  logger.info('AccountAdsController::getAccountsAds is called');
+  try {
+    const accounts = await AccountAdsService.getAccountsAdsByUserId(req.user._id);
+    if (accounts !== null) {
+      const response = {
+        messages: [messages.ResponseMessages.SUCCESS],
+        data: {
+          accounts: accounts
+        }
+      };
+      return res.status(HttpStatus.OK).json(response);
+    }
+
+    const response = {
+      messages: [messages.ResponseMessages.AccountAds.ACCOUNT_NOT_FOUND],
+      data: {}
+    };
+    return res.status(HttpStatus.NOT_FOUND).json(response);
+
+  } catch (e) {
+    logger.error('AccountAdsController::getAccountsAds::error', e);
     return next(e);
   }
 };
@@ -133,5 +158,6 @@ const handleManipulationGoogleAds = async(req, res, next) => {
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
+  getAccountsAds
 };
 
