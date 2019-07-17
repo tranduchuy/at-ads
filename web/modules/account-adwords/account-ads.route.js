@@ -7,6 +7,7 @@ const CheckEmptyCampaignMiddleWare = require('../../middlewares/check-empty-camp
 
 router.post('/', CheckTokenMiddleware, AccountAdsController.addAccountAds);
 router.post('/:accountId/ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.handleManipulationGoogleAds);
+router.post('/:accountId/auto-blocking-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockIp);
 router.get('/', CheckTokenMiddleware, AccountAdsController.getAccountsAds);
 
 module.exports = router;
