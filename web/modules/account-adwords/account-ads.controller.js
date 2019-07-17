@@ -11,6 +11,7 @@ const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
 const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blocking-3g4g.schema');
+const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
 
@@ -235,11 +236,47 @@ const autoBlocking3g4g = (req, res, next) => {
   }
 };
 
+const autoBlockingDevices = (req, res, next) => {
+  logger.info('AccountAdsController::autoBlockDevices is called');
+  try{
+    const { error } = Joi.validate(Object.assign({}, req.body), AutoBlockingDevicesValidationSchema);
+   
+    if (error) {
+       return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {mobile, tablet, pc} = req.body;
+    const devices = {mobile, tablet, pc};
+
+    req.adsAccount.setting.devices = devices;
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::autoBlockingDevices::error', JSON.stringify(e));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập chặn ip theo thiết bị không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::autoBlockingDevices::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập chặn ip theo thiết bị thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::autoBlockingDevices::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
   getAccountsAds,
   autoBlockIp,
-  autoBlocking3g4g
+  autoBlocking3g4g,
+  autoBlockingDevices
 };
 
