@@ -11,6 +11,7 @@ const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
 const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blocking-3g4g.schema');
+const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-blocking-range-ip.schema');
 const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
@@ -202,6 +203,41 @@ const autoBlockIp = (req, res, next) => {
   }
 };
 
+const autoBlockingRangeIp = (req, res, next) => {
+  logger.info('AccountAdsController::autoBlockingRangeIp is called');
+  try{
+    const { error } = Joi.validate(req.body, AutoBlockingRangeIpValidationSchema);
+   
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {classC, classD} = req.body;
+    const rangeIp = {classC, classD};
+
+    req.adsAccount.setting.autoBlackListIpRanges = rangeIp;
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::autoBlockingRangeIp::error', JSON.stringify(e));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập chặn ip theo nhóm không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::autoBlockingRangeIp::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập chặn ip theo nhóm thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::autoBlockingRangeIp::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 const autoBlocking3g4g = (req, res, next) => {
   logger.info('AccountAdsController::autoBlock3g4g is called');
   try{
@@ -277,6 +313,7 @@ module.exports = {
   handleManipulationGoogleAds,
   getAccountsAds,
   autoBlockIp,
+  autoBlockingRangeIp,
   autoBlocking3g4g,
   autoBlockingDevices
 };
