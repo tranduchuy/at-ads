@@ -8,7 +8,10 @@ const accountAdsSchema = new Schema({
         autoBlockByMaxClick: { type: Number, default: AccountAdsConstant.setting.autoBlockByMaxClick },
         autoRemoveBlocking: { type: Boolean, default: AccountAdsConstant.setting.autoRemoveBlocking },
         autoBlackListIp: { type: Array, default: AccountAdsConstant.setting.autoBlackListIp },
-        autoBlackListIpRanges: { type: Array, default: AccountAdsConstant.setting.autoBlackListIpRanges },
+        autoBlackListIpRanges: {
+            classC: {type: Boolean, default: AccountAdsConstant.setting.autoBlackListIpRanges},
+            classD: {type: Boolean, default: AccountAdsConstant.setting.autoBlackListIpRanges},  
+        },
         customBackList: { type: Array, default: AccountAdsConstant.setting.customBackList },
         mobileNetworks: {
             viettel: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.viettel },
