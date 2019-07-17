@@ -240,7 +240,7 @@ const autoBlocking3g4g = (req, res, next) => {
 const autoBlockingDevices = (req, res, next) => {
   logger.info('AccountAdsController::autoBlockDevices is called');
   try{
-    const { error } = Joi.validate(Object.assign({}, req.body), AutoBlockingDevicesValidationSchema);
+    const { error } = Joi.validate(req.body, AutoBlockingDevicesValidationSchema);
    
     if (error) {
        return requestUtil.joiValidationResponse(error, res);
