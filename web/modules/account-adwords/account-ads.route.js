@@ -11,6 +11,7 @@ router.post('/:accountId/auto-blocking-ip', CheckTokenMiddleware, CheckAccountId
 router.post('/:accountId/auto-blocking-range-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockingRangeIp);
 router.post('/:accountId/auto-blocking-3g4g', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlocking3g4g);
 router.post('/:accountId/auto-blocking-device', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockingDevices);
+router.post('/:accountId/campaigns', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.addCampaignsForAAccountAds);
 router.get('/', CheckTokenMiddleware, AccountAdsController.getAccountsAds);
 
 module.exports = router;
