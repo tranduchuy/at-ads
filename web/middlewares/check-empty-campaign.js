@@ -6,14 +6,23 @@ const logger = log4js.getLogger('Middleware');
 module.exports = async(req, res, next) => {
     logger.info('Middlewares::check-empty-campaign is called');
     try{
-        const result = BlockingCriterions.findOne({accountId: req.adsAccount._id});
+        const result = await BlockingCriterions.find({accountId: req.adsAccount._id});
 
-        if(!result)
+        if(!result || result.length === 0)
         {
             return res.status(HttpStatus.NOT_FOUND).json({
                 messages: ["Tài khoản hiện chưa có chiến dịch"]
             });
         }
+        
+        let campaignIdArr = [];
+        
+        result.forEach(campaign => {
+            campaignIdArr.push(campaign.campaignId);            
+        });
+
+        req.campaignIds = campaignIdArr;
+
         logger.info('Middlewares::check-empty-campaign::success');
         return next();
     }

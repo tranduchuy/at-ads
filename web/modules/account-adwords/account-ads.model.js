@@ -24,8 +24,7 @@ const accountAdsSchema = new Schema({
             tablet: { type: Boolean, default: AccountAdsConstant.setting.devices.tablet },
             pc: { type: Boolean, default: AccountAdsConstant.setting.devices.pc },
         }
-    },
-    campaignIds: [String]
+    }
 }, { timestamps: true });
 
 const AccountAdsModel = mongoose.model('AccountAds', accountAdsSchema, 'AccountAds');

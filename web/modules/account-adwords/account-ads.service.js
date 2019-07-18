@@ -48,8 +48,17 @@ const addIpsToBlackListOfOneCampaign = (adsId, campaignId, ipsArr, callback) => 
       .then((result) => {
         if(result)
         {
-          const logData = {adsId, campaignId, ip};
-          logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign: ', JSON.stringify(logData));
+          const criterionId = result.value[0].criterion.id;
+          const infoCampaign ={ip, criterionId};
+          BlockingCriterionsModel.update({campaignId},{$push: {customBackList: infoCampaign}}).exec(err=>{
+            if(err)
+            {
+              logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', JSON.stringify(err));
+              return cb(err);
+            }
+            const logData = {adsId, campaignId, ip};
+            logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign: ', JSON.stringify(logData));
+          });
         }
         return cb();
       })
@@ -131,13 +140,24 @@ const processCampaignList = (result) => {
     return campaignArr;
 };
 
-const newBacklistArr = (oldBacklistArr, ips) => {
+const addNewIpsToBacklistArr = (oldBacklistArr, ips) => {
   ips.forEach(ip=>{
     oldBacklistArr.push(ip);
   });
 
   return oldBacklistArr;
 };
+
+const removeIdenticalElementInArr = arr => {
+    const removeIdenticalElement = new Set(arr);
+    let ArrAfterRemoveIdenticalElement = [];
+
+    removeIdenticalElement.forEach(ele =>{
+      ArrAfterRemoveIdenticalElement.push(ele);
+    });
+
+    return ArrAfterRemoveIdenticalElement;
+}
 
 module.exports = {
   createAccountAds,
@@ -147,5 +167,6 @@ module.exports = {
   checkCampaign,
   createdCampaignArr,
   processCampaignList,
-  newBacklistArr
+  addNewIpsToBacklistArr,
+  removeIdenticalElementInArr 
 };
