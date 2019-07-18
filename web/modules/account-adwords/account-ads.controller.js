@@ -328,7 +328,7 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
     {
       logger.info('AccountAdsController::addCampaignsForAAccountAds::error');
       return res.status(HttpStatus.CONFLICT).json({
-        messages: ["campainId bị trùng"]
+        messages: ["Chiến dịch bị trùng"]
       });
     }
 
@@ -339,12 +339,12 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
       {
         logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(err));
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          messages: ["Thêm campainId không thành công"]
+          messages: ["Thêm chiến dịch không thành công"]
         });
       }
       logger.info('AccountAdsController::addCampaignsForAAccountAds::success');
       return res.status(HttpStatus.OK).json({
-        messages: ["Thêm campainId thành công"]
+        messages: ["Thêm chiến dịch thành công"]
       });
     });
   }
