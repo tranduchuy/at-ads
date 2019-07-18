@@ -83,36 +83,24 @@ const createCampaign = (accountId, campaignId) => {
     accountId: accountId,
     campaignId: campaignId.toString()
   })
-
   return newCampaign;
 };
 
 const checkCampaign = async(accountId, campaignIds) => {
   try{
-    const result = await BlockingCriterionsModel
-    .find({accountId:accountId})
+     const result = await BlockingCriterionsModel
+    .find({accountId:accountId, campaignId: {$in: campaignIds}})
 
-    if(result || result.length !== 0)
+    if(!result || result.length === 0)
     {
-      let arr = [];
-
-      result.forEach((val)=>{
-        arr.push(val.campaignId);
-      });
-
-      const arrCampaign = _.difference(campaignIds, arr);
-
-      if(arrCampaign.length !== campaignIds.length )
-      {
-        return false;
-      }
       return true;
     }
-    return true;
+    return false;
   }
   catch(e)
   {
-    console.log(e)
+    logger.info('AccountAdsService::checkCampaign::error', JSON.stringify(e));
+    return false;
   }
 };
 
