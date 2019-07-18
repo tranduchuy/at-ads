@@ -115,7 +115,7 @@ const createdCampaignArr = (accountId, campaignIds) =>
    });
 
    return campaignIdsArr;
-}
+};
 
 const processCampaignList = (result) => {
     let campaignArr = [];
@@ -131,6 +131,14 @@ const processCampaignList = (result) => {
     return campaignArr;
 };
 
+const newBacklistArr = (oldBacklistArr, ips) => {
+  ips.forEach(ip=>{
+    oldBacklistArr.push(ip);
+  });
+
+  return oldBacklistArr;
+};
+
 module.exports = {
   createAccountAds,
   detectIpsShouldBeUpdated,
@@ -138,5 +146,6 @@ module.exports = {
   getAccountsAdsByUserId,
   checkCampaign,
   createdCampaignArr,
-  processCampaignList
+  processCampaignList,
+  newBacklistArr
 };
