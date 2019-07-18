@@ -368,16 +368,7 @@ const getListOriginalCampaigns = async(req, res, next) => {
         });
       }
 
-      const processCampaignList = AccountAdsService.processCampaignList(result);
-
-      if(!processCampaignList || processCampaignList.length === 0)
-      {
-        logger.info('AccountAdsController::getListOriginalCampaigns::success');
-        return res.status(HttpStatus.BAD_REQUEST).json({
-          messages: ["Các chiến dịch hiện đang đóng hoặc không thuộc loại chiến dịch tìm kiếm."],
-          data:{}
-        });
-      }
+      const processCampaignList = AccountAdsService.getIdAndNameCampaignInCampaignsList(result);
 
       logger.info('AccountAdsController::getListOriginalCampaigns::success');
       return res.status(HttpStatus.OK).json({

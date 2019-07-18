@@ -117,7 +117,7 @@ const createdCampaignArr = (accountId, campaignIds) =>
    return campaignIdsArr;
 }
 
-const processCampaignList = (result) => {
+const getIdAndNameCampaignInCampaignsList = (result) => {
     let campaignArr = [];
 
     result.forEach(campaign => {
@@ -138,5 +138,5 @@ module.exports = {
   getAccountsAdsByUserId,
   checkCampaign,
   createdCampaignArr,
-  processCampaignList
+  getIdAndNameCampaignInCampaignsList
 };
