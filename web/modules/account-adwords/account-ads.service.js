@@ -1,10 +1,12 @@
 const AccountAdsModel = require('./account-ads.model');
 const WebsiteModel = require('../website/website.model');
+const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const mongoose = require('mongoose');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
+const _ = require('lodash');
 
 /**
  *
@@ -76,10 +78,61 @@ const getAccountsAdsByUserId = async (userId) => {
   return null;
 };
 
+const createCampaign = (accountId, campaignId) => {
+  const newCampaign = new BlockingCriterionsModel({
+    accountId: accountId,
+    campaignId: campaignId.toString()
+  })
+
+  return newCampaign;
+};
+
+const checkCampaign = async(accountId, campaignIds) => {
+  try{
+    const result = await BlockingCriterionsModel
+    .find({accountId:accountId})
+
+    if(result || result.length !== 0)
+    {
+      let arr = [];
+
+      result.forEach((val)=>{
+        arr.push(val.campaignId);
+      });
+
+      const arrCampaign = _.difference(campaignIds, arr);
+
+      if(arrCampaign.length !== campaignIds.length )
+      {
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+  catch(e)
+  {
+    console.log(e)
+  }
+};
+
+const createdCampaignArr = (accountId, campaignIds) =>
+{
+   let campaignIdsArr = [];
+
+   campaignIds.forEach((campaign) => {
+    const newcampaign = createCampaign(accountId, campaign);
+    campaignIdsArr.push(newcampaign);
+   });
+
+   return campaignIdsArr;
+}
 
 module.exports = {
   createAccountAds,
   detectIpsShouldBeUpdated,
   addIpsToBlackListOfOneCampaign,
-  getAccountsAdsByUserId
+  getAccountsAdsByUserId,
+  checkCampaign,
+  createdCampaignArr
 };

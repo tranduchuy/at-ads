@@ -3,6 +3,7 @@ const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
 const HttpStatus = require('http-status-codes');
 const AccountAdsModel = require('./account-ads.model');
+const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
 const AccountAdsService = require("./account-ads.service");
@@ -13,6 +14,7 @@ const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-
 const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blocking-3g4g.schema');
 const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-blocking-range-ip.schema');
 const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
+const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
 
@@ -308,6 +310,51 @@ const autoBlockingDevices = (req, res, next) => {
   }
 };
 
+const addCampaignsForAAccountAds = async(req, res, next) => {
+  logger.info('AccountAdsController::addCampaignsForAAccountAds is called');
+  try{
+    const { error } = Joi.validate(req.body, AddCampaingsValidationSchema);
+   
+    if (error) {
+       return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let {campaignIds} = req.body;
+    campaignIds = campaignIds.map(String);
+
+    const checkCampaignId =  await AccountAdsService.checkCampaign(req.adsAccount._id, campaignIds);
+
+    if(!checkCampaignId)
+    {
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::error');
+      return res.status(HttpStatus.CONFLICT).json({
+        messages: ["campainId bị trùng"]
+      });
+    }
+
+    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignIds);
+
+    BlockingCriterionsModel.insertMany(campaignsArr, (err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(err));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thêm campainId không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thêm campainId thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -315,6 +362,7 @@ module.exports = {
   autoBlockIp,
   autoBlockingRangeIp,
   autoBlocking3g4g,
-  autoBlockingDevices
+  autoBlockingDevices,
+  addCampaignsForAAccountAds
 };
 
