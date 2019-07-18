@@ -16,5 +16,6 @@ module.exports = {
       tablet: false,
       pc: false
     }
-  }
+  },
+  StatusOfCampaign: 'ENABLED'
 };

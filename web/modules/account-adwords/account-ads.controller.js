@@ -355,13 +355,34 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
   }
 };
 
-const getOriginalCampaigns = async(req, res, next) => {
+const getListOriginalCampaigns = async(req, res, next) => {
+  logger.info('AccountAdsController::getListOriginalCampaigns is called');
   try{
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
 
+      if(!result || result.length === 0)
+      {
+        return res.status(HttpStatus.NOT_FOUND).json({
+          messages: ["Tài khoản hiện không có chiến dịch."],
+          data:{}
+        });
+      }
+
+      const processCampaignList = AccountAdsService.processCampaignList(result);
+
+      if(!processCampaignList || processCampaignList.length === 0)
+      {
+        logger.info('AccountAdsController::getListOriginalCampaigns::success');
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ["Các chiến dịch hiện đang đóng hoặc không thuộc loại chiến dịch tìm kiếm."],
+          data:{}
+        });
+      }
+
+      logger.info('AccountAdsController::getListOriginalCampaigns::success');
       return res.status(HttpStatus.OK).json({
-        messages: ["Done"],
-        data: result
+        messages: ["Lây danh sách chiến dịch thành công."],
+        data: {campaignList: processCampaignList}
       });
   }
   catch(e)
@@ -380,6 +401,6 @@ module.exports = {
   autoBlocking3g4g,
   autoBlockingDevices,
   addCampaignsForAAccountAds,
-  getOriginalCampaigns
+  getListOriginalCampaigns
 };
 
