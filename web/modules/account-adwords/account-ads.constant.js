@@ -17,5 +17,7 @@ module.exports = {
       pc: false
     }
   },
-  StatusOfCampaign: 'ENABLED'
+  GoogleCampaignStatus: {
+    ENABLED: 'ENABLED'
+  }
 };
