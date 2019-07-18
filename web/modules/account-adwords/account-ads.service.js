@@ -99,7 +99,7 @@ const checkCampaign = async(accountId, campaignIds) => {
   }
   catch(e)
   {
-    logger.info('AccountAdsService::checkCampaign::error', JSON.stringify(e));
+    logger.error('AccountAdsService::checkCampaign::error', JSON.stringify(e));
     return false;
   }
 };
