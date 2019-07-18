@@ -95,7 +95,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       }
 
       async.eachSeries(campaignIds, (campaignId, callback)=>{
-        AccountAdsService.addIpsToBlackListOfOneCampaign(req.adsAccount.adsId, campaignId, ipsArr, callback);
+        AccountAdsService.addIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ipsArr, callback);
       },err => {
         if(err)
         {

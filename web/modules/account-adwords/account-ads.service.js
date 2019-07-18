@@ -42,7 +42,7 @@ const detectIpsShouldBeUpdated = (backList, ips) => {
     return ipsArr;  
 };
 
-const addIpsToBlackListOfOneCampaign = (adsId, campaignId, ipsArr, callback) => {
+const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, callback) => {
   async.eachSeries(ipsArr, (ip, cb)=> {
     GoogleAdwordsService.addIpBlackList(adsId, campaignId, ip)
       .then((result) => {
@@ -50,7 +50,7 @@ const addIpsToBlackListOfOneCampaign = (adsId, campaignId, ipsArr, callback) => 
         {
           const criterionId = result.value[0].criterion.id;
           const infoCampaign ={ip, criterionId};
-          BlockingCriterionsModel.update({campaignId},{$push: {customBackList: infoCampaign}}).exec(err=>{
+          BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBackList: infoCampaign}}).exec(err=>{
             if(err)
             {
               logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', JSON.stringify(err));
