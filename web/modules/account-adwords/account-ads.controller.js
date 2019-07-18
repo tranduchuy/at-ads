@@ -355,6 +355,22 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
   }
 };
 
+const getOriginalCampaigns = async(req, res, next) => {
+  try{
+      const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
+
+      return res.status(HttpStatus.OK).json({
+        messages: ["Done"],
+        data: result
+      });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::getOriginalCampaigns::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -363,6 +379,7 @@ module.exports = {
   autoBlockingRangeIp,
   autoBlocking3g4g,
   autoBlockingDevices,
-  addCampaignsForAAccountAds
+  addCampaignsForAAccountAds,
+  getOriginalCampaigns
 };
 
