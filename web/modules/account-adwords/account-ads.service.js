@@ -144,7 +144,65 @@ const addNewIpsToBacklistArr = (oldBacklistArr, ips) => {
 
 const onlyUnique = (value, index, self) => { 
   return self.indexOf(value) === index;
-}
+};
+
+const RemoveIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, callback) => {
+  async.eachSeries(ipsArr, (ip, cb)=> {
+    const queryFindIpOfcampaign = {accountId, campaignId, "customBackList.ip": ip};
+    const select = {'customBackList.$': 1};
+
+    BlockingCriterionsModel
+    .findOne(queryFindIpOfcampaign, select)
+    .exec((errIp, resultIp) => {
+        if(errIp)
+        {
+          logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', JSON.stringify(errIp));
+          return cb(errIp);
+        }
+        if(resultIp)
+        {
+          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, resultIp.customBackList[0].criterionId)
+            .then((result) => {
+              if(result)
+              {
+                const queryUpdate = {accountId, campaignId};
+                const updateingData = {$pull: {customBackList : {ip}}};
+
+                BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
+                    if(e)
+                    {
+                      logger.error('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', JSON.stringify(e));
+                      return cb(e);
+                    }
+                    
+                    const logData = {adsId, campaignId, ip};
+                    logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign: ', JSON.stringify(logData));
+                });
+              }
+            })
+            .catch(err => cb(err));
+        }
+        cb();
+    });
+  }, callback);
+};
+
+const checkIpsInBackList = (backList, ips) => {
+    if(!backList || backList.length === 0)
+    {
+      return false;
+    }
+    else 
+    {
+      const ipsArr = _.difference(ips, backList);
+
+      if(ipsArr.length === 0)
+      {
+        return true;
+      }
+      return false;
+    }
+};
 
 module.exports = {
   createAccountAds,
@@ -155,5 +213,7 @@ module.exports = {
   createdCampaignArr,
   getIdAndNameCampaignInCampaignsList,
   addNewIpsToBacklistArr,
-  onlyUnique 
+  onlyUnique,
+  RemoveIpsToBlackListOfOneCampaign,
+  checkIpsInBackList 
 };

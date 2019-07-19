@@ -17,6 +17,7 @@ const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-bloc
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
+const _ = require('lodash');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -128,7 +129,44 @@ const handleManipulationGoogleAds = async(req, res, next) => {
     //REMOVE IPS IN CUSTOMBACKLIST
     else
     {
-      //TODO DELETE IPS BACKLIST
+      logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + ' is called');
+      const backList = req.adsAccount.setting.customBackList || [];
+      
+      if(!AccountAdsService.checkIpsInBackList(backList, ArrAfterRemoveIdenticalElement))
+      {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ['Ip không nằm trong backlist.']
+        });
+      }
+
+      async.eachSeries(campaignIds, (campaignId, callback)=>{
+        AccountAdsService.RemoveIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ips, callback);
+      },err => {
+        if(err)
+        {
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', JSON.stringify(err));
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: ['Xóa ips ra khỏi backlist không thành công.']
+          });
+        }
+
+        const ipNotExistsInListArr = _.difference(backList, ArrAfterRemoveIdenticalElement);
+
+        req.adsAccount.setting.customBackList = ipNotExistsInListArr;
+        req.adsAccount.save((err)=>{
+          if(err)
+          {
+            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', JSON.stringify(err));
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: ['Xóa ips ra khỏi backlist không thành công.']
+            });
+          }
+          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::sussecc');
+          return res.status(HttpStatus.OK).json({
+            messages: ['Xóa ips ra khỏi backlist thành công.']
+          });
+        });
+      });
     }
   }
   catch(e)
