@@ -78,8 +78,10 @@ const handleManipulationGoogleAds = async(req, res, next) => {
        return requestUtil.joiValidationResponse(error, res);
     }
 
-    const ArrAfterRemoveIdenticalElement = AccountAdsService.removeIdenticalElementInArr(ips);
+    const ArrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
     const campaignIds = req.campaignIds || [];
+
+
 
     //ADD IPS IN CUSTOMBACKLIST
     if(action === ActionConstant.ADD)

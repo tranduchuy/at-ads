@@ -148,15 +148,8 @@ const addNewIpsToBacklistArr = (oldBacklistArr, ips) => {
   return oldBacklistArr;
 };
 
-const removeIdenticalElementInArr = arr => {
-    const removeIdenticalElement = new Set(arr);
-    let ArrAfterRemoveIdenticalElement = [];
-
-    removeIdenticalElement.forEach(ele =>{
-      ArrAfterRemoveIdenticalElement.push(ele);
-    });
-
-    return ArrAfterRemoveIdenticalElement;
+const onlyUnique = (value, index, self) => { 
+  return self.indexOf(value) === index;
 }
 
 module.exports = {
@@ -168,5 +161,5 @@ module.exports = {
   createdCampaignArr,
   processCampaignList,
   addNewIpsToBacklistArr,
-  removeIdenticalElementInArr 
+  onlyUnique 
 };
