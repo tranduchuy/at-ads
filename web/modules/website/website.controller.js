@@ -9,6 +9,7 @@ const AccountAdsModel = require('../account-adwords/account-ads.model');
 const WebsiteService = require('./website.service');
 const mongoose = require('mongoose');
 
+const { DeleteDomainValidationSchema } = require("./validations/delete-domain.schema");
 const { EditDomainValidationSchema } = require("./validations/edit-domain.schema");
 const { GetWebsitesValidationSchema } = require("./validations/get-websites.schema");
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
@@ -118,8 +119,47 @@ const editDomain = async (req, res, next) => {
   }
 };
 
+const deleteDomain = async (req, res, next) => {
+  logger.info('WebsiteController::deleteDomain is called');
+  try {
+    const { error } = Joi.validate(req.params, DeleteDomainValidationSchema);
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const websiteId = req.params.websiteId;
+    const website = await WebsiteModel.findById(mongoose.Types.ObjectId(websiteId));
+    if (!website) {
+      const result = {
+        messages: [messages.ResponseMessages.Website.Delete.WEBSITE_NOT_FOUND],
+      };
+      return res.status(HttpStatus.NOT_FOUND).json(result);
+    }
+
+    const requestUser = req.user;
+    const ownDomain = await WebsiteService.isOwnDomain(website.accountAd, requestUser._id);
+    if (!ownDomain) {
+      const result = {
+        messages: [messages.ResponseMessages.Website.Delete.IS_NOT_OWN_DOMAIN]
+      };
+      return res.status(HttpStatus.UNAUTHORIZED).json(result);
+    }
+
+    await WebsiteModel.deleteOne({ _id: mongoose.Types.ObjectId(websiteId) });
+    const result = {
+      messages: [messages.ResponseMessages.Website.Delete.DELETE_SUCCESS]
+    };
+    return res.status(HttpStatus.OK).json(result);
+
+  } catch (e) {
+    logger.error('WebsiteController::deleteDomain::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   addDomainForAccountAds,
   getWebsitesByAccountId,
-  editDomain
+  editDomain,
+  deleteDomain
 };

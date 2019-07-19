@@ -81,8 +81,6 @@ const handleManipulationGoogleAds = async(req, res, next) => {
     const ArrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
     const campaignIds = req.campaignIds || [];
 
-
-
     //ADD IPS IN CUSTOMBACKLIST
     if(action === ActionConstant.ADD)
     {
@@ -365,28 +363,11 @@ const getListOriginalCampaigns = async(req, res, next) => {
   try{
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
 
-      if(!result || result.length === 0)
-      {
-        return res.status(HttpStatus.NOT_FOUND).json({
-          messages: ["Tài khoản hiện không có chiến dịch."],
-          data:{}
-        });
-      }
-
-      const processCampaignList = AccountAdsService.processCampaignList(result);
-
-      if(!processCampaignList || processCampaignList.length === 0)
-      {
-        logger.info('AccountAdsController::getListOriginalCampaigns::success');
-        return res.status(HttpStatus.BAD_REQUEST).json({
-          messages: ["Các chiến dịch hiện đang đóng hoặc không thuộc loại chiến dịch tìm kiếm."],
-          data:{}
-        });
-      }
+      const processCampaignList = AccountAdsService.getIdAndNameCampaignInCampaignsList(result);
 
       logger.info('AccountAdsController::getListOriginalCampaigns::success');
       return res.status(HttpStatus.OK).json({
-        messages: ["Lây danh sách chiến dịch thành công."],
+        messages: ["Lấy danh sách chiến dịch thành công."],
         data: {campaignList: processCampaignList}
       });
   }

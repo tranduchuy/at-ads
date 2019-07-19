@@ -7,7 +7,7 @@ const logger = log4js.getLogger('Services');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
 const _ = require('lodash');
-const { StatusOfCampaign } = require('../account-adwords/account-ads.constant');
+const { GoogleCampaignStatus } = require('../account-adwords/account-ads.constant');
 
 /**
  *
@@ -74,10 +74,10 @@ const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, ca
 const getAccountsAdsByUserId = async (userId) => {
   const accountsAds = await AccountAdsModel.find({ user: userId });
   if (accountsAds.length !== 0) {
-    const promises = accounts
-    Ads.map(async (account) => {
+    const promises = accountsAds.map(async (account) => {
       const numberOfWebsites = await WebsiteModel.countDocuments({ accountAd: mongoose.Types.ObjectId(account._id) });
       return {
+        id: account._id,
         adsId: account.adsId,
         createdAt: account.createdAt,
         numberOfWebsites
@@ -126,18 +126,12 @@ const createdCampaignArr = (accountId, campaignIds) =>
    return campaignIdsArr;
 };
 
-const processCampaignList = (result) => {
-    let campaignArr = [];
-
-    result.forEach(campaign => {
-      if(campaign.status === StatusOfCampaign && campaign.networkSetting.targetGoogleSearch === true)
-      {
-        const temp = {id: campaign.id, name: campaign.name}
-        campaignArr.push(temp);
-      }
+const getIdAndNameCampaignInCampaignsList = (result) => {
+    return result
+      .filter(campaign => campaign.status === GoogleCampaignStatus.ENABLED && campaign.networkSetting.targetGoogleSearch === true)
+      .map(c => {
+      return {id: c.id, name: c.name}
     });
-
-    return campaignArr;
 };
 
 const addNewIpsToBacklistArr = (oldBacklistArr, ips) => {
@@ -159,7 +153,7 @@ module.exports = {
   getAccountsAdsByUserId,
   checkCampaign,
   createdCampaignArr,
-  processCampaignList,
+  getIdAndNameCampaignInCampaignsList,
   addNewIpsToBacklistArr,
   onlyUnique 
 };
