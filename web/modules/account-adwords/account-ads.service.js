@@ -53,11 +53,11 @@ const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, ca
           BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBackList: infoCampaign}}).exec(err=>{
             if(err)
             {
-              logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', JSON.stringify(err));
+              logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', err);
               return cb(err);
             }
             const logData = {adsId, campaignId, ip};
-            logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign: ', JSON.stringify(logData));
+            logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign: ', logData);
           });
         }
         return cb();
@@ -134,14 +134,6 @@ const getIdAndNameCampaignInCampaignsList = (result) => {
     });
 };
 
-const addNewIpsToBacklistArr = (oldBacklistArr, ips) => {
-  ips.forEach(ip=>{
-    oldBacklistArr.push(ip);
-  });
-
-  return oldBacklistArr;
-};
-
 const onlyUnique = (value, index, self) => { 
   return self.indexOf(value) === index;
 }
@@ -154,6 +146,5 @@ module.exports = {
   checkCampaign,
   createdCampaignArr,
   getIdAndNameCampaignInCampaignsList,
-  addNewIpsToBacklistArr,
   onlyUnique 
 };
