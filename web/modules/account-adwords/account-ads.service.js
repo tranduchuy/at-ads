@@ -7,6 +7,7 @@ const logger = log4js.getLogger('Services');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const async = require('async');
 const _ = require('lodash');
+const { GoogleCampaignStatus } = require('../account-adwords/account-ads.constant');
 
 /**
  *
@@ -116,11 +117,20 @@ const createdCampaignArr = (accountId, campaignIds) =>
    return campaignIdsArr;
 }
 
+const getIdAndNameCampaignInCampaignsList = (result) => {
+    return result
+      .filter(campaign => campaign.status === GoogleCampaignStatus.ENABLED && campaign.networkSetting.targetGoogleSearch === true)
+      .map(c => {
+      return {id: c.id, name: c.name}
+    });
+};
+
 module.exports = {
   createAccountAds,
   detectIpsShouldBeUpdated,
   addIpsToBlackListOfOneCampaign,
   getAccountsAdsByUserId,
   checkCampaign,
-  createdCampaignArr
+  createdCampaignArr,
+  getIdAndNameCampaignInCampaignsList
 };

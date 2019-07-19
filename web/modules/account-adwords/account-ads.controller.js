@@ -355,6 +355,26 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
   }
 };
 
+const getListOriginalCampaigns = async(req, res, next) => {
+  logger.info('AccountAdsController::getListOriginalCampaigns is called');
+  try{
+      const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
+
+      const processCampaignList = AccountAdsService.getIdAndNameCampaignInCampaignsList(result);
+
+      logger.info('AccountAdsController::getListOriginalCampaigns::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Lấy danh sách chiến dịch thành công."],
+        data: {campaignList: processCampaignList}
+      });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::getOriginalCampaigns::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -363,6 +383,7 @@ module.exports = {
   autoBlockingRangeIp,
   autoBlocking3g4g,
   autoBlockingDevices,
-  addCampaignsForAAccountAds
+  addCampaignsForAAccountAds,
+  getListOriginalCampaigns
 };
 

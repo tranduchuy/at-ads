@@ -16,5 +16,8 @@ module.exports = {
       tablet: false,
       pc: false
     }
+  },
+  GoogleCampaignStatus: {
+    ENABLED: 'ENABLED'
   }
 };
