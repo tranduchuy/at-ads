@@ -133,7 +133,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::handleManipulationGoogleAds::error', JSON.stringify(e));
+    logger.error('AccountAdsController::handleManipulationGoogleAds::error', e);
     return next(e);
   }
 };
