@@ -134,19 +134,22 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       
       if(!AccountAdsService.checkIpsInBackList(backList, ArrAfterRemoveIdenticalElement))
       {
-        return res.status(HttpStatus.BAD_REQUEST).json({
-          messages: ['Ip không nằm trong backlist.']
+        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
+        return res.status(HttpStatus.OK).json({
+          messages: ['Xóa ip thành công.']
         });
       }
 
+      const ipsArrayAfterDeletingElementsNotInTheBacklist = _.intersection(backList, ArrAfterRemoveIdenticalElement);
+
       Async.eachSeries(campaignIds, (campaignId, callback)=>{
-        AccountAdsService.removeIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ips, callback);
+        AccountAdsService.removeIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ipsArrayAfterDeletingElementsNotInTheBacklist, callback);
       },err => {
         if(err)
         {
           logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            messages: ['Xóa ips ra khỏi backlist không thành công.']
+            messages: ['Xóa ip không thành công.']
           });
         }
 
@@ -158,12 +161,12 @@ const handleManipulationGoogleAds = async(req, res, next) => {
           {
             logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-              messages: ['Xóa ips ra khỏi backlist không thành công.']
+              messages: ['Xóa ip không thành công.']
             });
           }
           logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
           return res.status(HttpStatus.OK).json({
-            messages: ['Xóa ips ra khỏi backlist thành công.']
+            messages: ['Xóa ip thành công.']
           });
         });
       });

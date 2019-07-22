@@ -194,12 +194,7 @@ const checkIpsInBackList = (backList, ips) => {
     {
       return false;
     }
-
-    if(_.difference(ips, backList).length === 0)
-    {
-      return true;
-    }
-    return false;
+    return _.difference(ips, backList).length !== ips.length;
 };
 
 module.exports = {
