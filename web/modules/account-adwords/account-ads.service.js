@@ -42,19 +42,32 @@ const detectIpsShouldBeUpdated = (backList, ips) => {
     return ipsArr;  
 };
 
-const addIpsToBlackListOfOneCampaign = (adsId, campaignId, ipsArr, callback) => {
+const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, callback) => {
   async.eachSeries(ipsArr, (ip, cb)=> {
     GoogleAdwordsService.addIpBlackList(adsId, campaignId, ip)
       .then((result) => {
-        if(result)
-        {
-          const logData = {adsId, campaignId, ip};
-          logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign: ', JSON.stringify(logData));
-        }
-        return cb();
+        addIpAndCriterionIdToTheBlacklistOfACampaign(result, accountId, campaignId, adsId, ip, cb);
       })
       .catch(err => cb(err));
   }, callback);
+};
+
+const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaignId, adsId, ip, cb) => {
+  if(result)
+  {
+    const criterionId = result.value[0].criterion.id;
+    const infoCampaign ={ip, criterionId};
+    BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBackList: infoCampaign}}).exec(err=>{
+      if(err)
+      {
+        logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', err);
+        return cb(err);
+      }
+      const logData = {adsId, campaignId, ip};
+      logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign: ', logData);
+    });
+  }
+  return cb();
 };
 
 /**
@@ -65,10 +78,10 @@ const addIpsToBlackListOfOneCampaign = (adsId, campaignId, ipsArr, callback) => 
 const getAccountsAdsByUserId = async (userId) => {
   const accountsAds = await AccountAdsModel.find({ user: userId });
   if (accountsAds.length !== 0) {
-    const promises = accounts
-    Ads.map(async (account) => {
+    const promises = accountsAds.map(async (account) => {
       const numberOfWebsites = await WebsiteModel.countDocuments({ accountAd: mongoose.Types.ObjectId(account._id) });
       return {
+        id: account._id,
         adsId: account.adsId,
         createdAt: account.createdAt,
         numberOfWebsites
@@ -115,7 +128,7 @@ const createdCampaignArr = (accountId, campaignIds) =>
    });
 
    return campaignIdsArr;
-}
+};
 
 const getIdAndNameCampaignInCampaignsList = (result) => {
     return result
@@ -125,6 +138,10 @@ const getIdAndNameCampaignInCampaignsList = (result) => {
     });
 };
 
+const onlyUnique = (value, index, self) => { 
+  return self.indexOf(value) === index;
+}
+
 module.exports = {
   createAccountAds,
   detectIpsShouldBeUpdated,
@@ -132,5 +149,6 @@ module.exports = {
   getAccountsAdsByUserId,
   checkCampaign,
   createdCampaignArr,
-  getIdAndNameCampaignInCampaignsList
+  getIdAndNameCampaignInCampaignsList,
+  onlyUnique 
 };

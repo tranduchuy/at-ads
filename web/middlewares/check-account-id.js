@@ -4,23 +4,22 @@ const log4js = require('log4js');
 const logger = log4js.getLogger('Middleware');
 
 module.exports = async(req, res, next) => {
+    logger.info('Middlewares::check-account-id is called');
     try{
         const {accountId} = req.params;
         const adsAccount = await AccountAdsModel.findOne({_id: accountId, user: req.user._id});
 
         if(adsAccount)
         {
-            req.adsAccount = adsAccount; 
-            next();
+            req.adsAccount = adsAccount;
+            logger.info('Middlewares::check-account-id::success'); 
+            return next();
         }
-        else
-        {
-            return res.status(HttpStatus.NOT_FOUND).json({messages: ['Không tìm thấy tài khoản adwords']})
-        }
+        return res.status(HttpStatus.NOT_FOUND).json({messages: ['Không tìm thấy tài khoản adwords']})
     }
     catch(e)
     {
-        logger.error('Middlewares::account-id::error ', e);
+        logger.error('Middlewares::check-account-id::error ', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             messages: ['Lỗi không xác định']
         })
