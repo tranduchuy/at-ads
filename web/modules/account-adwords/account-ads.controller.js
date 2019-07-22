@@ -144,7 +144,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       },err => {
         if(err)
         {
-          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', JSON.stringify(err));
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             messages: ['Xóa ips ra khỏi backlist không thành công.']
           });
@@ -156,12 +156,12 @@ const handleManipulationGoogleAds = async(req, res, next) => {
         req.adsAccount.save((err)=>{
           if(err)
           {
-            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', JSON.stringify(err));
+            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
               messages: ['Xóa ips ra khỏi backlist không thành công.']
             });
           }
-          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::sussecc');
+          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
           return res.status(HttpStatus.OK).json({
             messages: ['Xóa ips ra khỏi backlist thành công.']
           });

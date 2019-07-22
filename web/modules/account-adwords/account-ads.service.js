@@ -153,15 +153,15 @@ const RemoveIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr,
 
     BlockingCriterionsModel
     .findOne(queryFindIpOfcampaign, select)
-    .exec((errIp, resultIp) => {
-        if(errIp)
+    .exec((errQuery, resultQuery) => {
+        if(errQuery)
         {
-          logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', JSON.stringify(errIp));
-          return cb(errIp);
+          logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', errQuery);
+          return cb(errQuery);
         }
-        if(resultIp)
+        if(resultQuery)
         {
-          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, resultIp.customBackList[0].criterionId)
+          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, resultQuery.customBackList[0].criterionId)
             .then((result) => {
               if(result)
               {
@@ -171,18 +171,20 @@ const RemoveIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr,
                 BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
                     if(e)
                     {
-                      logger.error('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', JSON.stringify(e));
+                      logger.error('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', e);
                       return cb(e);
                     }
                     
                     const logData = {adsId, campaignId, ip};
-                    logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign: ', JSON.stringify(logData));
+                    logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign: ', logData);
+                    return cb();
                 });
               }
+              else { return cb(null); }
             })
             .catch(err => cb(err));
         }
-        cb();
+        else { return cb(null); }
     });
   }, callback);
 };
