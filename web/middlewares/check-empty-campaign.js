@@ -19,8 +19,6 @@ module.exports = async(req, res, next) => {
 
         req.campaignIds = campaignIdArr;
 
-        console.log(campaignIdArr);
-
         logger.info('Middlewares::check-empty-campaign::success');
         return next();
     }

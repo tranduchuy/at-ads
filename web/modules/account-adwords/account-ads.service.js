@@ -46,24 +46,28 @@ const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, ca
   async.eachSeries(ipsArr, (ip, cb)=> {
     GoogleAdwordsService.addIpBlackList(adsId, campaignId, ip)
       .then((result) => {
-        if(result)
-        {
-          const criterionId = result.value[0].criterion.id;
-          const infoCampaign ={ip, criterionId};
-          BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBackList: infoCampaign}}).exec(err=>{
-            if(err)
-            {
-              logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', err);
-              return cb(err);
-            }
-            const logData = {adsId, campaignId, ip};
-            logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign: ', logData);
-          });
-        }
-        return cb();
+        addIpAndCriterionIdToTheBlacklistOfACampaign(result, accountId, campaignId, adsId, ip, cb);
       })
       .catch(err => cb(err));
   }, callback);
+};
+
+const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaignId, adsId, ip, cb) => {
+  if(result)
+  {
+    const criterionId = result.value[0].criterion.id;
+    const infoCampaign ={ip, criterionId};
+    BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBackList: infoCampaign}}).exec(err=>{
+      if(err)
+      {
+        logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', err);
+        return cb(err);
+      }
+      const logData = {adsId, campaignId, ip};
+      logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign: ', logData);
+    });
+  }
+  return cb();
 };
 
 /**
