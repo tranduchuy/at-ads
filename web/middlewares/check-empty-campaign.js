@@ -8,18 +8,14 @@ module.exports = async(req, res, next) => {
     try{
         const result = await BlockingCriterions.find({accountId: req.adsAccount._id});
 
-        if(!result || result.length === 0)
+        if(result.length === 0)
         {
             return res.status(HttpStatus.NOT_FOUND).json({
                 messages: ["Tài khoản hiện chưa có chiến dịch"]
             });
         }
         
-        let campaignIdArr = [];
-        
-        result.forEach(campaign => {
-            campaignIdArr.push(campaign.campaignId);            
-        });
+        const campaignIdArr = result.map(c => c.campaignId);
 
         req.campaignIds = campaignIdArr;
 

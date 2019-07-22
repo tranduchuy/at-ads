@@ -100,20 +100,20 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       },err => {
         if(err)
         {
-          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', JSON.stringify(err));
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err);
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             messages: ['Thêm ips vào backlist không thành công.']
           });
         }
 
-        const newBackList = AccountAdsService.addNewIpsToBacklistArr(req.adsAccount.setting.customBackList, ipsArr);
+        const newBackList = req.adsAccount.setting.customBackList.concat(ipsArr);
 
         req.adsAccount.setting.customBackList = newBackList;
 
         req.adsAccount.save(err=>{
           if(err)
           {
-            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', JSON.stringify(err));
+            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
               messages: ['Thêm ips vào backlist không thành công.']
             });
@@ -171,7 +171,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::handleManipulationGoogleAds::error', JSON.stringify(e));
+    logger.error('AccountAdsController::handleManipulationGoogleAds::error', e);
     return next(e);
   }
 };
