@@ -16,7 +16,7 @@ const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-bloc
 const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
-const async = require('async');
+const Async = require('async');
 const _ = require('lodash');
 
 const addAccountAds = async (req, res, next) => {
@@ -95,7 +95,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
         });
       }
 
-      async.eachSeries(campaignIds, (campaignId, callback)=>{
+      Async.eachSeries(campaignIds, (campaignId, callback)=>{
         AccountAdsService.addIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ipsArr, callback);
       },err => {
         if(err)
@@ -139,8 +139,8 @@ const handleManipulationGoogleAds = async(req, res, next) => {
         });
       }
 
-      async.eachSeries(campaignIds, (campaignId, callback)=>{
-        AccountAdsService.RemoveIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ips, callback);
+      Async.eachSeries(campaignIds, (campaignId, callback)=>{
+        AccountAdsService.removeIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ips, callback);
       },err => {
         if(err)
         {
