@@ -7,8 +7,6 @@ const logger = require('morgan');
 const cors = require('cors');
 const HttpStatus = require('http-status-codes');
 const fs = require('fs');
-const Log4js = require('log4js');
-const Logger = Log4js.getLogger('app');
 
 
 // create logs folder
@@ -18,6 +16,7 @@ if (!fs.existsSync('./logs')) {
 // config log4js
 const log4js = require('log4js');
 log4js.configure('./config/log4js.json');
+const loggerApp = log4js.getLogger('app');
 
 const app = express();
 
@@ -39,7 +38,7 @@ app.use(function (req, res, next) {
 app.use(function (err, req, res, next) {
   const msg = err.message ? err.message : JSON.stringify(err);
 
-  Logger.error('app::error ', msg);
+  loggerApp.error('app::error ', err);
 
   return res
     .status(HttpStatus.BAD_REQUEST)
