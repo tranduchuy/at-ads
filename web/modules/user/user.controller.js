@@ -209,6 +209,7 @@ const loginByGoogle = async (request, res, next) => {
 
       if(response.statusCode !== HttpStatus.OK)
       {
+        logger.error('UserController::loginByGoogle::error', response);
         return res.status(HttpStatus.BAD_REQUEST).json({
           messages: ["Đăng nhập không thành công."]
         });
