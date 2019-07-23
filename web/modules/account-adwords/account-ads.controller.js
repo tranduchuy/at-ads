@@ -16,7 +16,8 @@ const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-bloc
 const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
-const async = require('async');
+const Async = require('async');
+const _ = require('lodash');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -78,14 +79,14 @@ const handleManipulationGoogleAds = async(req, res, next) => {
        return requestUtil.joiValidationResponse(error, res);
     }
 
-    const ArrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
+    const arrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
     const campaignIds = req.campaignIds || [];
 
     //ADD IPS IN CUSTOMBACKLIST
     if(action === ActionConstant.ADD)
     {
       logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' is called');
-      const ipsArr = AccountAdsService.detectIpsShouldBeUpdated(req.adsAccount.setting.customBackList, ArrAfterRemoveIdenticalElement);
+      const ipsArr = AccountAdsService.detectIpsShouldBeUpdated(req.adsAccount.setting.customBackList, arrAfterRemoveIdenticalElement);
 
       if(!ipsArr || ipsArr.length === 0)
       {
@@ -94,7 +95,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
         });
       }
 
-      async.eachSeries(campaignIds, (campaignId, callback)=>{
+      Async.eachSeries(campaignIds, (campaignId, callback)=>{
         AccountAdsService.addIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ipsArr, callback);
       },err => {
         if(err)
@@ -128,7 +129,47 @@ const handleManipulationGoogleAds = async(req, res, next) => {
     //REMOVE IPS IN CUSTOMBACKLIST
     else
     {
-      //TODO DELETE IPS BACKLIST
+      logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + ' is called');
+      const backList = req.adsAccount.setting.customBackList || [];
+      
+      if(!AccountAdsService.checkIpsInBackList(backList, arrAfterRemoveIdenticalElement))
+      {
+        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
+        return res.status(HttpStatus.OK).json({
+          messages: ['Xóa ip thành công.']
+        });
+      }
+
+      const ipsArrayAfterDeletingElementsNotInTheBacklist = _.intersection(backList, arrAfterRemoveIdenticalElement);
+
+      Async.eachSeries(campaignIds, (campaignId, callback)=>{
+        AccountAdsService.removeIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ipsArrayAfterDeletingElementsNotInTheBacklist, callback);
+      },err => {
+        if(err)
+        {
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: ['Xóa ip không thành công.']
+          });
+        }
+
+        const ipNotExistsInListArr = _.difference(backList, arrAfterRemoveIdenticalElement);
+
+        req.adsAccount.setting.customBackList = ipNotExistsInListArr;
+        req.adsAccount.save((err)=>{
+          if(err)
+          {
+            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: ['Xóa ip không thành công.']
+            });
+          }
+          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
+          return res.status(HttpStatus.OK).json({
+            messages: ['Xóa ip thành công.']
+          });
+        });
+      });
     }
   }
   catch(e)
