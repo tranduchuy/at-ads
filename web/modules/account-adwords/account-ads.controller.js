@@ -42,7 +42,7 @@ const addAccountAds = async (req, res, next) => {
     GoogleAdwordsService.sendManagerRequest(adWordId)
       .then(async result => {
         if (!result || !result.links) {
-          logger.error('AccountAdsController::addAccountAds::error', JSON.stringify(result));
+          logger.error('AccountAdsController::addAccountAds::error', result);
 
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             messages: ['Gửi request quản lý tài khoản adword không thành công']
@@ -50,7 +50,7 @@ const addAccountAds = async (req, res, next) => {
         }
 
         await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
-        logger.info('AccountAdsController::addAccountAds::success', JSON.stringify(result));
+        logger.info('AccountAdsController::addAccountAds::success', result);
         return res.status(HttpStatus.OK).json({
           messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
           data: {}
@@ -63,7 +63,7 @@ const addAccountAds = async (req, res, next) => {
         });
       });
   } catch (e) {
-    logger.error('AccountAdsController::addAccountAds::error', JSON.stringify(e));
+    logger.error('AccountAdsController::addAccountAds::error', e);
     return next(e);
   }
 };
@@ -79,7 +79,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
        return requestUtil.joiValidationResponse(error, res);
     }
 
-    const arrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
+    const arrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique);
     const campaignIds = req.campaignIds || [];
 
     //ADD IPS IN CUSTOMBACKLIST
@@ -231,7 +231,7 @@ const autoBlockIp = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlockingIp::error', JSON.stringify(e));
+        logger.error('AccountAdsController::autoBlockingIp::error', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập block ip tự động không thành công"]
         });
@@ -244,7 +244,7 @@ const autoBlockIp = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlockingIp::error', JSON.stringify(e));
+    logger.error('AccountAdsController::autoBlockingIp::error', e);
     return next(e);
   }
 };
@@ -266,7 +266,7 @@ const autoBlockingRangeIp = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlockingRangeIp::error', JSON.stringify(e));
+        logger.error('AccountAdsController::autoBlockingRangeIp::error', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập chặn ip theo nhóm không thành công"]
         });
@@ -279,7 +279,7 @@ const autoBlockingRangeIp = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlockingRangeIp::error', JSON.stringify(e));
+    logger.error('AccountAdsController::autoBlockingRangeIp::error', e);
     return next(e);
   }
 };
@@ -301,7 +301,7 @@ const autoBlocking3g4g = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlocking3g4g::error', JSON.stringify(e));
+        logger.error('AccountAdsController::autoBlocking3g4g::error', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập chặn ip theo 3G/4G không thành công"]
         });
@@ -314,7 +314,7 @@ const autoBlocking3g4g = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlocking3g4g::error', JSON.stringify(e));
+    logger.error('AccountAdsController::autoBlocking3g4g::error', e);
     return next(e);
   }
 };
@@ -336,7 +336,7 @@ const autoBlockingDevices = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlockingDevices::error', JSON.stringify(e));
+        logger.error('AccountAdsController::autoBlockingDevices::error', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập chặn ip theo thiết bị không thành công"]
         });
@@ -349,7 +349,7 @@ const autoBlockingDevices = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlockingDevices::error', JSON.stringify(e));
+    logger.error('AccountAdsController::autoBlockingDevices::error', e);
     return next(e);
   }
 };
@@ -365,8 +365,9 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
 
     let {campaignIds} = req.body;
     campaignIds = campaignIds.map(String);
+    const campaignIdsAfterRemoveIdenticalElement = campaignIds.filter(AccountAdsService.onlyUnique);
 
-    const checkCampaignId =  await AccountAdsService.checkCampaign(req.adsAccount._id, campaignIds);
+    const checkCampaignId =  await AccountAdsService.checkCampaign(req.adsAccount._id, campaignIdsAfterRemoveIdenticalElement);
 
     if(!checkCampaignId)
     {
@@ -376,12 +377,12 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
       });
     }
 
-    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignIds);
+    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignIdsAfterRemoveIdenticalElement);
 
     BlockingCriterionsModel.insertMany(campaignsArr, (err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(err));
+        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', err);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thêm chiến dịch không thành công"]
         });
@@ -394,7 +395,7 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(e));
+    logger.error('AccountAdsController::addCampaignsForAAccountAds::error', e);
     return next(e);
   }
 };
@@ -414,7 +415,7 @@ const getListOriginalCampaigns = async(req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::getOriginalCampaigns::error', JSON.stringify(e));
+    logger.error('AccountAdsController::getOriginalCampaigns::error', e);
     return next(e);
   }
 };

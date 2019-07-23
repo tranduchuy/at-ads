@@ -23,12 +23,12 @@ const requestUtil = require('../../utils/RequestUtil');
 const forgetPassword = async (request, res, next) => {
   logger.info('UserController::forgetPassword is called');
   try {
-    const { error } = Joi.validate(request.query, ForgetPasswordValidationSchema);
+    const { error } = Joi.validate(request.body, ForgetPasswordValidationSchema);
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const { email } = request.query;
+    const { email } = request.body;
     const user = await UserService.findByEmail(email);
 
     if (!user) {
