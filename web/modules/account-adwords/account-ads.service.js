@@ -197,6 +197,28 @@ const checkIpsInBackList = (backList, ips) => {
     return _.difference(ips, backList).length !== ips.length;
 };
 
+/**
+ * reuturn object if error, else null
+ * @returns Promise<obj|null> 
+ */
+const createdAccountIfNotExists = async(userId, adsId) => {
+  try{
+    const accountInfo = {adsId, 'user': userId };
+    const adAccount = await AccountAdsModel.findOne(accountInfo);
+
+    if(!adAccount) {
+      await createAccountAds({userId, adsId});
+    }
+
+    return null;
+
+  }catch(e)
+  {
+    logger.error('AccountAdsService::createdAccountIfNotExists:error ', e);
+    return e;
+  }
+};
+
 module.exports = {
   createAccountAds,
   detectIpsShouldBeUpdated,
@@ -207,5 +229,6 @@ module.exports = {
   getIdAndNameCampaignInCampaignsList,
   onlyUnique,
   removeIpsToBlackListOfOneCampaign,
-  checkIpsInBackList 
+  checkIpsInBackList,
+  createdAccountIfNotExists
 };

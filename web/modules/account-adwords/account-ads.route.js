@@ -14,5 +14,6 @@ router.post('/:accountId/auto-blocking-3g4g', CheckTokenMiddleware, CheckAccount
 router.post('/:accountId/auto-blocking-device', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockingDevices);
 router.post('/:accountId/campaigns', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.addCampaignsForAAccountAds);
 router.get('/', CheckTokenMiddleware, AccountAdsController.getAccountsAds);
+router.post('/connection-confirmation', CheckTokenMiddleware, AccountAdsController.connectionConfirmation);
 
 module.exports = router;

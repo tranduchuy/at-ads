@@ -3,16 +3,7 @@ const logger = log4js.getLogger('Services');
 const AdwordsUser = require('node-adwords').AdwordsUser;
 const adwordConfig = require('config').get('google-ads');
 const AdwordsConstants = require('node-adwords').AdwordsConstants;
-const ManagerCustomerMsgs = {
-  ALREADY_MANAGED_BY_THIS_MANAGER: 'Hệ thống đã được quý khách chấp nhận quyền quản lý',
-  ALREADY_INVITED_BY_THIS_MANAGER: 'Hệ thống đã gửi yêu cầu quyền quản lý đến tài khoản adword của quý khách. Vui lòng kiểm tra lại.',
-  ALREADY_MANAGED_IN_HIERARCHY: '',
-  ALREADY_MANAGED_FOR_UI_ACCESS: '',
-  UNKNOWN: 'Không xác định được lỗi',
-  NOT_AUTHORIZED: 'Không có quyền',
-  ADD_CUSTOMER_FAILURE: '',
-  '': 'Không xác định'
-};
+const ManagerCustomerMsgs = require('../constants/ManagerCustomerMsgs');
 
 /**
  * Send request to manage an adword id
@@ -256,7 +247,7 @@ const getPendingInvitations = () => {
   });
 };
 
-const _getErrorCode = (error) => {
+const getErrorCode = (error) => {
   return (
     !error ||
     !error.root ||
@@ -273,7 +264,7 @@ const _getErrorCode = (error) => {
 };
 
 const mapManageCustomerErrorMessage = (error) => {
-  const reason = _getErrorCode(error);
+  const reason = getErrorCode(error);
   logger.info('GoogleAdsService::mapManageCustomerErrorMessage::info', {reason});
 
   return ManagerCustomerMsgs[reason];
@@ -327,5 +318,6 @@ module.exports = {
   removeIpBlackList,
   getPendingInvitations,
   mapManageCustomerErrorMessage,
-  getAccountHierachy
+  getAccountHierachy,
+  getErrorCode
 };
