@@ -3,11 +3,21 @@ const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
 const HttpStatus = require('http-status-codes');
 const AccountAdsModel = require('./account-ads.model');
+const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const messages = require("../../constants/messages");
+const ActionConstant = require('../../constants/action.constant');
 const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
+const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
+const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
+const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blocking-3g4g.schema');
+const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-blocking-range-ip.schema');
+const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
+const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
+const Async = require('async');
+const _ = require('lodash');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -58,6 +68,117 @@ const addAccountAds = async (req, res, next) => {
   }
 };
 
+const handleManipulationGoogleAds = async(req, res, next) => {
+  logger.info('AccountAdsController::handleManipulationGoogleAds is called');
+  try{
+
+    const { error } = Joi.validate(req.body, blockIpsValidationSchema);
+    const {action, ips} = req.body;
+
+    if (error) {
+       return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const arrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
+    const campaignIds = req.campaignIds || [];
+
+    //ADD IPS IN CUSTOMBACKLIST
+    if(action === ActionConstant.ADD)
+    {
+      logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' is called');
+      const ipsArr = AccountAdsService.detectIpsShouldBeUpdated(req.adsAccount.setting.customBackList, arrAfterRemoveIdenticalElement);
+
+      if(!ipsArr || ipsArr.length === 0)
+      {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ['Ip đã có trong backlist.']
+        });
+      }
+
+      Async.eachSeries(campaignIds, (campaignId, callback)=>{
+        AccountAdsService.addIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ipsArr, callback);
+      },err => {
+        if(err)
+        {
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err);
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: ['Thêm ips vào backlist không thành công.']
+          });
+        }
+
+        const newBackList = req.adsAccount.setting.customBackList.concat(ipsArr);
+
+        req.adsAccount.setting.customBackList = newBackList;
+
+        req.adsAccount.save(err=>{
+          if(err)
+          {
+            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err);
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: ['Thêm ips vào backlist không thành công.']
+            });
+          }
+          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::success');
+          return res.status(HttpStatus.OK).json({
+            messages: ['Thêm ips vào backlist thành công.']
+          });
+        });
+
+      });
+    }
+    //REMOVE IPS IN CUSTOMBACKLIST
+    else
+    {
+      logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + ' is called');
+      const backList = req.adsAccount.setting.customBackList || [];
+      
+      if(!AccountAdsService.checkIpsInBackList(backList, arrAfterRemoveIdenticalElement))
+      {
+        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
+        return res.status(HttpStatus.OK).json({
+          messages: ['Xóa ip thành công.']
+        });
+      }
+
+      const ipsArrayAfterDeletingElementsNotInTheBacklist = _.intersection(backList, arrAfterRemoveIdenticalElement);
+
+      Async.eachSeries(campaignIds, (campaignId, callback)=>{
+        AccountAdsService.removeIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ipsArrayAfterDeletingElementsNotInTheBacklist, callback);
+      },err => {
+        if(err)
+        {
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: ['Xóa ip không thành công.']
+          });
+        }
+
+        const ipNotExistsInListArr = _.difference(backList, arrAfterRemoveIdenticalElement);
+
+        req.adsAccount.setting.customBackList = ipNotExistsInListArr;
+        req.adsAccount.save((err)=>{
+          if(err)
+          {
+            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: ['Xóa ip không thành công.']
+            });
+          }
+          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
+          return res.status(HttpStatus.OK).json({
+            messages: ['Xóa ip thành công.']
+          });
+        });
+      });
+    }
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::handleManipulationGoogleAds::error', e);
+    return next(e);
+  }
+};
+
 const getAccountsAds = async (req, res, next) => {
   logger.info('AccountAdsController::getAccountsAds is called');
   try {
@@ -84,8 +205,229 @@ const getAccountsAds = async (req, res, next) => {
   }
 };
 
+const autoBlockIp = (req, res, next) => {
+  logger.info('AccountAdsController::autoBlockIp is called');
+  try{
+    const { error } = Joi.validate(req.body, AutoBlockingIpValidationSchema);
+   
+    if (error) {
+       return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let {maxClick, autoRemove} = req.body;
+    maxClick = Number(maxClick);
+
+    if(maxClick == 0 || maxClick == -1)
+    {
+      req.adsAccount.setting.autoBlockByMaxClick = -1;
+      req.adsAccount.setting.autoRemoveBlocking = false;
+    }
+    else
+    {
+      req.adsAccount.setting.autoBlockByMaxClick = maxClick;
+      req.adsAccount.setting.autoRemoveBlocking = autoRemove;
+    }
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::autoBlockingIp::error', JSON.stringify(e));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập block ip tự động không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::autoBlockingIp::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập block ip tự động thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::autoBlockingIp::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
+const autoBlockingRangeIp = (req, res, next) => {
+  logger.info('AccountAdsController::autoBlockingRangeIp is called');
+  try{
+    const { error } = Joi.validate(req.body, AutoBlockingRangeIpValidationSchema);
+   
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {classC, classD} = req.body;
+    const rangeIp = {classC, classD};
+
+    req.adsAccount.setting.autoBlackListIpRanges = rangeIp;
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::autoBlockingRangeIp::error', JSON.stringify(e));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập chặn ip theo nhóm không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::autoBlockingRangeIp::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập chặn ip theo nhóm thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::autoBlockingRangeIp::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
+const autoBlocking3g4g = (req, res, next) => {
+  logger.info('AccountAdsController::autoBlock3g4g is called');
+  try{
+    const { error } = Joi.validate(req.body, AutoBlocking3g4gValidationSchema);
+   
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {viettel, mobifone, vinafone, vietnammobile} = req.body;
+    const mobiNetworks = {viettel, mobifone, vinafone, vietnammobile};
+
+    req.adsAccount.setting.mobileNetworks = mobiNetworks;
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::autoBlocking3g4g::error', JSON.stringify(e));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập chặn ip theo 3G/4G không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::autoBlocking3g4g::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập chặn ip theo 3G/4G thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::autoBlocking3g4g::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
+const autoBlockingDevices = (req, res, next) => {
+  logger.info('AccountAdsController::autoBlockDevices is called');
+  try{
+    const { error } = Joi.validate(req.body, AutoBlockingDevicesValidationSchema);
+   
+    if (error) {
+       return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {mobile, tablet, pc} = req.body;
+    const devices = {mobile, tablet, pc};
+
+    req.adsAccount.setting.devices = devices;
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::autoBlockingDevices::error', JSON.stringify(e));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập chặn ip theo thiết bị không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::autoBlockingDevices::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập chặn ip theo thiết bị thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::autoBlockingDevices::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
+const addCampaignsForAAccountAds = async(req, res, next) => {
+  logger.info('AccountAdsController::addCampaignsForAAccountAds is called');
+  try{
+    const { error } = Joi.validate(req.body, AddCampaingsValidationSchema);
+   
+    if (error) {
+       return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let {campaignIds} = req.body;
+    campaignIds = campaignIds.map(String);
+
+    const checkCampaignId =  await AccountAdsService.checkCampaign(req.adsAccount._id, campaignIds);
+
+    if(!checkCampaignId)
+    {
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::error');
+      return res.status(HttpStatus.CONFLICT).json({
+        messages: ["Chiến dịch bị trùng"]
+      });
+    }
+
+    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignIds);
+
+    BlockingCriterionsModel.insertMany(campaignsArr, (err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(err));
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thêm chiến dịch không thành công"]
+        });
+      }
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thêm chiến dịch thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
+const getListOriginalCampaigns = async(req, res, next) => {
+  logger.info('AccountAdsController::getListOriginalCampaigns is called');
+  try{
+      const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
+
+      const processCampaignList = AccountAdsService.getIdAndNameCampaignInCampaignsList(result);
+
+      logger.info('AccountAdsController::getListOriginalCampaigns::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Lấy danh sách chiến dịch thành công."],
+        data: {campaignList: processCampaignList}
+      });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::getOriginalCampaigns::error', JSON.stringify(e));
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
-  getAccountsAds
+  handleManipulationGoogleAds,
+  getAccountsAds,
+  autoBlockIp,
+  autoBlockingRangeIp,
+  autoBlocking3g4g,
+  autoBlockingDevices,
+  addCampaignsForAAccountAds,
+  getListOriginalCampaigns
 };
 

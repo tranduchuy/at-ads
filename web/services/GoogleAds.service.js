@@ -76,7 +76,7 @@ const getListCampaigns = function (adwordId) {
 
     let campaignService = user.getService('CampaignService', adwordConfig.version);
     const selector = {
-      fields: ['Id', 'Name'],
+      fields: ['Id', 'Name', 'Status', 'ServingStatus', 'TargetGoogleSearch'],
       ordering: [{ field: 'Name', sortOrder: 'ASCENDING' }],
       paging: { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
     };

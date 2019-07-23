@@ -1,4 +1,5 @@
 const WebsiteModel = require('./website.model');
+const AccountAdsModel = require('../account-adwords/account-ads.model');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 /**
@@ -34,7 +35,19 @@ const getWebsitesByAccountId = async (accountId) => {
   return await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(accountId) }).select('domain code expiredAt status');
 };
 
+/**
+ *
+ * @param {ObjectId}accountId
+ * @param {ObjectId}userId
+ * @returns {Promise<boolean>}
+ */
+const isOwnDomain = async (accountId, userId) => {
+  const account = await AccountAdsModel.findById(accountId);
+  return account.user === userId.toString();
+};
+
 module.exports = {
   createDomain,
-  getWebsitesByAccountId
+  getWebsitesByAccountId,
+  isOwnDomain
 };

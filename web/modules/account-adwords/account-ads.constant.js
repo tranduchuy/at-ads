@@ -3,7 +3,7 @@ module.exports = {
     autoBlockByMaxClick: -1,
     autoRemoveBlocking: false,
     autoBlackListIp: [],
-    autoBlackListIpRanges: [],
+    autoBlackListIpRanges: false,
     customBackList: [],
     mobileNetworks: {
       viettel: false,
@@ -16,5 +16,8 @@ module.exports = {
       tablet: false,
       pc: false
     }
+  },
+  GoogleCampaignStatus: {
+    ENABLED: 'ENABLED'
   }
 };
