@@ -12,6 +12,8 @@ const RandomString = require('randomstring');
 const { Status } = require('../../constants/status');
 const GlobalConstant = require('../../constants/global.constant');
 const logger = log4js.getLogger(GlobalConstant.LoggerTargets.Service);
+const messages = require('../../constants/messages');
+
 
 /**
  * Compare hash password with input plain text
@@ -111,7 +113,7 @@ const updateGoogleId = async (user, googleId) => {
   return await user.save();
 };
 
-const createUserByGoogle = async ({ email, name, googleId }) => {
+const createUserByGoogle = async ({ email, name, googleId, image }) => {
   const newUser = new UserModel({
     email,
     passwordHash: null,
@@ -121,7 +123,8 @@ const createUserByGoogle = async ({ email, name, googleId }) => {
     registerBy: UserConstant.registerByTypes.google,
     status: Status.PENDING_OR_WAIT_CONFIRM,
     role: UserConstant.role.endUser,
-    googleId
+    googleId,
+    avatar: image
   });
   return await newUser.save();
 };
@@ -167,6 +170,31 @@ const updateUser = async ( { password, name, phone,
 
   return updateUser.update(dataForUpdating);
 };
+
+const getAccountInfo = (user ,message) => {
+  const userInfoResponse = {
+    _id: user.id,
+    role: user.role,
+    email: user.email,
+    name: user.name,
+    status: user.status,
+    registerBy: user.registerBy,
+    googleId: user.googleId
+  };
+  const token = generateToken({ _id: user._id });
+  const result = {
+    messages: [message],
+    data: {
+      meta: {
+        token
+      },
+      user: userInfoResponse
+    }
+  };
+
+  return result;
+};
+
 module.exports = {
   createUser,
   generateToken,
@@ -180,5 +208,6 @@ module.exports = {
   resetPassword,
   generateForgetPasswordToken,
   findUserByPasswordReminderToken,
-  updateUser
+  updateUser,
+  getAccountInfo,
 };
