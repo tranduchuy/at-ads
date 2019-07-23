@@ -79,14 +79,14 @@ const handleManipulationGoogleAds = async(req, res, next) => {
        return requestUtil.joiValidationResponse(error, res);
     }
 
-    const ArrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
+    const arrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
     const campaignIds = req.campaignIds || [];
 
     //ADD IPS IN CUSTOMBACKLIST
     if(action === ActionConstant.ADD)
     {
       logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' is called');
-      const ipsArr = AccountAdsService.detectIpsShouldBeUpdated(req.adsAccount.setting.customBackList, ArrAfterRemoveIdenticalElement);
+      const ipsArr = AccountAdsService.detectIpsShouldBeUpdated(req.adsAccount.setting.customBackList, arrAfterRemoveIdenticalElement);
 
       if(!ipsArr || ipsArr.length === 0)
       {
@@ -132,7 +132,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + ' is called');
       const backList = req.adsAccount.setting.customBackList || [];
       
-      if(!AccountAdsService.checkIpsInBackList(backList, ArrAfterRemoveIdenticalElement))
+      if(!AccountAdsService.checkIpsInBackList(backList, arrAfterRemoveIdenticalElement))
       {
         logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
         return res.status(HttpStatus.OK).json({
@@ -140,7 +140,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
         });
       }
 
-      const ipsArrayAfterDeletingElementsNotInTheBacklist = _.intersection(backList, ArrAfterRemoveIdenticalElement);
+      const ipsArrayAfterDeletingElementsNotInTheBacklist = _.intersection(backList, arrAfterRemoveIdenticalElement);
 
       Async.eachSeries(campaignIds, (campaignId, callback)=>{
         AccountAdsService.removeIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, ipsArrayAfterDeletingElementsNotInTheBacklist, callback);
@@ -153,7 +153,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
           });
         }
 
-        const ipNotExistsInListArr = _.difference(backList, ArrAfterRemoveIdenticalElement);
+        const ipNotExistsInListArr = _.difference(backList, arrAfterRemoveIdenticalElement);
 
         req.adsAccount.setting.customBackList = ipNotExistsInListArr;
         req.adsAccount.save((err)=>{
