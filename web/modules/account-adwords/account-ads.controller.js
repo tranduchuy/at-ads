@@ -438,6 +438,7 @@ const connectionConfirmation = async(req, res, next) => {
       const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
       if(error)
       {
+        logger.error('AccountAdsController::connectionConfirmation::error', error);
         return next(error);
       }
       return res.status(HttpStatus.OK).json({

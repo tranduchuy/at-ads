@@ -239,7 +239,7 @@ const loginByGoogle = async (request, res, next) => {
           user = await UserService.createUserByGoogle(newUser);
         }
       };
-
+      logger.info('UserController::loginByGoogle::success');
       const result = UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);
     });
