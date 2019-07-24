@@ -248,7 +248,7 @@ const convertCSVToJSON = (report) => {
       cost: temp[1],
       impressions: temp[2],
       clicks: temp[3],
-      avgPositon: temp[4]
+      avgPosition: temp[4]
     };
     jsonArr.push(json);
   });
@@ -262,16 +262,16 @@ const reportTotalOnTheSameDevice = (jsonArr, deviceName) => {
    let totalCost = 0;
    let totalImpressions = 0;
    let totalClicks = 0;
-   let totalAvgPositon = 0;
+   let totalAvgPosition = 0;
 
    filterDevice.forEach(ADevice => {
       totalCost += Number(ADevice.cost);
       totalImpressions += Number(ADevice.impressions);
       totalClicks += Number(ADevice.clicks);
-      totalAvgPositon += Number(ADevice.avgPositon);
+      totalAvgPosition += Number(ADevice.avgPosition);
    });
 
-   totalAvgPositon /= filterDevice.length;
+   totalAvgPosition /= filterDevice.length;
    totalCost /= 1e6;
 
    const result = {
@@ -279,7 +279,7 @@ const reportTotalOnTheSameDevice = (jsonArr, deviceName) => {
       cost: totalCost,
       impressions: totalImpressions,
       clicks: totalClicks,
-      avgPositon: parseFloat(totalAvgPositon.toFixed(2)),
+      avgPosition: parseFloat(totalAvgPosition.toFixed(2)),
       ctr: parseFloat((totalClicks/totalImpressions).toFixed(3))
    }
 
