@@ -8,6 +8,7 @@ const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
 const { GoogleCampaignStatus } = require('../account-adwords/account-ads.constant');
+const DeviceConstant = require('../../constants/device.constant');
 
 /**
  *
@@ -219,6 +220,80 @@ const createdAccountIfNotExists = async(userId, adsId) => {
   }
 };
 
+const convertCSVToJSON = (report) => {
+  let CSV = report.split('\n');
+  CSV = CSV.slice(2, CSV.length - 2);
+
+  const jsonArr = [];
+  CSV.forEach(ele => {
+    const temp = ele.split(',');
+    let device = '';
+
+    switch (temp[0]) {
+      case DeviceConstant.computer:
+        device = 'Máy tính';
+        break;
+      case DeviceConstant.mobile:
+        device = 'Điện thoại';
+        break;
+      case DeviceConstant.tablet:
+        device = 'Máy tính bảng';
+        break;
+      default:
+        device = 'Other';
+    }
+
+    const json = {
+      device,
+      cost: temp[1],
+      impressions: temp[2],
+      clicks: temp[3],
+      avgPositon: temp[4]
+    };
+    jsonArr.push(json);
+  });
+
+  return jsonArr;
+}
+
+const reportTotalOnTheSameDevice = (jsonArr, deviceName) => {
+   const filterDevice = jsonArr.filter(ele => ele.device === deviceName);
+
+   let totalCost = 0;
+   let totalImpressions = 0;
+   let totalClicks = 0;
+   let totalAvgPositon = 0;
+
+   filterDevice.forEach(ADevice => {
+      totalCost += Number(ADevice.cost);
+      totalImpressions += Number(ADevice.impressions);
+      totalClicks += Number(ADevice.clicks);
+      totalAvgPositon += Number(ADevice.avgPositon);
+   });
+
+   totalAvgPositon /= filterDevice.length;
+   totalCost /= 1e6;
+
+   const result = {
+      device: deviceName,
+      cost: totalCost,
+      impressions: totalImpressions,
+      clicks: totalClicks,
+      avgPositon: parseFloat(totalAvgPositon.toFixed(2)),
+      ctr: parseFloat((totalClicks/totalImpressions).toFixed(3))
+   }
+
+   return result;
+}
+
+const reportTotalOnDevice = (jsonArr) => {
+  const reportOfComputer = reportTotalOnTheSameDevice(jsonArr, 'Máy tính');
+  const reportOfMobile = reportTotalOnTheSameDevice(jsonArr, 'Điện thoại');
+  const reportOfTablet = reportTotalOnTheSameDevice(jsonArr, 'Máy tính bảng');
+  
+  return [reportOfComputer, reportOfMobile, reportOfTablet];
+};
+
 module.exports = {
   createAccountAds,
   detectIpsShouldBeUpdated,
@@ -230,5 +305,7 @@ module.exports = {
   onlyUnique,
   removeIpsToBlackListOfOneCampaign,
   checkIpsInBackList,
-  createdAccountIfNotExists
+  createdAccountIfNotExists,
+  convertCSVToJSON,
+  reportTotalOnDevice
 };

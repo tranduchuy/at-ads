@@ -19,6 +19,7 @@ const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
 const ManagerCustomerMsgs = require('../../constants/ManagerCustomerMsgs');
+const moment = require('moment');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -441,7 +442,7 @@ const connectionConfirmation = async(req, res, next) => {
         logger.error('AccountAdsController::connectionConfirmation::error', error);
         return next(error);
       }
-      
+
       logger.info('AccountAdsController::connectionConfirmation::success');
       return res.status(HttpStatus.OK).json({
         messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
@@ -487,6 +488,68 @@ const connectionConfirmation = async(req, res, next) => {
   }
 };
 
+const getReportOnDevice = async(req, res, next) => {
+  logger.info('AccountAdsController::getReportOnDevice is called');
+  try{
+    const { error } = Joi.validate(req.body, AddAccountAdsValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { adWordId } = req.body;
+
+    const campaigns = await BlockingCriterionsModel.find({'accountId': req.adsAccount._id })
+
+    if(campaigns.length === 0)
+    {
+      logger.info('AccountAdsController::getReportOnDevice::success');
+      return res.status(HttpStatus.OK).json({
+        messages: 'Lấy report thành công',
+        data:{
+          reportDevice: []
+        }
+      });
+    }
+
+    const fields = ['Device', 'Cost', 'Impressions', 'Clicks', 'AveragePosition'];
+    const campaignIds = campaigns.map(campaign => campaign.campaignId);
+    const startDate = moment().subtract(1, 'months').format('MM/DD/YYYY');
+    const endDate = moment().format('MM/DD/YYYY');
+
+    GoogleAdwordsService.getReportOnDevice(adWordId, campaignIds, fields, startDate, endDate)
+    .then(result => {
+      const jsonArr = AccountAdsService.convertCSVToJSON(result);
+
+      if(jsonArr.length === 0)
+      {
+        logger.info('AccountAdsController::getReportOnDevice::success');
+        return res.status(HttpStatus.OK).json({
+          messages: 'Lấy report thành công',
+          data:{
+            reportDevice: []
+          }
+        });
+      }
+
+      const reportDevice = AccountAdsService.reportTotalOnDevice(jsonArr);
+      logger.info('AccountAdsController::getReportOnDevice::success');
+      return res.status(HttpStatus.OK).json({
+        messages: 'Lấy report thành công',
+        data:{
+          reportDevice
+        }
+      });
+    }).catch(err => {
+      logger.error('AccountAdsController::getReportOnDevice::error ', err);
+      next(err);
+    });
+  }catch(e){
+    logger.error('AccountAdsController::getReportOnDevice::error ', e);
+    next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -497,6 +560,7 @@ module.exports = {
   autoBlockingDevices,
   addCampaignsForAAccountAds,
   getListOriginalCampaigns,
-  connectionConfirmation
+  connectionConfirmation,
+  getReportOnDevice
 };
 
