@@ -441,6 +441,8 @@ const connectionConfirmation = async(req, res, next) => {
         logger.error('AccountAdsController::connectionConfirmation::error', error);
         return next(error);
       }
+      
+      logger.info('AccountAdsController::connectionConfirmation::success');
       return res.status(HttpStatus.OK).json({
         messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
         data: {
