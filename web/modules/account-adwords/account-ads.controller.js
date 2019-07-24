@@ -18,6 +18,7 @@ const { AddCampaingsValidationSchema } = require('./validations/add-campaings-ac
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
+const ManagerCustomerMsgs = require('../../constants/ManagerCustomerMsgs');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -415,7 +416,70 @@ const getListOriginalCampaigns = async(req, res, next) => {
   }
   catch(e)
   {
+    const message = GoogleAdwordsService.mapManageCustomerErrorMessage(e);
     logger.error('AccountAdsController::getOriginalCampaigns::error', e);
+    return next(message);
+  }
+};
+
+const connectionConfirmation = async(req, res, next) => {
+  logger.info('AccountAdsController::connectionConfirmation is called');
+  try{
+    const { error } = Joi.validate(req.body, AddAccountAdsValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { adWordId } = req.body;
+
+    GoogleAdwordsService.sendManagerRequest(adWordId)
+    .then(async result => {
+      const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
+      if(error)
+      {
+        return next(error);
+      }
+      return res.status(HttpStatus.OK).json({
+        messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+        data: {
+          isConnected: false
+        }
+      }); 
+    }).catch(async err => {
+      const message = GoogleAdwordsService.mapManageCustomerErrorMessage(err);
+      let isConnected = false;
+      switch (message) {
+        case ManagerCustomerMsgs.ALREADY_MANAGED_BY_THIS_MANAGER:
+          isConnected = true;
+          break;
+        case ManagerCustomerMsgs.ALREADY_INVITED_BY_THIS_MANAGER:
+          break;
+        default:
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: [message]
+          });
+      }
+      
+      const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
+      if(error)
+      {
+        logger.error('AccountAdsController::connectionConfirmation::error', error);
+        return next(error);
+      }
+
+      logger.info('AccountAdsController::connectionConfirmation::success');
+      return res.status(HttpStatus.OK).json({
+        messages: [message],
+        data: {
+          isConnected
+        }
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::connectionConfirmation::error', e);
     return next(e);
   }
 };
@@ -429,6 +493,7 @@ module.exports = {
   autoBlocking3g4g,
   autoBlockingDevices,
   addCampaignsForAAccountAds,
-  getListOriginalCampaigns
+  getListOriginalCampaigns,
+  connectionConfirmation
 };
 
