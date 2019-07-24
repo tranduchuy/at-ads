@@ -423,6 +423,7 @@ const getListOriginalCampaigns = async(req, res, next) => {
 };
 
 const connectionConfirmation = async(req, res, next) => {
+  logger.info('AccountAdsController::connectionConfirmation is called');
   try{
     const { error } = Joi.validate(req.body, AddAccountAdsValidationSchema);
 
@@ -463,8 +464,11 @@ const connectionConfirmation = async(req, res, next) => {
       const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
       if(error)
       {
+        logger.error('AccountAdsController::connectionConfirmation::error', error);
         return next(error);
       }
+
+      logger.info('AccountAdsController::connectionConfirmation::success');
       return res.status(HttpStatus.OK).json({
         messages: [message],
         data: {

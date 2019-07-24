@@ -226,11 +226,9 @@ const loginByGoogle = async (request, res, next) => {
         user = await UserService.findByEmail(email);
         if (user) {
           user = await UserService.updateGoogleId(user, googleId);
-          if(!user.avatar)
-          {
-            user.avatar = image;
-            await user.save();
-          }
+
+          user.avatar = user.avatar || image;
+          await user.save();
         } else {
           const newUser = {
             name,
