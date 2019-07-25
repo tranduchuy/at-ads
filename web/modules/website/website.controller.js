@@ -38,6 +38,8 @@ const addDomainForAccountAds = async (req, res, next) => {
         messages: [messages.ResponseMessages.Website.Register.ACCOUNT_ID_NOT_FOUND],
         data: {}
       };
+
+      logger.info('WebsiteController::addDomainForAccountAds::accountIDNotFound');
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
@@ -47,6 +49,7 @@ const addDomainForAccountAds = async (req, res, next) => {
       data: {}
     };
 
+    logger.info('WebsiteController::addDomainForAccountAds::success');
     return res.status(HttpStatus.OK).json(response);
 
   } catch (e) {
@@ -71,6 +74,8 @@ const getWebsitesByAccountId = async (req, res, next) => {
         messages: [messages.ResponseMessages.Website.ACCOUNT_ID_NOT_FOUND],
         data: {}
       };
+
+      logger.info('WebsiteController::getWebsitesByAccountId::accountIDNotFound');
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
@@ -80,6 +85,7 @@ const getWebsitesByAccountId = async (req, res, next) => {
         website: await WebsiteService.getWebsitesByAccountId(accountId)
       }
     };
+    logger.info('WebsiteController::getWebsitesByAccountId::success');
     return res.status(HttpStatus.OK).json(result);
 
   } catch (e) {
@@ -100,6 +106,8 @@ const editDomain = async (req, res, next) => {
       const result = {
         messages: [messages.ResponseMessages.Website.Edit.WEBSITE_NOT_FOUND]
       };
+
+      logger.info('WebsiteController::editDomain::websiteNotFound');
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     const { domain, status } = req.body;
@@ -108,10 +116,11 @@ const editDomain = async (req, res, next) => {
     if (status) dataForUpdating.status = status;
 
     await website.update(dataForUpdating);
-
     const result = {
       messages: [messages.ResponseMessages.Website.Edit.EDIT_SUCCESS]
     };
+
+    logger.info('WebsiteController::editDomain::success');
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('WebsiteController::editDomain::error', e);
@@ -120,7 +129,7 @@ const editDomain = async (req, res, next) => {
 };
 
 const deleteDomain = async (req, res, next) => {
-  logger.info('WebsiteController::deleteDomain is called');
+  logger.info('WebsiteController::deleteDomain is called', req.params.code);
   try {
     const { error } = Joi.validate(req.params, DeleteDomainValidationSchema);
     if (error) {
@@ -133,6 +142,8 @@ const deleteDomain = async (req, res, next) => {
       const result = {
         messages: [messages.ResponseMessages.Website.Delete.WEBSITE_NOT_FOUND],
       };
+
+      logger.info('WebsiteController::deleteDomain::websiteNotFound', req.user._id, code);
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
@@ -142,6 +153,8 @@ const deleteDomain = async (req, res, next) => {
       const result = {
         messages: [messages.ResponseMessages.Website.Delete.IS_NOT_OWN_DOMAIN]
       };
+
+      logger.info('WebsiteController::deleteDomain::isNotOwnDomain', requestUser._id, code);
       return res.status(HttpStatus.UNAUTHORIZED).json(result);
     }
 
@@ -149,6 +162,8 @@ const deleteDomain = async (req, res, next) => {
     const result = {
       messages: [messages.ResponseMessages.Website.Delete.DELETE_SUCCESS]
     };
+
+    logger.info('WebsiteController::deleteDomain::success', requestUser._id, code );
     return res.status(HttpStatus.OK).json(result);
 
   } catch (e) {
