@@ -6,6 +6,6 @@ const CheckTokenMiddleware = require('../../middlewares/check-token');
 router.post('/', CheckTokenMiddleware, WebsiteController.addDomainForAccountAds);
 router.get('/', CheckTokenMiddleware, WebsiteController.getWebsitesByAccountId);
 router.put('/:websiteId', CheckTokenMiddleware, WebsiteController.editDomain);
-router.delete('/:websiteId', CheckTokenMiddleware, WebsiteController.deleteDomain);
+router.delete('/:code', CheckTokenMiddleware, WebsiteController.deleteDomain);
 
 module.exports = router;
