@@ -491,14 +491,6 @@ const connectionConfirmation = async(req, res, next) => {
 const getReportOnDevice = async(req, res, next) => {
   logger.info('AccountAdsController::getReportOnDevice is called');
   try{
-    const { error } = Joi.validate(req.body, AddAccountAdsValidationSchema);
-
-    if (error) {
-      return requestUtil.joiValidationResponse(error, res);
-    }
-
-    const { adWordId } = req.body;
-
     const campaigns = await BlockingCriterionsModel.find({'accountId': req.adsAccount._id })
 
     if(campaigns.length === 0)
@@ -517,7 +509,7 @@ const getReportOnDevice = async(req, res, next) => {
     const startDate = moment().subtract(1, 'months').format('MM/DD/YYYY');
     const endDate = moment().format('MM/DD/YYYY');
 
-    GoogleAdwordsService.getReportOnDevice(adWordId, campaignIds, fields, startDate, endDate)
+    GoogleAdwordsService.getReportOnDevice(req.adsAccount.adsId, campaignIds, fields, startDate, endDate)
     .then(result => {
       const jsonArr = AccountAdsService.convertCSVToJSON(result);
 
