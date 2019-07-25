@@ -127,8 +127,8 @@ const deleteDomain = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const websiteId = req.params.websiteId;
-    const website = await WebsiteModel.findById(mongoose.Types.ObjectId(websiteId));
+    const { code } = req.params;
+    const website = await WebsiteModel.findOne({code});
     if (!website) {
       const result = {
         messages: [messages.ResponseMessages.Website.Delete.WEBSITE_NOT_FOUND],
@@ -145,7 +145,7 @@ const deleteDomain = async (req, res, next) => {
       return res.status(HttpStatus.UNAUTHORIZED).json(result);
     }
 
-    await WebsiteModel.deleteOne({ _id: mongoose.Types.ObjectId(websiteId) });
+    await WebsiteModel.deleteOne({ code });
     const result = {
       messages: [messages.ResponseMessages.Website.Delete.DELETE_SUCCESS]
     };
