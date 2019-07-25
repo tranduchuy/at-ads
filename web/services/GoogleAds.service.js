@@ -4,6 +4,8 @@ const AdwordsUser = require('node-adwords').AdwordsUser;
 const adwordConfig = require('config').get('google-ads');
 const AdwordsConstants = require('node-adwords').AdwordsConstants;
 const ManagerCustomerMsgs = require('../constants/ManagerCustomerMsgs');
+const AdwordsReport = require('node-adwords').AdwordsReport;
+const DeviceConstants = require('../constants/device.constant');
 
 /**
  * Send request to manage an adword id
@@ -311,6 +313,40 @@ const getAccountHierachy = function (adwordId) {
   });
 };
 
+const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) => {
+  logger.info('GoogleAdsService::getReportOfOneCampaign', adwordId);
+  return new Promise((resolve, reject) => {
+    const report = new AdwordsReport({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+    report.getReport(adwordConfig.version, {
+        reportName: 'Custom Adgroup Performance Report',
+        reportType: 'CAMPAIGN_PERFORMANCE_REPORT',
+        fields,
+        filters: [
+            {field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED']},
+            {field: 'CampaignId', operator: 'IN', values: campaignIds}
+        ],
+        dateRangeType: 'CUSTOM_DATE',
+        startDate,
+        endDate,
+        format: 'CSV'
+    }, (error, report) => {
+      if (error) {
+        logger.error('GoogleAdsService::getReportOnDevice::error', error);
+        return reject(error);
+      }
+      logger.info('GoogleAdsService::getReportOnDevice::success', report);
+      return resolve(report);
+    });
+  });
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
@@ -319,5 +355,6 @@ module.exports = {
   getPendingInvitations,
   mapManageCustomerErrorMessage,
   getAccountHierachy,
-  getErrorCode
+  getErrorCode,
+  getReportOnDevice
 };
