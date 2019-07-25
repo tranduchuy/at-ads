@@ -20,6 +20,7 @@ const Async = require('async');
 const _ = require('lodash');
 const ManagerCustomerMsgs = require('../../constants/ManagerCustomerMsgs');
 const moment = require('moment');
+const CriterionIdOfDevice = require('../../constants/CriterionIdOfDevice.constant');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -512,7 +513,7 @@ const getReportOnDevice = async(req, res, next) => {
       });
     }
 
-    const fields = ['Device', 'Cost', 'Impressions', 'Clicks', 'AveragePosition'];
+    const fields = ['Device', 'Cost', 'Impressions', 'Clicks', 'AveragePosition', 'CampaignId',  'CampaignDesktopBidModifier', 'CampaignMobileBidModifier', 'CampaignTabletBidModifier'];
     const campaignIds = campaigns.map(campaign => campaign.campaignId);
     const startDate = moment().subtract(1, 'months').format('MM/DD/YYYY');
     const endDate = moment().format('MM/DD/YYYY');
@@ -550,6 +551,26 @@ const getReportOnDevice = async(req, res, next) => {
   }
 };
 
+const testApiGoogle = (req, res, next) => {
+  try{
+    GoogleAdwordsService.enableOrPauseOfCampaignOnADevice('2104087721', '2065518203', '30000' , 0.1)
+    .then(result => {
+      logger.info('AccountAdsController::getReportOnDevice::success');
+      return res.status(HttpStatus.OK).json({
+        messages: result
+      });
+    }).catch(err => {
+      logger.error('AccountAdsController::getReportOnDevice::error ', err);
+      next(err);
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::getReportOnDevice::error ', e);
+    next(e);
+  }
+}
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -561,6 +582,7 @@ module.exports = {
   addCampaignsForAAccountAds,
   getListOriginalCampaigns,
   connectionConfirmation,
-  getReportOnDevice
+  getReportOnDevice,
+  testApiGoogle
 };
 
