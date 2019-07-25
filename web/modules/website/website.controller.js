@@ -15,7 +15,7 @@ const { GetWebsitesValidationSchema } = require("./validations/get-websites.sche
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
 
 const addDomainForAccountAds = async (req, res, next) => {
-  logger.info('WebsiteController::addDomainForAccountAds is called');
+  logger.info('WebsiteController::addDomainForAccountAds is called, userId:', req.user._id);
   try {
     const { error } = Joi.validate(req.body, AddDomainForAccountAdsValidationSchema);
 
@@ -30,6 +30,8 @@ const addDomainForAccountAds = async (req, res, next) => {
         messages: [messages.ResponseMessages.Website.Register.DOMAIN_DUPLICATE],
         data: {}
       };
+
+      logger.info('WebsiteController::addDomainForAccountAds::domainDuplicate::userId:', req.user._id);
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     const accountAds = await AccountAdsModel.findById(mongoose.Types.ObjectId(accountId));
@@ -39,7 +41,7 @@ const addDomainForAccountAds = async (req, res, next) => {
         data: {}
       };
 
-      logger.info('WebsiteController::addDomainForAccountAds::accountIDNotFound');
+      logger.info('WebsiteController::addDomainForAccountAds::accountIDNotFound::userId:', req.user._id);
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
@@ -59,7 +61,7 @@ const addDomainForAccountAds = async (req, res, next) => {
 };
 
 const getWebsitesByAccountId = async (req, res, next) => {
-  logger.info('WebsiteController::getWebsitesByAccountId is called');
+  logger.info('WebsiteController::getWebsitesByAccountId is called, userId:', req.user._id);
   try {
     const { error } = Joi.validate(req.query, GetWebsitesValidationSchema);
 
@@ -75,7 +77,7 @@ const getWebsitesByAccountId = async (req, res, next) => {
         data: {}
       };
 
-      logger.info('WebsiteController::getWebsitesByAccountId::accountIDNotFound');
+      logger.info('WebsiteController::getWebsitesByAccountId::accountIDNotFound::userId:', req.user._id);
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
@@ -95,7 +97,7 @@ const getWebsitesByAccountId = async (req, res, next) => {
 };
 
 const editDomain = async (req, res, next) => {
-  logger.info('WebsiteController::editDomain is called');
+  logger.info('WebsiteController::editDomain is called, userId:', req.user._id);
   try {
     const { error } = Joi.validate(Object.assign({}, req.params, req.body), EditDomainValidationSchema);
     if (error) {
@@ -107,7 +109,7 @@ const editDomain = async (req, res, next) => {
         messages: [messages.ResponseMessages.Website.Edit.WEBSITE_NOT_FOUND]
       };
 
-      logger.info('WebsiteController::editDomain::websiteNotFound');
+      logger.info('WebsiteController::editDomain::websiteNotFound::userId:', req.user._id);
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
     const { domain, status } = req.body;
@@ -129,7 +131,7 @@ const editDomain = async (req, res, next) => {
 };
 
 const deleteDomain = async (req, res, next) => {
-  logger.info('WebsiteController::deleteDomain is called', req.params.code);
+  logger.info('WebsiteController::deleteDomain is called, userId:', req.user._id, '::code:', req.params.code);
   try {
     const { error } = Joi.validate(req.params, DeleteDomainValidationSchema);
     if (error) {
@@ -143,7 +145,7 @@ const deleteDomain = async (req, res, next) => {
         messages: [messages.ResponseMessages.Website.Delete.WEBSITE_NOT_FOUND],
       };
 
-      logger.info('WebsiteController::deleteDomain::websiteNotFound', req.user._id, code);
+      logger.info('WebsiteController::deleteDomain::websiteNotFound::userId:', req.user._id, '::code:',  code);
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
@@ -154,7 +156,7 @@ const deleteDomain = async (req, res, next) => {
         messages: [messages.ResponseMessages.Website.Delete.IS_NOT_OWN_DOMAIN]
       };
 
-      logger.info('WebsiteController::deleteDomain::isNotOwnDomain', requestUser._id, code);
+      logger.info('WebsiteController::deleteDomain::isNotOwnDomain::userId:', requestUser._id, '::code:',  code);
       return res.status(HttpStatus.UNAUTHORIZED).json(result);
     }
 
@@ -163,7 +165,7 @@ const deleteDomain = async (req, res, next) => {
       messages: [messages.ResponseMessages.Website.Delete.DELETE_SUCCESS]
     };
 
-    logger.info('WebsiteController::deleteDomain::success', requestUser._id, code );
+    logger.info('WebsiteController::deleteDomain::success::userId:', requestUser._id, '::code:',  code);
     return res.status(HttpStatus.OK).json(result);
 
   } catch (e) {
