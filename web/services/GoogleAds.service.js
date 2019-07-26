@@ -347,7 +347,7 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
   });
 };
 
-const enableOrPauseOfCampaignOnADevice = (adwordId, campaignId, idCriterion, bidModifier) => {
+const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier) => {
   logger.info('GoogleAdsService::enableOrPauseOfCampaignOnADevice', adwordId);
   return new Promise((resolve, reject) => {
     const user = new AdwordsUser({
@@ -358,21 +358,20 @@ const enableOrPauseOfCampaignOnADevice = (adwordId, campaignId, idCriterion, bid
       refresh_token: adwordConfig.refresh_token,
       clientCustomerId: adwordId,
     });
-    const CampaignBidModifierService = user.getService('CampaignBidModifierService', adwordConfig.version);
+    const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
     const operation = {
       operator: 'SET',
       operand: {
         campaignId: campaignId,
         criterion: {
-          id: 30000,
+          id: criterionId,
           type: 'INTERACTION_TYPE',
-          'xsi:type': 'InteractionType',
         },
         bidModifier
       }
     };
 
-    CampaignBidModifierService.mutate({ operations: [operation] }, (error, result) => {
+    CampaignCriterionService.mutate({ operations: [operation] }, (error, result) => {
       if (error) {
         logger.error('GoogleAdsService::enableOrPauseOfCampaignOnADevice::error', error);
         return reject(error);
@@ -393,5 +392,5 @@ module.exports = {
   getAccountHierachy,
   getErrorCode,
   getReportOnDevice,
-  enableOrPauseOfCampaignOnADevice
+  enabledOrPauseTheCampaignByDevice
 };

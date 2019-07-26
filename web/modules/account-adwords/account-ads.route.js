@@ -16,6 +16,6 @@ router.post('/:accountId/campaigns', CheckTokenMiddleware, CheckAccountIdMiddleW
 router.get('/', CheckTokenMiddleware, AccountAdsController.getAccountsAds);
 router.post('/connection-confirmation', CheckTokenMiddleware, AccountAdsController.connectionConfirmation);
 router.get('/:accountId/report/device', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getReportOnDevice);
-router.get('/testApi', AccountAdsController.testApiGoogle);
+router.put('/:accountId/report/device',CheckTokenMiddleware , CheckAccountIdMiddleWare, AccountAdsController.setUpCampaignsByOneDevice);
 
 module.exports = router;

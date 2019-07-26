@@ -15,12 +15,12 @@ const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blockin
 const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-blocking-range-ip.schema');
 const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
+const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
 const ManagerCustomerMsgs = require('../../constants/ManagerCustomerMsgs');
 const moment = require('moment');
-const CriterionIdOfDevice = require('../../constants/CriterionIdOfDevice.constant');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -543,25 +543,66 @@ const getReportOnDevice = async(req, res, next) => {
   }
 };
 
-const testApiGoogle = (req, res, next) => {
+const setUpCampaignsByOneDevice = async(req, res, next) => {
+  const info = { 
+    userId: req.adsAccount.user,
+    adsId: req.adsAccount.adsId,
+    device: req.body.device,
+    isEnable: req.body.isEnable
+  };
+
+  logger.info('AccountAdsController::setUpCampaignsByOneDevice is called\n', info);
+
   try{
-    GoogleAdwordsService.enableOrPauseOfCampaignOnADevice('2104087721', '2065518203', '30000' , 0.1)
-    .then(result => {
-      logger.info('AccountAdsController::getReportOnDevice::success');
+    const { error } = Joi.validate(req.body, setUpCampaignsByOneDeviceValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { device, isEnable } = req.body;
+    const campaigns = await BlockingCriterionsModel.find({accountId: req.adsAccount._id});
+
+    if(campaigns.length === 0)
+    {
+      logger.info('AccountAdsController::setUpCampaignsByOneDevice::success\n', info);
       return res.status(HttpStatus.OK).json({
-        messages: result
+        messages: ['Thiết lập thành công.']
       });
-    }).catch(err => {
-      logger.error('AccountAdsController::getReportOnDevice::error ', err);
-      next(err);
+    }
+
+    const campaignIds = campaigns.map(campaign => campaign.campaignId);
+    const adsId = req.adsAccount.adsId;
+    let bidModify = isEnable?1:0;
+
+    Async.eachSeries(campaignIds, (campaignId, callback)=>{
+      GoogleAdwordsService.enabledOrPauseTheCampaignByDevice( adsId, campaignId, device, bidModify)
+      .then(result => {
+        callback();
+      }).catch(error => {
+        logger.error('AccountAdsController::setUpCampaignsByOneDevice::error', error, '\n', info);
+        callback(error);
+      });
+    },err => {
+      if(err)
+      {
+        logger.error('AccountAdsController::setUpCampaignsByOneDevice::error', err, '\n', info);
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ['Thiết lập không thành công.']
+        });
+      }
+      logger.info('AccountAdsController::setUpCampaignsByOneDevice::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ['Thiết lập thành công.']
+      });
     });
   }
   catch(e)
   {
-    logger.error('AccountAdsController::getReportOnDevice::error ', e);
+    logger.error('AccountAdsController::setUpCampaignsByOneDevice::error', e, '\n', info);
     next(e);
   }
-}
+};
 
 module.exports = {
   addAccountAds,
@@ -575,6 +616,6 @@ module.exports = {
   getListOriginalCampaigns,
   connectionConfirmation,
   getReportOnDevice,
-  testApiGoogle
+  setUpCampaignsByOneDevice
 };
 
