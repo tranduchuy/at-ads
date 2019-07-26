@@ -348,7 +348,8 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
 };
 
 const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier) => {
-  logger.info('GoogleAdsService::enableOrPauseOfCampaignOnADevice', adwordId);
+  const info = {adwordId, campaignId, criterionId, bidModifier}
+  logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
   return new Promise((resolve, reject) => {
     const user = new AdwordsUser({
       developerToken: adwordConfig.developerToken,
@@ -373,10 +374,10 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
 
     CampaignCriterionService.mutate({ operations: [operation] }, (error, result) => {
       if (error) {
-        logger.error('GoogleAdsService::enableOrPauseOfCampaignOnADevice::error', error);
+        logger.error('GoogleAdsService::enabledOrPauseTheCampaignByDevice::error', error);
         return reject(error);
       }
-      logger.info('GoogleAdsService::enableOrPauseOfCampaignOnADevice::success', result);
+      logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice::success', result);
       return resolve(result);
     });
   });
