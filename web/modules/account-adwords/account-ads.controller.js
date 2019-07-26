@@ -565,9 +565,9 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
 
     if(campaigns.length === 0)
     {
-      logger.info('AccountAdsController::setUpCampaignsByOneDevice::success\n', info);
-      return res.status(HttpStatus.OK).json({
-        messages: ['Thiết lập thành công.']
+      logger.info('AccountAdsController::setUpCampaignsByOneDevice::accountNotCampaign\n', info);
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Tài khoản chưa có chiến dịch để thiết lập.']
       });
     }
 
