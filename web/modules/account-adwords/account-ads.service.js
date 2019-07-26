@@ -305,7 +305,104 @@ const convertPercentToCoefficient = (number) => {
     return 0;
   }
   return 1 - temp;
-}
+};
+
+const removeSampleBlockingIp = (adsId, accountId, campaignIds) => {
+  return new Promise((resolve, reject) => {
+    Async.eachSeries(campaignIds, (campaignId, callback)=>{
+      const queryFindIpOfcampaign = {accountId, campaignId};
+
+      BlockingCriterionsModel
+      .findOne(queryFindIpOfcampaign)
+      .exec((errQuery, blockingCriterionRecord) => {
+        if(errQuery)
+        {
+          logger.info('AccountAdsService::removeSampleBlockingIp:error ', errQuery);
+          return callback(errQuery);
+        }
+        if(!blockingCriterionRecord)
+        {
+          return callback(null);
+        }
+
+        GoogleAdwordsService.removeIpBlackList(adsId, campaignId, blockingCriterionRecord.sampleBlockingIp.ip, blockingCriterionRecord.sampleBlockingIp.criterionId)
+        .then(result => {
+          removeIpAndCriterionsIdForSampleBlockingIp(result, accountId, campaignId, adsId, callback);
+        }).catch(error => {
+          logger.error('AccountAdsService::removeSampleBlockingIp:error ', e);
+          callback(error);
+        });
+      });
+    },(err, result) => {
+      if (err) {
+        logger.error('AccountAdsController::removeSampleBlockingIp::error', err);
+        return reject(err);
+      }
+      logger.info('AccountAdsController::removeSampleBlockingIp::success');
+      return resolve(result);
+    });
+  });
+};
+
+const removeIpAndCriterionsIdForSampleBlockingIp = (result, accountId, campaignId, adsId, callback) => {
+  if(!result)
+  {
+    return callback(null);
+  }
+
+  const queryUpdate = {accountId, campaignId};
+  const updateingData = {sampleBlockingIp: null};
+
+  BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
+    if(e)
+    {
+      logger.error('AccountAdsService::removeIpAndCriterionsIdInSampleBlockingIp:error ', e);
+      return callback(e);
+    }
+    
+    const logData = {adsId, campaignId};
+    logger.info('AccountAdsService::removeIpAndCriterionsIdInSampleBlockingIp: ', logData);
+  });
+  return callback();
+};
+
+const addSampleBlockingIp = (adsId, accountId, campaignIds, ip) => {
+  return new Promise((resolve, reject) => {
+    Async.eachSeries(campaignIds, (campaignId, callback)=> {
+      GoogleAdwordsService.addIpBlackList(adsId, campaignId, ip)
+        .then((result) => {
+          addIpAndCriterionIdForSampleBlockingIp(result, accountId, campaignId, adsId, ip, callback);
+        })
+        .catch(err => callback(err));
+    }, (err, result) => {
+      if (err) {
+        logger.error('AccountAdsController::addSampleBlockingIp::error', err);
+        return reject(err);
+      }
+      logger.info('AccountAdsController::addSampleBlockingIp::success');
+      return resolve(result);
+    });
+  });
+};
+
+const addIpAndCriterionIdForSampleBlockingIp = (result, accountId, campaignId, adsId, ip, callback) => {
+  if(!result)
+  {
+    return callback(null);
+  }
+  const criterionId = result.value[0].criterion.id;
+  const infoCampaign ={ip, criterionId};
+  BlockingCriterionsModel.update({accountId, campaignId},{sampleBlockingIp: infoCampaign}).exec(err=>{
+    if(err)
+    {
+      logger.info('AccountAdsService::addIpAndCriterionIdForSampleBlockingIp:error ', err);
+      return callback(err);
+    }
+    const logData = {adsId, campaignId, ip};
+    logger.info('AccountAdsService::addIpAndCriterionIdForSampleBlockingIp: ', logData);
+  });
+  callback();
+};
 
 module.exports = {
   createAccountAds,
@@ -320,5 +417,7 @@ module.exports = {
   checkIpsInBackList,
   createdAccountIfNotExists,
   convertCSVToJSON,
-  reportTotalOnDevice
+  reportTotalOnDevice,
+  removeSampleBlockingIp,
+  addSampleBlockingIp
 };

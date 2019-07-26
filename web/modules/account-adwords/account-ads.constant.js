@@ -11,11 +11,7 @@ module.exports = {
       vinafone: false,
       vietnammobile: false
     },
-    devices: {
-      mobile: false,
-      tablet: false,
-      pc: false
-    }
+    sampleBlockingIp: null
   },
   GoogleCampaignStatus: {
     ENABLED: 'ENABLED'

@@ -13,8 +13,8 @@ const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
 const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blocking-3g4g.schema');
 const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-blocking-range-ip.schema');
-const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
+const { sampleBlockingIpValidationSchema } = require('./validations/sample-blocking-ip.schema');
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
@@ -322,41 +322,6 @@ const autoBlocking3g4g = (req, res, next) => {
   }
 };
 
-const autoBlockingDevices = (req, res, next) => {
-  logger.info('AccountAdsController::autoBlockDevices is called');
-  try{
-    const { error } = Joi.validate(req.body, AutoBlockingDevicesValidationSchema);
-   
-    if (error) {
-       return requestUtil.joiValidationResponse(error, res);
-    }
-
-    const {mobile, tablet, pc} = req.body;
-    const devices = {mobile, tablet, pc};
-
-    req.adsAccount.setting.devices = devices;
-
-    req.adsAccount.save((err)=>{
-      if(err)
-      {
-        logger.error('AccountAdsController::autoBlockingDevices::error', e);
-        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          messages: ["Thiết lập chặn ip theo thiết bị không thành công"]
-        });
-      }
-      logger.info('AccountAdsController::autoBlockingDevices::success');
-      return res.status(HttpStatus.OK).json({
-        messages: ["Thiết lập chặn ip theo thiết bị thành công"]
-      });
-    });
-  }
-  catch(e)
-  {
-    logger.error('AccountAdsController::autoBlockingDevices::error', e);
-    return next(e);
-  }
-};
-
 const addCampaignsForAAccountAds = async(req, res, next) => {
   logger.info('AccountAdsController::addCampaignsForAAccountAds is called');
   try{
@@ -548,7 +513,7 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
     device: req.body.device,
-    isEnable: req.body.isEnable
+    isEnabled: req.body.isEnabled
   };
 
   logger.info('AccountAdsController::setUpCampaignsByOneDevice is called\n', info);
@@ -560,7 +525,7 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const { device, isEnable } = req.body;
+    const { device, isEnabled } = req.body;
     const campaigns = await BlockingCriterionsModel.find({accountId: req.adsAccount._id});
 
     if(campaigns.length === 0)
@@ -573,7 +538,7 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
 
     const campaignIds = campaigns.map(campaign => campaign.campaignId);
     const adsId = req.adsAccount.adsId;
-    let bidModify = isEnable?1:0;
+    let bidModify = isEnabled?1:0;
 
     Async.eachSeries(campaignIds, (campaignId, callback)=>{
       GoogleAdwordsService.enabledOrPauseTheCampaignByDevice( adsId, campaignId, device, bidModify)
@@ -604,6 +569,68 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
   }
 };
 
+const sampleBlockingIp = (req, res, next) => {
+  const info = { 
+    userId: req.adsAccount.user,
+    adsId: req.adsAccount.adsId,
+    ip: req.body.ip
+  };
+
+  logger.info('AccountAdsController::sampleBlockingIp is called\n', info);
+  try{
+    const { error } = Joi.validate(req.body, sampleBlockingIpValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { ip } = req.body;
+    const campaignIds = req.campaignIds || [];
+    const adsId = req.adsAccount.adsId;
+    const accountId= req.adsAccount._id; 
+
+    if(req.adsAccount.setting.sampleBlockingIp || req.adsAccount.setting.sampleBlockingIp !== '')
+    {
+      AccountAdsService.removeSampleBlockingIp(adsId, accountId, campaignIds)
+      .then(result => {
+        logger.info('AccountAdsController::sampleBlockingIp::removeSampleBlockingIp::success', info);
+      }).catch(err => {
+        logger.error('AccountAdsController::sampleBlockingIp::removeSampleBlockingIp::error', err, '\n', info);
+        return res.status(HttpStatus.OK).json({
+          messages: ['Thêm ip không thành công.']
+        });
+      });
+    }
+
+    AccountAdsService.addSampleBlockingIp(adsId, accountId, campaignIds, ip)
+    .then(result => {
+      req.adsAccount.setting.sampleBlockingIp = ip;
+      req.adsAccount.save(error=> {
+        if(error)
+        {
+          logger.error('AccountAdsController::sampleBlockingIp::error', err, '\n', info);
+            return res.status(HttpStatus.OK).json({
+            messages: ['Thêm ip không thành công.']
+          });
+        }
+
+        logger.info('AccountAdsController::sampleBlockingIp::addSampleBlockingIp::success', info);
+        return res.status(HttpStatus.OK).json({
+          messages: ['Thêm ip thành công.']
+        });
+      });
+    }).catch(err => {
+      logger.error('AccountAdsController::sampleBlockingIp::addSampleBlockingIp::error', err, '\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ['Thêm ip không thành công.']
+      });
+    });
+  }catch(e){
+    logger.error('AccountAdsController::sampleBlockingIp::error', e, '\n', info);
+    next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -611,11 +638,11 @@ module.exports = {
   autoBlockIp,
   autoBlockingRangeIp,
   autoBlocking3g4g,
-  autoBlockingDevices,
   addCampaignsForAAccountAds,
   getListOriginalCampaigns,
   connectionConfirmation,
   getReportOnDevice,
-  setUpCampaignsByOneDevice
+  setUpCampaignsByOneDevice,
+  sampleBlockingIp
 };
 
