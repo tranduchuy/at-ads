@@ -347,6 +347,42 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
   });
 };
 
+const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier) => {
+  const info = {adwordId, campaignId, criterionId, bidModifier}
+  logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
+  return new Promise((resolve, reject) => {
+    const user = new AdwordsUser({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+    const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+    const operation = {
+      operator: 'SET',
+      operand: {
+        campaignId: campaignId,
+        criterion: {
+          id: criterionId,
+          type: 'INTERACTION_TYPE',
+        },
+        bidModifier
+      }
+    };
+
+    CampaignCriterionService.mutate({ operations: [operation] }, (error, result) => {
+      if (error) {
+        logger.error('GoogleAdsService::enabledOrPauseTheCampaignByDevice::error', error);
+        return reject(error);
+      }
+      logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice::success', result);
+      return resolve(result);
+    });
+  });
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
@@ -356,5 +392,6 @@ module.exports = {
   mapManageCustomerErrorMessage,
   getAccountHierachy,
   getErrorCode,
-  getReportOnDevice
+  getReportOnDevice,
+  enabledOrPauseTheCampaignByDevice
 };

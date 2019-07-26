@@ -294,6 +294,19 @@ const reportTotalOnDevice = (jsonArr) => {
   return [reportOfComputer, reportOfMobile, reportOfTablet];
 };
 
+const convertPercentToCoefficient = (number) => {
+  if(number >= 0)
+  {
+    return (number/100)+1;
+  }
+  const temp = Math.abs(number / 100);
+  if(temp === 0 )
+  {
+    return 0;
+  }
+  return 1 - temp;
+}
+
 module.exports = {
   createAccountAds,
   detectIpsShouldBeUpdated,
