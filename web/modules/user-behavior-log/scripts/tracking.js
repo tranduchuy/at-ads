@@ -201,10 +201,28 @@ const googleUrls = [
   "google.co.zw"
 ];
 
+function loadCDNFile(filename, filetype) {
+  if(filetype == "js") {
+    var cssNode = document.createElement('script');
+    cssNode.setAttribute("type", "text/javascript");
+    cssNode.setAttribute("src", filename);
+  } else if(filetype == "css") {
+    var cssNode = document.createElement("link");
+    cssNode.setAttribute("rel", "stylesheet");
+    cssNode.setAttribute("type", "text/css");
+    cssNode.setAttribute("href", filename);
+  }
+  if(typeof cssNode != "undefined")
+    document.getElementsByTagName("head")[0].appendChild(cssNode);
+}
+
 fetch("https://api.ipify.org?format=json", {
   method: 'get'
 }).then(res => res.json())
   .then(data => {
+
+    loadCDNFile("https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js", 'js');
+
     const ip = data.ip;
     const referrer = window.document.referrer;
     const userAgent = window.navigator.userAgent;
