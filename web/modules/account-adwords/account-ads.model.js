@@ -12,7 +12,7 @@ const accountAdsSchema = new Schema({
             classC: {type: Boolean, default: AccountAdsConstant.setting.autoBlackListIpRanges},
             classD: {type: Boolean, default: AccountAdsConstant.setting.autoBlackListIpRanges},  
         },
-        customBackList: { type: Array, default: AccountAdsConstant.setting.customBackList },
+        customBlackList: { type: Array, default: AccountAdsConstant.setting.customBlackList },
         mobileNetworks: {
             viettel: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.viettel },
             mobifone: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.mobifone },

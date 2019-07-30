@@ -4,7 +4,7 @@ const blockingCriterionsSchema = new Schema({
     accountId: String,
     campaignId: String,
     sampleBlockingIp: {type: Object, default: null},
-    customBackList: {type: Array, default: []}
+    customBlackList: {type: Array, default: []}
 }, { timestamps: true });
 
 const BlockingCriterionsModel = mongoose.model('BlockingCriterions', blockingCriterionsSchema, 'BlockingCriterions');

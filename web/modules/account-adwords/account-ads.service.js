@@ -25,22 +25,13 @@ const createAccountAds = async ({ userId, adsId }) => {
   return await newAccountAds.save();
 };
 
-const detectIpsShouldBeUpdated = (backList, ips) => {
-    if(!backList || backList.length === 0)
+const checkIpIsBlackListed = (blackList, ips, ipInSampleBlockIp) => {
+    if(ipInSampleBlockIp)
     {
-      return ips;
+      blackList = blackList.concat(ipInSampleBlockIp);
     }
 
-    let ipsArr = [];
-
-    ips.forEach((ip => {
-      if(backList.indexOf(ip) === -1)
-      {
-        ipsArr.push(ip);
-      }
-    }));
-
-    return ipsArr;  
+    return _.intersection(blackList, ips);
 };
 
 const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, callback) => {
@@ -58,7 +49,7 @@ const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaig
   {
     const criterionId = result.value[0].criterion.id;
     const infoCampaign ={ip, criterionId};
-    BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBackList: infoCampaign}}).exec(err=>{
+    BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBlackList: infoCampaign}}).exec(err=>{
       if(err)
       {
         logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', err);
@@ -145,8 +136,8 @@ const onlyUnique = (value, index, self) => {
 
 const removeIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, callback) => {
   Async.eachSeries(ipsArr, (ip, cb)=> {
-    const queryFindIpOfcampaign = {accountId, campaignId, "customBackList.ip": ip};
-    const select = {'customBackList.$': 1};
+    const queryFindIpOfcampaign = {accountId, campaignId, "customBlackList.ip": ip};
+    const select = {'customBlackList.$': 1};
 
     BlockingCriterionsModel
     .findOne(queryFindIpOfcampaign, select)
@@ -158,7 +149,7 @@ const removeIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr,
         }
         if(blockingCriterionRecord)
         {
-          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, blockingCriterionRecord.customBackList[0].criterionId)
+          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, blockingCriterionRecord.customBlackList[0].criterionId)
             .then((result) => {
               removeIpAndCriterionIdToTheBlacklistOfACampaign(result, accountId, campaignId, adsId, ip, cb);
             })
@@ -173,7 +164,7 @@ const removeIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, camp
   if(result)
   {
     const queryUpdate = {accountId, campaignId};
-    const updateingData = {$pull: {customBackList : {ip}}};
+    const updateingData = {$pull: {customBlackList : {ip}}};
 
     BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
         if(e)
@@ -190,12 +181,12 @@ const removeIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, camp
   else { return cb(null); }
 };
 
-const checkIpsInBackList = (backList, ips) => {
-    if(!backList || backList.length === 0)
+const checkIpIsNotOnTheBlackList = (blackList, ips) => {
+    if(!blackList || blackList.length === 0)
     {
-      return false;
+      return ips;
     }
-    return _.difference(ips, backList).length !== ips.length;
+    return _.difference(ips, blackList);
 };
 
 /**
@@ -328,10 +319,7 @@ const removeSampleBlockingIp = (adsId, accountId, campaignIds) => {
         GoogleAdwordsService.removeIpBlackList(adsId, campaignId, blockingCriterionRecord.sampleBlockingIp.ip, blockingCriterionRecord.sampleBlockingIp.criterionId)
         .then(result => {
           removeIpAndCriterionsIdForSampleBlockingIp(result, accountId, campaignId, adsId, callback);
-        }).catch(error => {
-          logger.error('AccountAdsService::removeSampleBlockingIp:error ', e);
-          callback(error);
-        });
+        }).catch(error => callback(error));
       });
     },(err, result) => {
       if (err) {
@@ -374,10 +362,10 @@ const addSampleBlockingIp = (adsId, accountId, campaignIds, ip) => {
           addIpAndCriterionIdForSampleBlockingIp(result, accountId, campaignId, adsId, ip, callback);
         })
         .catch(err => callback(err));
-    }, (err, result) => {
-      if (err) {
-        logger.error('AccountAdsController::addSampleBlockingIp::error', err);
-        return reject(err);
+    }, (e, result) => {
+      if (e) {
+        logger.error('AccountAdsController::addSampleBlockingIp::error', e);
+        return reject(e);
       }
       logger.info('AccountAdsController::addSampleBlockingIp::success');
       return resolve(result);
@@ -406,7 +394,7 @@ const addIpAndCriterionIdForSampleBlockingIp = (result, accountId, campaignId, a
 
 module.exports = {
   createAccountAds,
-  detectIpsShouldBeUpdated,
+  checkIpIsBlackListed,
   addIpsToBlackListOfOneCampaign,
   getAccountsAdsByUserId,
   checkCampaign,
@@ -414,7 +402,7 @@ module.exports = {
   getIdAndNameCampaignInCampaignsList,
   onlyUnique,
   removeIpsToBlackListOfOneCampaign,
-  checkIpsInBackList,
+  checkIpIsNotOnTheBlackList,
   createdAccountIfNotExists,
   convertCSVToJSON,
   reportTotalOnDevice,

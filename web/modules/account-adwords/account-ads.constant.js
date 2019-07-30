@@ -4,14 +4,14 @@ module.exports = {
     autoRemoveBlocking: false,
     autoBlackListIp: [],
     autoBlackListIpRanges: false,
-    customBackList: [],
+    customBlackList: [],
     mobileNetworks: {
       viettel: false,
       mobifone: false,
       vinafone: false,
       vietnammobile: false
     },
-    sampleBlockingIp: null
+    sampleBlockingIp: ''
   },
   GoogleCampaignStatus: {
     ENABLED: 'ENABLED'
