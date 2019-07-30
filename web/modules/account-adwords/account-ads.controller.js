@@ -15,9 +15,12 @@ const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blockin
 const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-blocking-range-ip.schema');
 const { AutoBlockingDevicesValidationSchema } = require('./validations/auto-blocking-devices.schema');
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
+const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
+const ManagerCustomerMsgs = require('../../constants/ManagerCustomerMsgs');
+const moment = require('moment');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -42,7 +45,7 @@ const addAccountAds = async (req, res, next) => {
     GoogleAdwordsService.sendManagerRequest(adWordId)
       .then(async result => {
         if (!result || !result.links) {
-          logger.error('AccountAdsController::addAccountAds::error', JSON.stringify(result));
+          logger.error('AccountAdsController::addAccountAds::error', result);
 
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             messages: ['Gửi request quản lý tài khoản adword không thành công']
@@ -50,7 +53,7 @@ const addAccountAds = async (req, res, next) => {
         }
 
         await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
-        logger.info('AccountAdsController::addAccountAds::success', JSON.stringify(result));
+        logger.info('AccountAdsController::addAccountAds::success', result);
         return res.status(HttpStatus.OK).json({
           messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
           data: {}
@@ -63,7 +66,7 @@ const addAccountAds = async (req, res, next) => {
         });
       });
   } catch (e) {
-    logger.error('AccountAdsController::addAccountAds::error', JSON.stringify(e));
+    logger.error('AccountAdsController::addAccountAds::error', e);
     return next(e);
   }
 };
@@ -79,7 +82,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
        return requestUtil.joiValidationResponse(error, res);
     }
 
-    const arrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique)
+    const arrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique);
     const campaignIds = req.campaignIds || [];
 
     //ADD IPS IN CUSTOMBACKLIST
@@ -231,7 +234,7 @@ const autoBlockIp = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlockingIp::error', JSON.stringify(e));
+        logger.error('AccountAdsController::autoBlockingIp::error', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập block ip tự động không thành công"]
         });
@@ -244,7 +247,7 @@ const autoBlockIp = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlockingIp::error', JSON.stringify(e));
+    logger.error('AccountAdsController::autoBlockingIp::error', e);
     return next(e);
   }
 };
@@ -266,7 +269,7 @@ const autoBlockingRangeIp = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlockingRangeIp::error', JSON.stringify(e));
+        logger.error('AccountAdsController::autoBlockingRangeIp::error', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập chặn ip theo nhóm không thành công"]
         });
@@ -279,7 +282,7 @@ const autoBlockingRangeIp = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlockingRangeIp::error', JSON.stringify(e));
+    logger.error('AccountAdsController::autoBlockingRangeIp::error', e);
     return next(e);
   }
 };
@@ -301,7 +304,7 @@ const autoBlocking3g4g = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlocking3g4g::error', JSON.stringify(e));
+        logger.error('AccountAdsController::autoBlocking3g4g::error', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập chặn ip theo 3G/4G không thành công"]
         });
@@ -314,7 +317,7 @@ const autoBlocking3g4g = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlocking3g4g::error', JSON.stringify(e));
+    logger.error('AccountAdsController::autoBlocking3g4g::error', e);
     return next(e);
   }
 };
@@ -336,7 +339,7 @@ const autoBlockingDevices = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlockingDevices::error', JSON.stringify(e));
+        logger.error('AccountAdsController::autoBlockingDevices::error', e);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập chặn ip theo thiết bị không thành công"]
         });
@@ -349,7 +352,7 @@ const autoBlockingDevices = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlockingDevices::error', JSON.stringify(e));
+    logger.error('AccountAdsController::autoBlockingDevices::error', e);
     return next(e);
   }
 };
@@ -365,8 +368,9 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
 
     let {campaignIds} = req.body;
     campaignIds = campaignIds.map(String);
+    const campaignIdsAfterRemoveIdenticalElement = campaignIds.filter(AccountAdsService.onlyUnique);
 
-    const checkCampaignId =  await AccountAdsService.checkCampaign(req.adsAccount._id, campaignIds);
+    const checkCampaignId =  await AccountAdsService.checkCampaign(req.adsAccount._id, campaignIdsAfterRemoveIdenticalElement);
 
     if(!checkCampaignId)
     {
@@ -376,12 +380,12 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
       });
     }
 
-    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignIds);
+    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignIdsAfterRemoveIdenticalElement);
 
     BlockingCriterionsModel.insertMany(campaignsArr, (err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(err));
+        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', err);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thêm chiến dịch không thành công"]
         });
@@ -394,7 +398,7 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::addCampaignsForAAccountAds::error', JSON.stringify(e));
+    logger.error('AccountAdsController::addCampaignsForAAccountAds::error', e);
     return next(e);
   }
 };
@@ -414,8 +418,189 @@ const getListOriginalCampaigns = async(req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::getOriginalCampaigns::error', JSON.stringify(e));
+    const message = GoogleAdwordsService.mapManageCustomerErrorMessage(e);
+    logger.error('AccountAdsController::getOriginalCampaigns::error', e);
+    return next(message);
+  }
+};
+
+const connectionConfirmation = async(req, res, next) => {
+  logger.info('AccountAdsController::connectionConfirmation is called');
+  try{
+    const { error } = Joi.validate(req.body, AddAccountAdsValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { adWordId } = req.body;
+
+    GoogleAdwordsService.sendManagerRequest(adWordId)
+    .then(async result => {
+      const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
+      if(error)
+      {
+        logger.error('AccountAdsController::connectionConfirmation::error', error);
+        return next(error);
+      }
+
+      logger.info('AccountAdsController::connectionConfirmation::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+        data: {
+          isConnected: false
+        }
+      }); 
+    }).catch(async err => {
+      const message = GoogleAdwordsService.mapManageCustomerErrorMessage(err);
+      let isConnected = false;
+      switch (message) {
+        case ManagerCustomerMsgs.ALREADY_MANAGED_BY_THIS_MANAGER:
+          isConnected = true;
+          break;
+        case ManagerCustomerMsgs.ALREADY_INVITED_BY_THIS_MANAGER:
+          break;
+        default:
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: [message]
+          });
+      }
+      
+      const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
+      if(error)
+      {
+        logger.error('AccountAdsController::connectionConfirmation::error', error);
+        return next(error);
+      }
+
+      logger.info('AccountAdsController::connectionConfirmation::success');
+      return res.status(HttpStatus.OK).json({
+        messages: [message],
+        data: {
+          isConnected
+        }
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::connectionConfirmation::error', e);
     return next(e);
+  }
+};
+
+const getReportOnDevice = async(req, res, next) => {
+  logger.info('AccountAdsController::getReportOnDevice is called');
+  try{
+    const campaigns = await BlockingCriterionsModel.find({'accountId': req.adsAccount._id })
+
+    if(campaigns.length === 0)
+    {
+      logger.info('AccountAdsController::getReportOnDevice::success');
+      return res.status(HttpStatus.OK).json({
+        messages: 'Lấy report thành công',
+        data:{
+          reportDevice: []
+        }
+      });
+    }
+
+    const fields = ['Device', 'Cost', 'Impressions', 'Clicks', 'AveragePosition', 'CampaignId',  'CampaignDesktopBidModifier', 'CampaignMobileBidModifier', 'CampaignTabletBidModifier'];
+    const campaignIds = campaigns.map(campaign => campaign.campaignId);
+    const startDate = moment().subtract(1, 'months').format('MM/DD/YYYY');
+    const endDate = moment().format('MM/DD/YYYY');
+
+    GoogleAdwordsService.getReportOnDevice(req.adsAccount.adsId, campaignIds, fields, startDate, endDate)
+    .then(result => {
+      const jsonArr = AccountAdsService.convertCSVToJSON(result);
+
+      if(jsonArr.length === 0)
+      {
+        logger.info('AccountAdsController::getReportOnDevice::success');
+        return res.status(HttpStatus.OK).json({
+          messages: 'Lấy report thành công',
+          data:{
+            reportDevice: []
+          }
+        });
+      }
+
+      const reportDevice = AccountAdsService.reportTotalOnDevice(jsonArr);
+      logger.info('AccountAdsController::getReportOnDevice::success');
+      return res.status(HttpStatus.OK).json({
+        messages: 'Lấy report thành công',
+        data:{
+          reportDevice
+        }
+      });
+    }).catch(err => {
+      logger.error('AccountAdsController::getReportOnDevice::error ', err);
+      next(err);
+    });
+  }catch(e){
+    logger.error('AccountAdsController::getReportOnDevice::error ', e);
+    next(e);
+  }
+};
+
+const setUpCampaignsByOneDevice = async(req, res, next) => {
+  const info = { 
+    userId: req.adsAccount.user,
+    adsId: req.adsAccount.adsId,
+    device: req.body.device,
+    isEnable: req.body.isEnable
+  };
+
+  logger.info('AccountAdsController::setUpCampaignsByOneDevice is called\n', info);
+
+  try{
+    const { error } = Joi.validate(req.body, setUpCampaignsByOneDeviceValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { device, isEnable } = req.body;
+    const campaigns = await BlockingCriterionsModel.find({accountId: req.adsAccount._id});
+
+    if(campaigns.length === 0)
+    {
+      logger.info('AccountAdsController::setUpCampaignsByOneDevice::accountNotCampaign\n', info);
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Tài khoản chưa có chiến dịch để thiết lập.']
+      });
+    }
+
+    const campaignIds = campaigns.map(campaign => campaign.campaignId);
+    const adsId = req.adsAccount.adsId;
+    let bidModify = isEnable?1:0;
+
+    Async.eachSeries(campaignIds, (campaignId, callback)=>{
+      GoogleAdwordsService.enabledOrPauseTheCampaignByDevice( adsId, campaignId, device, bidModify)
+      .then(result => {
+        callback();
+      }).catch(error => {
+        logger.error('AccountAdsController::setUpCampaignsByOneDevice::error', error, '\n', info);
+        callback(error);
+      });
+    },err => {
+      if(err)
+      {
+        logger.error('AccountAdsController::setUpCampaignsByOneDevice::error', err, '\n', info);
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ['Thiết lập không thành công.']
+        });
+      }
+      logger.info('AccountAdsController::setUpCampaignsByOneDevice::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ['Thiết lập thành công.']
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::setUpCampaignsByOneDevice::error', e, '\n', info);
+    next(e);
   }
 };
 
@@ -428,6 +613,9 @@ module.exports = {
   autoBlocking3g4g,
   autoBlockingDevices,
   addCampaignsForAAccountAds,
-  getListOriginalCampaigns
+  getListOriginalCampaigns,
+  connectionConfirmation,
+  getReportOnDevice,
+  setUpCampaignsByOneDevice
 };
 

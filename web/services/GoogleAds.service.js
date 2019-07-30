@@ -3,16 +3,9 @@ const logger = log4js.getLogger('Services');
 const AdwordsUser = require('node-adwords').AdwordsUser;
 const adwordConfig = require('config').get('google-ads');
 const AdwordsConstants = require('node-adwords').AdwordsConstants;
-const ManagerCustomerMsgs = {
-  ALREADY_MANAGED_BY_THIS_MANAGER: 'Hệ thống đã được quý khách chấp nhận quyền quản lý',
-  ALREADY_INVITED_BY_THIS_MANAGER: 'Hệ thống đã gửi yêu cầu quyền quản lý đến tài khoản adword của quý khách. Vui lòng kiểm tra lại.',
-  ALREADY_MANAGED_IN_HIERARCHY: '',
-  ALREADY_MANAGED_FOR_UI_ACCESS: '',
-  UNKNOWN: 'Không xác định được lỗi',
-  NOT_AUTHORIZED: 'Không có quyền',
-  ADD_CUSTOMER_FAILURE: '',
-  '': 'Không xác định'
-};
+const ManagerCustomerMsgs = require('../constants/ManagerCustomerMsgs');
+const AdwordsReport = require('node-adwords').AdwordsReport;
+const DeviceConstants = require('../constants/device.constant');
 
 /**
  * Send request to manage an adword id
@@ -256,7 +249,7 @@ const getPendingInvitations = () => {
   });
 };
 
-const _getErrorCode = (error) => {
+const getErrorCode = (error) => {
   return (
     !error ||
     !error.root ||
@@ -273,7 +266,7 @@ const _getErrorCode = (error) => {
 };
 
 const mapManageCustomerErrorMessage = (error) => {
-  const reason = _getErrorCode(error);
+  const reason = getErrorCode(error);
   logger.info('GoogleAdsService::mapManageCustomerErrorMessage::info', {reason});
 
   return ManagerCustomerMsgs[reason];
@@ -320,6 +313,76 @@ const getAccountHierachy = function (adwordId) {
   });
 };
 
+const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) => {
+  logger.info('GoogleAdsService::getReportOfOneCampaign', adwordId);
+  return new Promise((resolve, reject) => {
+    const report = new AdwordsReport({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+    report.getReport(adwordConfig.version, {
+        reportName: 'Custom Adgroup Performance Report',
+        reportType: 'CAMPAIGN_PERFORMANCE_REPORT',
+        fields,
+        filters: [
+            {field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED']},
+            {field: 'CampaignId', operator: 'IN', values: campaignIds}
+        ],
+        dateRangeType: 'CUSTOM_DATE',
+        startDate,
+        endDate,
+        format: 'CSV'
+    }, (error, report) => {
+      if (error) {
+        logger.error('GoogleAdsService::getReportOnDevice::error', error);
+        return reject(error);
+      }
+      logger.info('GoogleAdsService::getReportOnDevice::success', report);
+      return resolve(report);
+    });
+  });
+};
+
+const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier) => {
+  const info = {adwordId, campaignId, criterionId, bidModifier}
+  logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
+  return new Promise((resolve, reject) => {
+    const user = new AdwordsUser({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+    const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+    const operation = {
+      operator: 'SET',
+      operand: {
+        campaignId: campaignId,
+        criterion: {
+          id: criterionId,
+          type: 'INTERACTION_TYPE',
+        },
+        bidModifier
+      }
+    };
+
+    CampaignCriterionService.mutate({ operations: [operation] }, (error, result) => {
+      if (error) {
+        logger.error('GoogleAdsService::enabledOrPauseTheCampaignByDevice::error', error);
+        return reject(error);
+      }
+      logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice::success', result);
+      return resolve(result);
+    });
+  });
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
@@ -327,5 +390,8 @@ module.exports = {
   removeIpBlackList,
   getPendingInvitations,
   mapManageCustomerErrorMessage,
-  getAccountHierachy
+  getAccountHierachy,
+  getErrorCode,
+  getReportOnDevice,
+  enabledOrPauseTheCampaignByDevice
 };

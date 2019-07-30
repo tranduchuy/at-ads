@@ -19,16 +19,17 @@ const UserService = require('./user.service');
 const UserModel = require('./user.model');
 const messages = require("../../constants/messages");
 const requestUtil = require('../../utils/RequestUtil');
+const Request = require('request');
 
 const forgetPassword = async (request, res, next) => {
   logger.info('UserController::forgetPassword is called');
   try {
-    const { error } = Joi.validate(request.query, ForgetPasswordValidationSchema);
+    const { error } = Joi.validate(request.body, ForgetPasswordValidationSchema);
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const { email } = request.query;
+    const { email } = request.body;
     const user = await UserService.findByEmail(email);
 
     if (!user) {
@@ -193,62 +194,55 @@ const loginByGoogle = async (request, res, next) => {
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
-    const { email, googleId, name } = request.body;
-    let user = await UserService.findByGoogleId(googleId);
-    if (!user) {
-      user = await UserService.findByEmail(email);
-      if (user) {
-        user = await UserService.updateGoogleId(user, googleId);
-      } else {
-        const newUser = {
-          name,
-          email,
-          googleId
-        };
-        user = await UserService.createUserByGoogle(newUser);
-        const token = UserService.generateToken({ _id: user._id });
-        const result = {
-          messages: [messages.ResponseMessages.User.Login.NEW_USER_BY_GOOGLE],
-          data: {
-            meta: {
-              token
-            },
-            user: {
-              _id: user._id,
-              role: user.role,
-              email: user.email,
-              name: user.name,
-              type: user.type,
-              status: user.status,
-              registerBy: user.registerBy
-            }
-          }
-        };
 
-        return res.status(HttpStatus.CREATED).json(result);
-      }
-    }
+    const { accessToken } = request.body;
+    const googleConectionString = "https://www.googleapis.com/plus/v1/people/me?access_token=" + accessToken;
 
-    const userInfoResponse = {
-      _id: user.id,
-      role: user.role,
-      email: user.email,
-      name: user.name,
-      status: user.status,
-      registerBy: user.registerBy,
-      googleId: user.googleId
-    };
-    const token = UserService.generateToken({ _id: user._id });
-    const result = {
-      messages: [messages.ResponseMessages.User.Login.LOGIN_SUCCESS],
-      data: {
-        meta: {
-          token
-        },
-        user: userInfoResponse
+    Request(googleConectionString, async(error, response, body) => { 
+      if(error)
+      {
+        logger.error('UserController::loginByGoogle::error', error);
+        return next(error);
       }
-    };
-    return res.status(HttpStatus.OK).json(result);
+
+      console.log('statusCode:', response && response.statusCode);
+
+      if(response.statusCode !== HttpStatus.OK)
+      {
+        logger.error('UserController::loginByGoogle::error', response);
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ["Đăng nhập không thành công."]
+        });
+      }
+
+      const data = JSON.parse(body);
+      const email = data.emails[0].value;
+      const name = data.displayName;
+      const googleId = data.id;
+      const image = data.image.url;
+
+      let user = await UserService.findByGoogleId(googleId);
+      if (!user) {
+        user = await UserService.findByEmail(email);
+        if (user) {
+          user = await UserService.updateGoogleId(user, googleId);
+
+          user.avatar = user.avatar || image;
+          await user.save();
+        } else {
+          const newUser = {
+            name,
+            email,
+            googleId,
+            image
+          };
+          user = await UserService.createUserByGoogle(newUser);
+        }
+      };
+      logger.info('UserController::loginByGoogle::success');
+      const result = UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
+      return res.status(HttpStatus.OK).json(result);
+    });
   } catch (e) {
     logger.error('UserController::loginByGoogle::error', e);
     return next(e);

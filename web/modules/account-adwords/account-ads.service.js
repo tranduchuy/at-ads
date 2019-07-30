@@ -8,6 +8,7 @@ const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
 const { GoogleCampaignStatus } = require('../account-adwords/account-ads.constant');
+const DeviceConstant = require('../../constants/device.constant');
 
 /**
  *
@@ -113,7 +114,7 @@ const checkCampaign = async(accountId, campaignIds) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsService::checkCampaign::error', JSON.stringify(e));
+    logger.error('AccountAdsService::checkCampaign::error', e);
     return false;
   }
 };
@@ -197,6 +198,115 @@ const checkIpsInBackList = (backList, ips) => {
     return _.difference(ips, backList).length !== ips.length;
 };
 
+/**
+ * reuturn object if error, else null
+ * @returns Promise<obj|null> 
+ */
+const createdAccountIfNotExists = async(userId, adsId) => {
+  try{
+    const accountInfo = {adsId, 'user': userId };
+    const adAccount = await AccountAdsModel.findOne(accountInfo);
+
+    if(!adAccount) {
+      await createAccountAds({userId, adsId});
+    }
+
+    return null;
+
+  }catch(e)
+  {
+    logger.error('AccountAdsService::createdAccountIfNotExists:error ', e);
+    return e;
+  }
+};
+
+const convertCSVToJSON = (report) => {
+  let CSV = report.split('\n');
+  CSV = CSV.slice(2, CSV.length - 2);
+
+  const jsonArr = [];
+  CSV.forEach(ele => {
+    const temp = ele.split(',');
+    let device = '';
+
+    switch (temp[0]) {
+      case DeviceConstant.computer:
+        device = 'Máy tính';
+        break;
+      case DeviceConstant.mobile:
+        device = 'Điện thoại';
+        break;
+      case DeviceConstant.tablet:
+        device = 'Máy tính bảng';
+        break;
+      default:
+        device = 'Other';
+    }
+
+    const json = {
+      device,
+      cost: temp[1],
+      impressions: temp[2],
+      clicks: temp[3],
+      avgPosition: temp[4]
+    };
+    jsonArr.push(json);
+  });
+
+  return jsonArr;
+}
+
+const reportTotalOnTheSameDevice = (jsonArr, deviceName) => {
+   const filterDevice = jsonArr.filter(ele => ele.device === deviceName);
+
+   let totalCost = 0;
+   let totalImpressions = 0;
+   let totalClicks = 0;
+   let totalAvgPosition = 0;
+
+   filterDevice.forEach(ADevice => {
+      totalCost += Number(ADevice.cost);
+      totalImpressions += Number(ADevice.impressions);
+      totalClicks += Number(ADevice.clicks);
+      totalAvgPosition += Number(ADevice.avgPosition);
+   });
+
+   totalAvgPosition /= filterDevice.length;
+   totalCost /= 1e6;
+
+   const result = {
+      device: deviceName,
+      cost: totalCost,
+      impressions: totalImpressions,
+      clicks: totalClicks,
+      avgPosition: parseFloat(totalAvgPosition.toFixed(2)),
+      ctr: parseFloat((totalClicks/totalImpressions).toFixed(3))
+   }
+
+   return result;
+}
+
+const reportTotalOnDevice = (jsonArr) => {
+  const reportOfComputer = reportTotalOnTheSameDevice(jsonArr, 'Máy tính');
+  const reportOfMobile = reportTotalOnTheSameDevice(jsonArr, 'Điện thoại');
+  const reportOfTablet = reportTotalOnTheSameDevice(jsonArr, 'Máy tính bảng');
+  
+  return [reportOfComputer, reportOfMobile, reportOfTablet];
+};
+
+const convertPercentToCoefficient = (number) => {
+  if(number >= 0)
+  {
+    return (number/100)+1;
+  }
+  const temp = Math.abs(number / 100);
+  if(temp === 0 )
+  {
+    return 0;
+  }
+  return 1 - temp;
+}
+
 module.exports = {
   createAccountAds,
   detectIpsShouldBeUpdated,
@@ -207,5 +317,8 @@ module.exports = {
   getIdAndNameCampaignInCampaignsList,
   onlyUnique,
   removeIpsToBlackListOfOneCampaign,
-  checkIpsInBackList 
+  checkIpsInBackList,
+  createdAccountIfNotExists,
+  convertCSVToJSON,
+  reportTotalOnDevice
 };
