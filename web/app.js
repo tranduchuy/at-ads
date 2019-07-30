@@ -1,3 +1,5 @@
+const { attach_cookie } = require('./utils/attach-cookie');
+
 require('./config/def');
 const createError = require('http-errors');
 const express = require('express');
@@ -28,6 +30,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use('/api', require('./routes'));
+
+
+// attach uuid
+app.use(attach_cookie('/static/tracking.js'));
+
+// Serving static files
+app.use('/static', express.static(path.join(__dirname, 'public')));
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

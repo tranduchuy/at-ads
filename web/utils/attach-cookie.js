@@ -1,10 +1,14 @@
 const uuidv4 = require('uuid/v4');
 
-const attach_cookie = (url) => {
+const attach_cookie = (path) => {
   return (req, res, next) => {
-    if (req.url == url) {
+    const key = req.query.key;
+    if (req.path === path && key) {
       const uuid = uuidv4();
+      console.log(key);
+      console.log(req.cookies);
       res.cookie('uuid', uuid);
+      res.cookie('key', key);
     }
     next();
   }

@@ -3,10 +3,12 @@ const UserBehaviorLogModel = require('./user-behavior-log.model');
 const createUserBehaviorLog = async ({
                                        ip, utmMedium, utmSource, utmCampaign,
                                        referrer, userAgent, browser, engine,
-                                       device, os, cpu, domain, pathname,
+                                       device, os, cpu, domain, pathname, uuid, accountKey
                                      }) => {
   try {
     const newUserBehaviorLog = new UserBehaviorLogModel({
+      uuid,
+      accountKey,
       ip,
       referrer,
       userAgent,

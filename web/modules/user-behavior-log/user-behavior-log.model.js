@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const userBehaviorLogSchema = new Schema({
   uuid: String,
+  accountKey: String,
   pathname: String,
   domain: String,
   utmMedium: String,
