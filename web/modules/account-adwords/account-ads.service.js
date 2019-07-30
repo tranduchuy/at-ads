@@ -9,6 +9,7 @@ const Async = require('async');
 const _ = require('lodash');
 const { GoogleCampaignStatus } = require('../account-adwords/account-ads.constant');
 const DeviceConstant = require('../../constants/device.constant');
+const shortid = require('shortid');
 
 /**
  *
@@ -17,9 +18,11 @@ const DeviceConstant = require('../../constants/device.constant');
  * @returns {Promise<void>}
  */
 const createAccountAds = async ({ userId, adsId }) => {
+  const key = shortid();
   const newAccountAds = new AccountAdsModel({
     user: userId,
-    adsId
+    adsId,
+    key
   });
 
   return await newAccountAds.save();
