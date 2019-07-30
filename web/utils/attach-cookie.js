@@ -5,8 +5,6 @@ const attach_cookie = (path) => {
     const key = req.query.key;
     if (req.path === path && key) {
       const uuid = uuidv4();
-      console.log(key);
-      console.log(req.cookies);
       res.cookie('uuid', uuid);
       res.cookie('key', key);
     }
