@@ -17,6 +17,7 @@ const userBehaviorLogSchema = new Schema({
   time: Object,
   ip: Object,
   cpu: Object,
+  isPrivateBrowsing: {type: Boolean, default: false},
   createdAt: {type: Date, default: Date.now()}
 });
 
