@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const websiteSchema = new Schema({
   code: { type : String , unique : true, required : true, dropDups: true },
   status: { type: Number, default: StatusConstant.Status.ACTIVE},
-  domain: String,
+  domain: {type: String, unique: true},
   accountAd: Schema.Types.ObjectId,
   expiredAt: { type: Date, default: WebsiteConstant.expiredAt}
 
