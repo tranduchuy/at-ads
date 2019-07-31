@@ -16,7 +16,7 @@ const logTrackingBehavior = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const {ip, uuid, accountKey, userAgent, referrer, href} = req.body;
+    const {ip, uuid, accountKey, userAgent, isPrivateBrowsing, referrer, href} = req.body;
     const hrefURL = new Url(href);
     const hrefQuery = queryString.parse(hrefURL.query);
     const ua = parser(userAgent);
@@ -26,6 +26,7 @@ const logTrackingBehavior = async (req, res, next) => {
       referrer,
       userAgent,
       accountKey,
+      isPrivateBrowsing,
       domain: hrefURL.origin,
       pathname: hrefURL.pathname,
       utmCampaign: hrefQuery.utm_campaign || null,
