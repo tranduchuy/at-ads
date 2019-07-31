@@ -1,0 +1,30 @@
+{
+  "name": "static-server",
+  "version": "1.0.0",
+  "description": "serving static files",
+  "private": true,
+  "scripts": {
+    "start": "nodemon --inspect ./bin/www"
+  },
+  "dependencies": {
+    "amqplib": "^0.5.3",
+    "async": "^2.6.2",
+    "config": "^2.0.2",
+    "cookie-parser": "^1.4.4",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "eslint": "^5.14.1",
+    "express": "^4.16.4",
+    "express-useragent": "^1.0.12",
+    "http": "0.0.0",
+    "http-errors": "~1.6.2",
+    "http-status-codes": "^1.3.2",
+    "morgan": "^1.9.1",
+    "nanoid": "^2.0.3",
+    "request": "^2.88.0",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "ws": "3.3.2"
+  }
+}
