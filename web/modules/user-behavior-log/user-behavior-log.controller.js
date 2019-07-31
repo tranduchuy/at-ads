@@ -42,7 +42,7 @@ const logTrackingBehavior = async (req, res, next) => {
     return res.json({
       status: HttpStatus.OK,
       data: {},
-      message: messages.ResponseMessages.SUCCESS
+      messages: [messages.ResponseMessages.SUCCESS]
     });
   } catch (e) {
     logger.error('UserController::logTrackingBehavior::error', e);

@@ -8,7 +8,7 @@ const userBehaviorLogSchema = new Schema({
   utmMedium: String,
   utmSource: String,
   utmCampaign: String,
-  referrer: {type: String, required: true},
+  referrer: String,
   userAgent: String,
   browser: Object,
   engine: Object,

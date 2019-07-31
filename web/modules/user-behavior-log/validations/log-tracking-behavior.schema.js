@@ -6,7 +6,7 @@ const LogTrackingBehaviorValidationSchema = Joi.object().keys({
   accountKey: Joi.string().required(),
   href: Joi.string().required(),
   userAgent: Joi.string().required(),
-  referrer: Joi.string().required(),
+  referrer: Joi.string().allow('').optional(),
   accountKey: Joi.string().required(),
   isPrivateBrowsing: Joi.boolean().required()
   }

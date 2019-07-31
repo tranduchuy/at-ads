@@ -1,5 +1,3 @@
-const { attach_cookie } = require('./utils/attach-cookie');
-
 require('./config/def');
 const createError = require('http-errors');
 const express = require('express');
