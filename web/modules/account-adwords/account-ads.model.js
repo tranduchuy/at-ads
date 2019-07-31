@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 const accountAdsSchema = new Schema({
     user: String,
     adsId: String,
+    key: String,
     setting: {
         autoBlockByMaxClick: { type: Number, default: AccountAdsConstant.setting.autoBlockByMaxClick },
         autoRemoveBlocking: { type: Boolean, default: AccountAdsConstant.setting.autoRemoveBlocking },
