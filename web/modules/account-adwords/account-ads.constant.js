@@ -13,6 +13,7 @@ module.exports = {
     },
     sampleBlockingIp: ''
   },
+  isConnected: false,
   GoogleCampaignStatus: {
     ENABLED: 'ENABLED'
   }

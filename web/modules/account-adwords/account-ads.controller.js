@@ -446,6 +446,18 @@ const connectionConfirmation = async(req, res, next) => {
         return next(error);
       }
 
+      const queryUpdate = { adsId: adWordId };
+      const updatingData = { isConnected };
+      await AccountAdsModel
+        .updateMany(queryUpdate, updatingData)
+        .exec(err => {
+          if(err)
+          {
+            logger.error('AccountAdsController::connectionConfirmation::error', err);
+            next(err);
+          }
+        });
+
       logger.info('AccountAdsController::connectionConfirmation::success');
       return res.status(HttpStatus.OK).json({
         messages: [message],
