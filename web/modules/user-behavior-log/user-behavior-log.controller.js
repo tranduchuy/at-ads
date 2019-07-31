@@ -1,3 +1,5 @@
+
+const messages = require("../../constants/messages");
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
@@ -16,14 +18,17 @@ const logTrackingBehavior = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const {ip, userAgent, referrer, href} = req.body;
+    const {ip, uuid, accountKey, userAgent, isPrivateBrowsing, referrer, href} = req.body;
     const hrefURL = new Url(href);
     const hrefQuery = queryString.parse(hrefURL.query);
     const ua = parser(userAgent);
     const data = {
+      uuid,
       ip,
       referrer,
       userAgent,
+      accountKey,
+      isPrivateBrowsing,
       domain: hrefURL.origin,
       pathname: hrefURL.pathname,
       utmCampaign: hrefQuery.utm_campaign || null,
@@ -31,13 +36,13 @@ const logTrackingBehavior = async (req, res, next) => {
       utmSource: hrefQuery.utm_source || null,
       ...ua
     };
-    const newUserBehaviorLog = await UserBehaviorLogService.createUserBehaviorLog(data);
 
+    await UserBehaviorLogService.createUserBehaviorLog(data);
 
     return res.json({
       status: HttpStatus.OK,
-      data: newUserBehaviorLog,
-      message: 'request success'
+      data: {},
+      messages: [messages.ResponseMessages.SUCCESS]
     });
   } catch (e) {
     logger.error('UserController::logTrackingBehavior::error', e);

@@ -1,12 +1,14 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const userBehaviorLogSchema = new Schema({
+  uuid: String,
+  accountKey: String,
   pathname: String,
   domain: String,
   utmMedium: String,
   utmSource: String,
   utmCampaign: String,
-  referrer: {type: String, required: true},
+  referrer: String,
   userAgent: String,
   browser: Object,
   engine: Object,
@@ -15,6 +17,7 @@ const userBehaviorLogSchema = new Schema({
   time: Object,
   ip: Object,
   cpu: Object,
+  isPrivateBrowsing: {type: Boolean, default: false},
   createdAt: {type: Date, default: Date.now()}
 });
 
