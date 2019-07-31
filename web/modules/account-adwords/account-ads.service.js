@@ -304,22 +304,23 @@ const removeSampleBlockingIp = (adsId, accountId, campaignIds) => {
       const queryFindIpOfcampaign = {accountId, campaignId};
 
       BlockingCriterionsModel
-      .findOne(queryFindIpOfcampaign)
-      .exec((errQuery, blockingCriterionRecord) => {
-        if(errQuery)
-        {
-          logger.info('AccountAdsService::removeSampleBlockingIp:error ', errQuery);
-          return callback(errQuery);
-        }
-        if(!blockingCriterionRecord)
-        {
-          return callback(null);
-        }
+        .findOne(queryFindIpOfcampaign)
+        .exec((errQuery, blockingCriterionRecord) => {
+          if(errQuery)
+          {
+            logger.info('AccountAdsService::removeSampleBlockingIp:error ', errQuery);
+            return callback(errQuery);
+          }
+          if(!blockingCriterionRecord)
+          {
+            return callback(null);
+          }
 
-        GoogleAdwordsService.removeIpBlackList(adsId, campaignId, blockingCriterionRecord.sampleBlockingIp.ip, blockingCriterionRecord.sampleBlockingIp.criterionId)
-        .then(result => {
-          removeIpAndCriterionsIdForSampleBlockingIp(result, accountId, campaignId, adsId, callback);
-        }).catch(error => callback(error));
+          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, blockingCriterionRecord.sampleBlockingIp.ip, blockingCriterionRecord.sampleBlockingIp.criterionId)
+          .then(result => {
+            const accountInfo = {result, accountId, campaignId, adsId};
+            removeIpAndCriterionsIdForSampleBlockingIp(accountInfo, callback);
+          }).catch(error => callback(error));
       });
     },(err, result) => {
       if (err) {
@@ -332,26 +333,37 @@ const removeSampleBlockingIp = (adsId, accountId, campaignIds) => {
   });
 };
 
-const removeIpAndCriterionsIdForSampleBlockingIp = (result, accountId, campaignId, adsId, callback) => {
-  if(!result)
+/**
+ * 
+ * @param {{result: object, accountId: string, campaignId: string, adsId: string}} accountInfo 
+ * @param {*} callback 
+ */
+
+const removeIpAndCriterionsIdForSampleBlockingIp = (accountInfo, callback) => {
+  if(!accountInfo.result)
   {
     return callback(null);
   }
 
+  const accountId = accountInfo.accountId;
+  const campaignId = accountInfo.campaignId;
+  const adsId = accountInfo.adsId;
   const queryUpdate = {accountId, campaignId};
   const updateingData = {sampleBlockingIp: null};
 
-  BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
-    if(e)
-    {
-      logger.error('AccountAdsService::removeIpAndCriterionsIdInSampleBlockingIp:error ', e);
-      return callback(e);
-    }
-    
-    const logData = {adsId, campaignId};
-    logger.info('AccountAdsService::removeIpAndCriterionsIdInSampleBlockingIp: ', logData);
+  BlockingCriterionsModel
+    .update(queryUpdate, updateingData)
+    .exec((e) => {
+      if(e)
+      {
+        logger.error('AccountAdsService::removeIpAndCriterionsIdInSampleBlockingIp:error ', e);
+        return callback(e);
+      }
+      
+      const logData = {adsId, campaignId};
+      logger.info('AccountAdsService::removeIpAndCriterionsIdInSampleBlockingIp: ', logData);
+      return callback();
   });
-  return callback();
 };
 
 const addSampleBlockingIp = (adsId, accountId, campaignIds, ip) => {
@@ -359,7 +371,10 @@ const addSampleBlockingIp = (adsId, accountId, campaignIds, ip) => {
     Async.eachSeries(campaignIds, (campaignId, callback)=> {
       GoogleAdwordsService.addIpBlackList(adsId, campaignId, ip)
         .then((result) => {
-          addIpAndCriterionIdForSampleBlockingIp(result, accountId, campaignId, adsId, ip, callback);
+
+          const accountInfo = { result, accountId, campaignId, adsId, ip };
+
+          addIpAndCriterionIdForSampleBlockingIp(accountInfo, callback);
         })
         .catch(err => callback(err));
     }, (e, result) => {
@@ -373,23 +388,38 @@ const addSampleBlockingIp = (adsId, accountId, campaignIds, ip) => {
   });
 };
 
-const addIpAndCriterionIdForSampleBlockingIp = (result, accountId, campaignId, adsId, ip, callback) => {
-  if(!result)
+/**
+ * 
+ * @param {{result: object, accountId: string, campaignId: string, adsId: string, ip: string}} accountInfo 
+ * @param {*} callback 
+ */
+const addIpAndCriterionIdForSampleBlockingIp = (accountInfo, callback) => {
+  if(!accountInfo.result)
   {
     return callback(null);
   }
-  const criterionId = result.value[0].criterion.id;
+  const criterionId = accountInfo.result.value[0].criterion.id;
+  const ip = accountInfo.ip;
   const infoCampaign ={ip, criterionId};
-  BlockingCriterionsModel.update({accountId, campaignId},{sampleBlockingIp: infoCampaign}).exec(err=>{
-    if(err)
-    {
-      logger.info('AccountAdsService::addIpAndCriterionIdForSampleBlockingIp:error ', err);
-      return callback(err);
-    }
-    const logData = {adsId, campaignId, ip};
-    logger.info('AccountAdsService::addIpAndCriterionIdForSampleBlockingIp: ', logData);
-  });
-  callback();
+  const campaignId = accountInfo.campaignId;
+  const accountId = accountInfo.accountId;
+  const adsId = accountInfo.adsId;
+  const updateQuery = {accountId, campaignId};
+  const updateingData =  {sampleBlockingIp: infoCampaign};
+
+  BlockingCriterionsModel
+    .update(updateQuery, updateingData)
+    .exec(err=>{
+      if(err)
+      {
+        logger.info('AccountAdsService::addIpAndCriterionIdForSampleBlockingIp:error ', err);
+        return callback(err);
+      }
+
+      const logData = {adsId, campaignId, ip};
+      logger.info('AccountAdsService::addIpAndCriterionIdForSampleBlockingIp: ', logData);
+      callback();
+    });
 };
 
 module.exports = {
