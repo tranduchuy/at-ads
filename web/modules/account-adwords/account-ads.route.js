@@ -11,11 +11,12 @@ router.post('/:accountId/ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, C
 router.post('/:accountId/auto-blocking-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockIp);
 router.post('/:accountId/auto-blocking-range-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockingRangeIp);
 router.post('/:accountId/auto-blocking-3g4g', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlocking3g4g);
-router.post('/:accountId/auto-blocking-device', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockingDevices);
 router.post('/:accountId/campaigns', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.addCampaignsForAAccountAds);
 router.get('/', CheckTokenMiddleware, AccountAdsController.getAccountsAds);
 router.post('/connection-confirmation', CheckTokenMiddleware, AccountAdsController.connectionConfirmation);
 router.get('/:accountId/report/device', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getReportOnDevice);
 router.put('/:accountId/report/device',CheckTokenMiddleware , CheckAccountIdMiddleWare, AccountAdsController.setUpCampaignsByOneDevice);
+router.post('/:accountId/block-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.blockSampleIp);
+router.post('/:accountId/unblock-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.unblockSampleIp);
 
 module.exports = router;
