@@ -59,9 +59,24 @@ const addAccountAds = async (req, res, next) => {
           data: {}
         });
       })
-      .catch(error => {
+      .catch(async error => {
         const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
-        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        let isConnected = false;
+        switch (message) {
+          case ManagerCustomerMsgs.ALREADY_MANAGED_BY_THIS_MANAGER:
+            isConnected = true;
+            break;
+          case ManagerCustomerMsgs.ALREADY_INVITED_BY_THIS_MANAGER:
+            break;
+          default:
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: [message]
+            });
+        }
+
+        await AccountAdsService.createAccountAdsHaveIsConnectedStatus({userId: _id, adsId: adWordId}, isConnected);
+        logger.info('AccountAdsController::addAccountAds::success');
+        return res.status(HttpStatus.OK).json({
           messages: [message]
         });
       });
@@ -454,17 +469,16 @@ const connectionConfirmation = async(req, res, next) => {
           if(err)
           {
             logger.error('AccountAdsController::connectionConfirmation::error', err);
-            next(err);
+            return next(err);
           }
+          logger.info('AccountAdsController::connectionConfirmation::success');
+          return res.status(HttpStatus.OK).json({
+            messages: [message],
+            data: {
+              isConnected
+            }
+          });
         });
-
-      logger.info('AccountAdsController::connectionConfirmation::success');
-      return res.status(HttpStatus.OK).json({
-        messages: [message],
-        data: {
-          isConnected
-        }
-      });
     });
   }
   catch(e)
