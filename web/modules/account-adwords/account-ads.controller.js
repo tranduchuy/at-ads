@@ -746,6 +746,29 @@ const unblockSampleIp = (req, res, next) => {
   }
 };
 
+const getIpInSampleBlockIp = (req, res, next) => {
+  const info = { 
+    userId: req.adsAccount.user,
+    adsId: req.adsAccount.adsId,
+  };
+  logger.info('AccountAdsController::getIpInSampleBlockIp is called\n', info);
+  const ip = req.adsAccount.setting.sampleBlockingIp;
+  let ips = [];
+
+  if(ip)
+  {
+    ips.push(ip);
+  }
+
+  logger.info('AccountAdsController::getIpInSampleBlockIp::success\n', info);
+  return res.status(HttpStatus.OK).json({
+    messages: ['Lấy ip thành công.'],
+    data: {
+      ips
+    }
+  });
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -759,6 +782,7 @@ module.exports = {
   getReportOnDevice,
   setUpCampaignsByOneDevice,
   blockSampleIp,
-  unblockSampleIp
+  unblockSampleIp,
+  getIpInSampleBlockIp
 };
 
