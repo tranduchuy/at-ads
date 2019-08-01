@@ -448,7 +448,7 @@ const connectionConfirmation = async(req, res, next) => {
 
       const queryUpdate = { adsId: adWordId };
       const updatingData = { isConnected };
-      await AccountAdsModel
+      AccountAdsModel
         .updateMany(queryUpdate, updatingData)
         .exec(err => {
           if(err)
