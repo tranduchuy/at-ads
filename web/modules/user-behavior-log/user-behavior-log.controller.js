@@ -20,14 +20,24 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const { key, uuid} = req.cookies;
 
+    const googleUrls = global.GOOGLE_URLs;
+
     const {ip, userAgent, isPrivateBrowsing, referrer, href} = req.body;
     const hrefURL = new Url(href);
+    const referrerURL = new Url(referrer);
+    console.log(referrerURL);
+    let type = global.LOGGING_TYPES.TRACK;
+    if(googleUrls.includes(referrerURL.hostname.replace('www.', ''))){
+      type = global.LOGGING_TYPES.CLICK;
+    }
+
     const hrefQuery = queryString.parse(hrefURL.query);
     const ua = parser(userAgent);
     const data = {
       uuid,
       ip,
       referrer,
+      type,
       userAgent,
       accountKey: key,
       isPrivateBrowsing,

@@ -45,62 +45,67 @@ function detectPrivateMode(callback) {
         : off()
 }
 
-let oldHref = '';
+let ip = '';
+let isPrivateBrowsing = false;
+let oldUrl = window.document.referrer;
+const logAPI = "http://localhost:3000/api/user-behaviors/log";
+let userAgent = '';
+const intervalTime = 500; // ms
 
-const log = () =>{
-  console.log(oldHref);
-  // Check isPrivateMode
-  detectPrivateMode((isPrivateMode) => {
-    // Get IP
-    fetch("https://api.ipify.org?format=json", {
-      method: 'get'
-    }).then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        let referrer = window.document.referrer;
-        if(oldHref !== window.location.href){
-          referrer = oldHref;
-        }
-        oldHref = window.location.href;
-        const userAgent = window.navigator.userAgent;
-        const href = window.location.href;
-        const isPrivateBrowsing = isPrivateMode;
-        const info = {
-          ip,
-          href,
-          referrer,
-          userAgent,
-          isPrivateBrowsing
-        };
-        let json = JSON.stringify(info);
-        let url = "http://localhost:3000/api/user-behaviors/log";
-        fetch(url, {
-          method: 'post',
-          credentials: 'include',
-          headers: {
-            "Content-type": "application/json"
-          },
-          body: json
-        }).then(res => res.json())
-          .then(function (json) {
-
-            console.log(json.messages.join('\n'));
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
-      })
-      .catch(function (error) {
-        console.log(error.message);
-      });
+getIp = async () => {
+  const res = await fetch("https://api.ipify.org?format=json");
+  const data = await res.json();
+  ip = data.ip;
+};
+checkPrivate = async () => {
+  await detectPrivateMode((isPrivate)=>{
+    isPrivateBrowsing = isPrivate;
   });
 };
+log = async() => {
+  try{
+    if (window.location.href == oldUrl) {
+      return;
+    }
+    // set referrer
+    let referrer = oldUrl;
 
-setInterval(() => {
-  if(oldHref !== window.location.href){
-    log();
+    // assign current url to oldUrl
+    oldUrl = window.location.href;
+    const userAgent = window.navigator.userAgent;
+    const href = window.location.href;
+    const info = {
+      ip,
+      href,
+      referrer,
+      userAgent,
+      isPrivateBrowsing
+    };
+    let json = JSON.stringify(info);
+    const res = await fetch(logAPI, {
+      method: 'post',
+      credentials: 'include',
+      headers: {
+        "Content-type": "application/json"
+      },
+      body: json
+    });
+    const data = await res.json();
+    console.log(data.messages.join('\n'));
+  } catch (e) {
+    console.log(e);
   }
-}, 500);
+};
 
-log();
+init = async () => {
+  // get ip.
+  await getIp();
+  // get is Private Browsing.
+  await checkPrivate();
+  //get userAgent.
+  userAgent = window.navigator.userAgent;
 
+  setInterval(log, intervalTime);
+};
+
+init();
