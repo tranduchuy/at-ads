@@ -111,7 +111,7 @@ const resetPassword = async (request, res, next) => {
 const confirm = async (request, res, next) => {
   logger.info('UserController::confirm is called');
   try {
-    const { token } = request.query;
+    const { token } = request.body;
     const user = await UserModel.findOne({
       tokenEmailConfirm: token
     });
