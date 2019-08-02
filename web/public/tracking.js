@@ -45,62 +45,49 @@ function detectPrivateMode(callback) {
         : off()
 }
 
-let oldHref = '';
+// Check isPrivateMode
+detectPrivateMode((isPrivateMode) => {
+  // Get IP
+  fetch("https://api.ipify.org?format=json", {
+    method: 'get'
+  }).then(res => res.json())
+    .then(data => {
+      const uuid = Cookies.get('uuid');
+      const key = Cookies.get('key');
+      const ip = data.ip;
+      const referrer = window.document.referrer;
+      const userAgent = window.navigator.userAgent;
+      const href = window.location.href;
+      const isPrivateBrowsing = isPrivateMode;
+      const info = {
+        ip,
+        href,
+        referrer,
+        userAgent,
+        uuid,
+        accountKey: key,
+        isPrivateBrowsing
+      };
+      let json = JSON.stringify(info);
+      fetch("http://localhost:3000/api/user-behaviors/log", {
+        headers: {
+          "Content-type": "application/json",
+        },
+        credentials: 'include',
+        method: 'post',
+        body: json
+      }).then(res => res.json())
+        .then(function (json) {
 
-const log = () =>{
-  console.log(oldHref);
-  // Check isPrivateMode
-  detectPrivateMode((isPrivateMode) => {
-    // Get IP
-    fetch("https://api.ipify.org?format=json", {
-      method: 'get'
-    }).then(res => res.json())
-      .then(data => {
-        const ip = data.ip;
-        let referrer = window.document.referrer;
-        if(oldHref !== window.location.href){
-          referrer = oldHref;
-        }
-        oldHref = window.location.href;
-        const userAgent = window.navigator.userAgent;
-        const href = window.location.href;
-        const isPrivateBrowsing = isPrivateMode;
-        const info = {
-          ip,
-          href,
-          referrer,
-          userAgent,
-          isPrivateBrowsing
-        };
-        let json = JSON.stringify(info);
-        let url = "http://localhost:3000/api/user-behaviors/log";
-        fetch(url, {
-          method: 'post',
-          credentials: 'include',
-          headers: {
-            "Content-type": "application/json"
-          },
-          body: json
-        }).then(res => res.json())
-          .then(function (json) {
+          console.log(json.messages.join('\n'));
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    })
+    .catch(function (error) {
+      console.log(error.message);
+    });
+});
 
-            console.log(json.messages.join('\n'));
-          })
-          .catch(function (error) {
-            console.log(error);
-          });
-      })
-      .catch(function (error) {
-        console.log(error.message);
-      });
-  });
-};
-
-setInterval(() => {
-  if(oldHref !== window.location.href){
-    log();
-  }
-}, 500);
-
-log();
 

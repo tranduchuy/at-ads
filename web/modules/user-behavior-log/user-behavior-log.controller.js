@@ -18,7 +18,9 @@ const logTrackingBehavior = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const {ip, uuid, accountKey, userAgent, isPrivateBrowsing, referrer, href} = req.body;
+    const { key, uuid} = req.cookies;
+
+    const {ip, userAgent, isPrivateBrowsing, referrer, href} = req.body;
     const hrefURL = new Url(href);
     const hrefQuery = queryString.parse(hrefURL.query);
     const ua = parser(userAgent);
@@ -27,7 +29,7 @@ const logTrackingBehavior = async (req, res, next) => {
       ip,
       referrer,
       userAgent,
-      accountKey,
+      accountKey: key,
       isPrivateBrowsing,
       domain: hrefURL.origin,
       pathname: hrefURL.pathname,
@@ -50,6 +52,20 @@ const logTrackingBehavior = async (req, res, next) => {
   }
 };
 
+const getlogTrackingBehavior = async (req, res, next) => {
+  try {
+    return res.json({
+      status: HttpStatus.OK,
+      data: {},
+      messages: [messages.ResponseMessages.SUCCESS]
+    });
+  } catch (e) {
+    logger.error('UserController::logTrackingBehavior::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
-  logTrackingBehavior
+  logTrackingBehavior,
+  getlogTrackingBehavior
 };
