@@ -59,9 +59,24 @@ const addAccountAds = async (req, res, next) => {
           data: {}
         });
       })
-      .catch(error => {
+      .catch(async error => {
         const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
-        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        let isConnected = false;
+        switch (message) {
+          case ManagerCustomerMsgs.ALREADY_MANAGED_BY_THIS_MANAGER:
+            isConnected = true;
+            break;
+          case ManagerCustomerMsgs.ALREADY_INVITED_BY_THIS_MANAGER:
+            break;
+          default:
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: [message]
+            });
+        }
+
+        await AccountAdsService.createAccountAdsHaveIsConnectedStatus({userId: _id, adsId: adWordId}, isConnected);
+        logger.info('AccountAdsController::addAccountAds::success');
+        return res.status(HttpStatus.OK).json({
           messages: [message]
         });
       });
@@ -446,13 +461,24 @@ const connectionConfirmation = async(req, res, next) => {
         return next(error);
       }
 
-      logger.info('AccountAdsController::connectionConfirmation::success');
-      return res.status(HttpStatus.OK).json({
-        messages: [message],
-        data: {
-          isConnected
-        }
-      });
+      const queryUpdate = { adsId: adWordId };
+      const updatingData = { isConnected };
+      AccountAdsModel
+        .updateMany(queryUpdate, updatingData)
+        .exec(err => {
+          if(err)
+          {
+            logger.error('AccountAdsController::connectionConfirmation::error', err);
+            return next(err);
+          }
+          logger.info('AccountAdsController::connectionConfirmation::success');
+          return res.status(HttpStatus.OK).json({
+            messages: [message],
+            data: {
+              isConnected
+            }
+          });
+        });
     });
   }
   catch(e)
@@ -720,6 +746,29 @@ const unblockSampleIp = (req, res, next) => {
   }
 };
 
+const getIpInSampleBlockIp = (req, res, next) => {
+  const info = { 
+    userId: req.adsAccount.user,
+    adsId: req.adsAccount.adsId,
+  };
+  logger.info('AccountAdsController::getIpInSampleBlockIp is called\n', info);
+  const ip = req.adsAccount.setting.sampleBlockingIp;
+  let ips = [];
+
+  if(ip)
+  {
+    ips.push(ip);
+  }
+
+  logger.info('AccountAdsController::getIpInSampleBlockIp::success\n', info);
+  return res.status(HttpStatus.OK).json({
+    messages: ['Lấy ip thành công.'],
+    data: {
+      ips
+    }
+  });
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -733,6 +782,7 @@ module.exports = {
   getReportOnDevice,
   setUpCampaignsByOneDevice,
   blockSampleIp,
-  unblockSampleIp
+  unblockSampleIp,
+  getIpInSampleBlockIp
 };
 

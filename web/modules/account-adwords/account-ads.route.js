@@ -17,6 +17,7 @@ router.post('/connection-confirmation', CheckTokenMiddleware, AccountAdsControll
 router.get('/:accountId/report/device', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getReportOnDevice);
 router.put('/:accountId/report/device',CheckTokenMiddleware , CheckAccountIdMiddleWare, AccountAdsController.setUpCampaignsByOneDevice);
 router.post('/:accountId/block-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.blockSampleIp);
+router.get('/:accountId/block-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.getIpInSampleBlockIp);
 router.post('/:accountId/unblock-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.unblockSampleIp);
 
 module.exports = router;

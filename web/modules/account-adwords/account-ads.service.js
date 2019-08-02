@@ -28,6 +28,19 @@ const createAccountAds = async ({ userId, adsId }) => {
   return await newAccountAds.save();
 };
 
+const createAccountAdsHaveIsConnectedStatus = async ({ userId, adsId }, isConnected) => {
+  const key = shortid();
+  const newAccountAds = new AccountAdsModel({
+    user: userId,
+    adsId,
+    isConnected,
+    key
+  });
+
+  return await newAccountAds.save();
+};
+
+
 const checkIpIsBlackListed = (blackList, ips, ipInSampleBlockIp) => {
     if(ipInSampleBlockIp)
     {
@@ -427,6 +440,7 @@ const addIpAndCriterionIdForSampleBlockingIp = (accountInfo, callback) => {
 
 module.exports = {
   createAccountAds,
+  createAccountAdsHaveIsConnectedStatus,
   checkIpIsBlackListed,
   addIpsToBlackListOfOneCampaign,
   getAccountsAdsByUserId,
