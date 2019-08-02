@@ -3,7 +3,7 @@ const CriterionIdOfDevice = require('../../../constants/criterionIdOfDevice.cons
 
 const setUpCampaignsByOneDeviceValidationSchema = Joi.object().keys({
     device: Joi.valid([CriterionIdOfDevice.computer, CriterionIdOfDevice.connectedTv, CriterionIdOfDevice.mobile, CriterionIdOfDevice.tablet]).required(),
-    isEnable: Joi.boolean().required()
+    isEnabled: Joi.boolean().required()
 });
 
 module.exports = {

@@ -5,6 +5,7 @@ const accountAdsSchema = new Schema({
     user: String,
     adsId: String,
     key: String,
+    isConnected: {type: Boolean, default: AccountAdsConstant.isConnected},
     setting: {
         autoBlockByMaxClick: { type: Number, default: AccountAdsConstant.setting.autoBlockByMaxClick },
         autoRemoveBlocking: { type: Boolean, default: AccountAdsConstant.setting.autoRemoveBlocking },
@@ -13,18 +14,14 @@ const accountAdsSchema = new Schema({
             classC: {type: Boolean, default: AccountAdsConstant.setting.autoBlackListIpRanges},
             classD: {type: Boolean, default: AccountAdsConstant.setting.autoBlackListIpRanges},  
         },
-        customBackList: { type: Array, default: AccountAdsConstant.setting.customBackList },
+        customBlackList: { type: Array, default: AccountAdsConstant.setting.customBlackList },
         mobileNetworks: {
             viettel: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.viettel },
             mobifone: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.mobifone },
             vinafone: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.vinafone },
             vietnammobile: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.vietnammobile },
         },
-        devices: {
-            mobile: { type: Boolean, default: AccountAdsConstant.setting.devices.mobile },
-            tablet: { type: Boolean, default: AccountAdsConstant.setting.devices.tablet },
-            pc: { type: Boolean, default: AccountAdsConstant.setting.devices.pc },
-        }
+        sampleBlockingIp: {type: String, default: AccountAdsConstant.setting.sampleBlockingIp}
     }
 }, { timestamps: true });
 
