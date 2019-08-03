@@ -18,16 +18,28 @@ const logTrackingBehavior = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const {ip, uuid, accountKey, userAgent, isPrivateBrowsing, referrer, href} = req.body;
+    const { key, uuid} = req.cookies;
+
+    const googleUrls = global.GOOGLE_URLs;
+
+    const {ip, userAgent, isPrivateBrowsing, referrer, href} = req.body;
     const hrefURL = new Url(href);
+    const referrerURL = new Url(referrer);
+    console.log(referrerURL);
+    let type = global.LOGGING_TYPES.TRACK;
+    if(googleUrls.includes(referrerURL.hostname.replace('www.', ''))){
+      type = global.LOGGING_TYPES.CLICK;
+    }
+
     const hrefQuery = queryString.parse(hrefURL.query);
     const ua = parser(userAgent);
     const data = {
       uuid,
       ip,
       referrer,
+      type,
       userAgent,
-      accountKey,
+      accountKey: key,
       isPrivateBrowsing,
       domain: hrefURL.origin,
       pathname: hrefURL.pathname,
@@ -50,6 +62,20 @@ const logTrackingBehavior = async (req, res, next) => {
   }
 };
 
+const getlogTrackingBehavior = async (req, res, next) => {
+  try {
+    return res.json({
+      status: HttpStatus.OK,
+      data: {},
+      messages: [messages.ResponseMessages.SUCCESS]
+    });
+  } catch (e) {
+    logger.error('UserController::logTrackingBehavior::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
-  logTrackingBehavior
+  logTrackingBehavior,
+  getlogTrackingBehavior
 };

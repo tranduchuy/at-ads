@@ -19,8 +19,17 @@ log4js.configure('./config/log4js.json');
 const loggerApp = log4js.getLogger('app');
 
 const app = express();
-
-app.use(cors());
+const whitelist = ['http://localhost:63342', 'https://yame.vn','https://www.leflair.vn' , 'http://localhost:4200']
+const corsOptionsDelegate = function (req, callback) {
+  let corsOptions;
+  if (whitelist.indexOf(req.header('Origin')) !== -1) {
+    corsOptions = { origin: true, credentials: true } // reflect (enable) the requested origin in the CORS response
+  } else {
+    corsOptions = { origin: false } // disable CORS for this request
+  }
+  callback(null, corsOptions) // callback expects two parameters: error and options
+};
+app.use(cors(corsOptionsDelegate));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 app.use(logger('dev'));

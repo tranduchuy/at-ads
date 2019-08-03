@@ -12,6 +12,7 @@
     "cors": "^2.8.5",
     "eslint": "^5.14.1",
     "express": "^4.16.4",
+    "url-parse": "^1.4.7",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
