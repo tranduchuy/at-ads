@@ -5,6 +5,23 @@ const userBehaviorLogSchema = new Schema({
   accountKey: String,
   pathname: String,
   domain: String,
+  browserResolution: {
+    width: Number,
+    height: Number
+  },
+  displayResolution: {
+    width: Number,
+    height: Number
+  },
+  location: {
+    longitude: Number,
+    latitude: Number,
+    country_code: String,
+    country_name: String,
+    city: String,
+    postal: String,
+    state: String
+  },
   utmMedium: String,
   utmSource: String,
   utmCampaign: String,
