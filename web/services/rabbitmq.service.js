@@ -78,8 +78,27 @@ const insertAdStatHistory = (saleIds, logData, type) => {
   });*/
 };
 
+const detectSession = (logId) => {
+  /*  // type should be: VIEW or CLICK
+  connectRabbitMQ(RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE, (err, channel, conn) => {
+    if (err) {
+      console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE}`, err);
+      return;
+    }
+
+    const message = {
+      saleIds,
+      logData,
+      type
+    };
+    channel.sendToQueue(RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE, new Buffer(JSON.stringify(message)));
+    console.log(`Send queue ${RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE} message: ${JSON.stringify(message)}`);
+  });*/
+};
+
 module.exports = {
   connect: connectRabbitMQ,
   updateAdRank,
-  insertAdStatHistory
+  insertAdStatHistory,
+  detectSession
 };

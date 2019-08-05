@@ -1,13 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const blockingCriterionsSchema = new Schema({
-    accountId: String,
-    campaignId: String,
-    sampleBlockingIp: {type: Object, default: null},
-    customBlackList: {type: Array, default: []}
-}, { timestamps: true });
+const sessionsSchema = new Schema({
+    ip: String,
+    createdAt: {type: Date, default: Date()},
+    endedAt: {type: Date}
+});
 
-const SessionsModel = mongoose.model('BlockingCriterions', blockingCriterionsSchema, 'BlockingCriterions');
+const SessionsModel = mongoose.model('Sessions', sessionsSchema, 'Sessions');
 module.exports = SessionsModel;
-module.exports.Model = blockingCriterionsSchema;
+module.exports.Model = sessionsSchema;
 
