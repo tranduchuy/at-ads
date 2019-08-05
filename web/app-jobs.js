@@ -6,6 +6,8 @@ const { port } = require('./constants/appJobs.constant');
 const url = 'amqp://' + rabbitMQConfig.host + ':' + rabbitMQConfig.port;
 
 const autoBlockIpJobFn = require('./jobs/auto-block-ip');
+
+const detectSessionJobFn = require('./jobs/detect-session');
 amqp.connect(url, (error, connection) => {
   if (error) {
     console.log(error);
@@ -35,6 +37,9 @@ amqp.connect(url, (error, connection) => {
         switch (q) {
           case 'DEV_BLOCK_IP':
             autoBlockIpJobFn(msg);
+            break;
+          case 'DEV_DETECT_SESSION':
+            detectSessionJobFn(msg);
             break;
         }
       }, {
