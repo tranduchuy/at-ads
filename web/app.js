@@ -19,7 +19,7 @@ log4js.configure('./config/log4js.json');
 const loggerApp = log4js.getLogger('app');
 
 const app = express();
-const whitelist = ['http://localhost:63342', 'https://yame.vn','https://www.leflair.vn' , 'http://localhost:4200']
+const whitelist = ['http://localhost:63342', 'https://yame.vn','https://www.leflair.vn' , 'http://localhost:4200', 'http://click.appnet.edu.vn'];
 const corsOptionsDelegate = function (req, callback) {
   let corsOptions;
   if (whitelist.indexOf(req.header('Origin')) !== -1) {
