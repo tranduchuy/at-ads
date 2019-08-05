@@ -9,7 +9,7 @@ const userBehaviorLogSchema = new Schema({
     width: Number,
     height: Number
   },
-  displayResolution: {
+  screenResolution: {
     width: Number,
     height: Number
   },
@@ -22,10 +22,12 @@ const userBehaviorLogSchema = new Schema({
     postal: String,
     state: String
   },
+  keyword: String,
   utmMedium: String,
   utmSource: String,
   utmCampaign: String,
   referrer: String,
+  href: String,
   userAgent: String,
   browser: Object,
   engine: Object,
