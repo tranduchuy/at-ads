@@ -54,13 +54,13 @@ let userLocation = null;
 const intervalTime = 500; // ms
 
 let browserResolution = {
-  width: null,
-  height: null
+  width: window.outerWidth,
+  height: window.outerHeight
 };
 
 let screenResolution = {
-  width: null,
-  height: null
+  width: screen.width,
+  height: screen.height
 };
 
 getGeoIp = async () => {
@@ -87,11 +87,9 @@ log = async() => {
     oldUrl = window.location.href;
     const userAgent = window.navigator.userAgent;
     const href = window.location.href;
+
     browserResolution.width = window.outerWidth;
     browserResolution.height = window.outerHeight;
-
-    screenResolution.height = screen.height;
-    screenResolution.width = screen.width;
 
     const info = {
       ip,
