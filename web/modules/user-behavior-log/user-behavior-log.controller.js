@@ -10,6 +10,7 @@ const Url = require('url-parse');
 const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
+const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 
 const logTrackingBehavior = async (req, res, next) => {
   try {
@@ -20,15 +21,14 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const { key, uuid} = req.cookies;
 
-    const googleUrls = global.GOOGLE_URLs;
+    const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
 
-    const {ip, userAgent, isPrivateBrowsing, referrer, href} = req.body;
+    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer, href} = req.body;
     const hrefURL = new Url(href);
     const referrerURL = new Url(referrer);
-    console.log(referrerURL);
-    let type = global.LOGGING_TYPES.TRACK;
+    let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
     if(googleUrls.includes(referrerURL.hostname.replace('www.', ''))){
-      type = global.LOGGING_TYPES.CLICK;
+      type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
     }
 
     const hrefQuery = queryString.parse(hrefURL.query);
@@ -36,9 +36,13 @@ const logTrackingBehavior = async (req, res, next) => {
     const data = {
       uuid,
       ip,
+      href,
       referrer,
       type,
+      screenResolution,
+      browserResolution,
       userAgent,
+      location: location,
       accountKey: key,
       isPrivateBrowsing,
       domain: hrefURL.origin,
@@ -46,6 +50,7 @@ const logTrackingBehavior = async (req, res, next) => {
       utmCampaign: hrefQuery.utm_campaign || null,
       utmMedium: hrefQuery.utm_medium || null,
       utmSource: hrefQuery.utm_source || null,
+      keyword: hrefQuery.keyword || null,
       ...ua
     };
 
