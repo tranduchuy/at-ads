@@ -29,7 +29,7 @@ amqp.connect(url, (error, connection) => {
         durable: false
       });
 
-      channel.consume(q, function(msg) {
+      channel.consume(q, (msg) => {
         console.log(" [x] Received %s", msg.content.toString());
 
         switch (q) {
