@@ -1,4 +1,5 @@
 
+const RabbitMQService = require('../../services/rabbitmq.service');
 const messages = require("../../constants/messages");
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
@@ -25,7 +26,6 @@ const logTrackingBehavior = async (req, res, next) => {
     const {ip, userAgent, isPrivateBrowsing, referrer, href} = req.body;
     const hrefURL = new Url(href);
     const referrerURL = new Url(referrer);
-    console.log(referrerURL);
     let type = global.LOGGING_TYPES.TRACK;
     if(googleUrls.includes(referrerURL.hostname.replace('www.', ''))){
       type = global.LOGGING_TYPES.CLICK;
@@ -49,7 +49,12 @@ const logTrackingBehavior = async (req, res, next) => {
       ...ua
     };
 
-    await UserBehaviorLogService.createUserBehaviorLog(data);
+    const log = await UserBehaviorLogService.createUserBehaviorLog(data);
+
+
+    console.log('detect session');
+    // detect session
+    RabbitMQService.detectSession(log);
 
     return res.json({
       status: HttpStatus.OK,

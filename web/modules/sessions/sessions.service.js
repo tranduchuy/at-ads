@@ -1,8 +1,8 @@
 const SessionsModel = require('./sessions.model');
 
 const createSession = async ({
-                                       ip
-                                     }) => {
+                               ip
+                             }) => {
   try {
     const newSession = new SessionsModel({
       ip

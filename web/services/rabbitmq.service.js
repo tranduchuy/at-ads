@@ -1,6 +1,6 @@
-/*const amqp = require('amqplib/callback_api');
+const amqp = require('amqplib/callback_api');
 const config = require('config');
-const rabbitMQConfig = config.get('rabbitmq');
+const rabbitMQConfig = config.get('rabbitMQ');
 const RABBIT_MQ_NAMES = require('../config/rabbit-mq-channels');
 const uri = [
   'amqp://',
@@ -11,10 +11,10 @@ const uri = [
   rabbitMQConfig.host,
   ':',
   rabbitMQConfig.port
-].join('');*/
+].join('');
 
 const connectRabbitMQ = (queueName, cb) => {
-/*  console.log('rabbitMQ uri', uri);
+  console.log('rabbitMQ uri', uri);
   amqp.connect(uri, function (err, conn) {
     if (err) {
       return cb(err);
@@ -28,7 +28,7 @@ const connectRabbitMQ = (queueName, cb) => {
       ch.assertQueue(queueName, {durable: true});
       return cb(null, ch, conn);
     });
-  });*/
+  });
 };
 
 /**
@@ -78,22 +78,19 @@ const insertAdStatHistory = (saleIds, logData, type) => {
   });*/
 };
 
-const detectSession = (logId) => {
-  /*  // type should be: VIEW or CLICK
-  connectRabbitMQ(RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE, (err, channel, conn) => {
+const detectSession = (log) => {
+  connectRabbitMQ(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, (err, channel, conn) => {
     if (err) {
-      console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE}`, err);
+      console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION}`, err);
       return;
     }
 
     const message = {
-      saleIds,
-      logData,
-      type
+      log
     };
-    channel.sendToQueue(RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE, new Buffer(JSON.stringify(message)));
-    console.log(`Send queue ${RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE} message: ${JSON.stringify(message)}`);
-  });*/
+    channel.sendToQueue(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, new Buffer(JSON.stringify(message)));
+    console.log(`Send queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION} message: ${JSON.stringify(message)}`);
+  });
 };
 
 module.exports = {
