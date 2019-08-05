@@ -54,7 +54,7 @@ const logTrackingBehavior = async (req, res, next) => {
 
     console.log('detect session');
     // detect session
-    RabbitMQService.detectSession(log);
+    RabbitMQService.detectSession(log._id);
 
     return res.json({
       status: HttpStatus.OK,

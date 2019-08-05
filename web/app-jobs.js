@@ -8,46 +8,53 @@ const url = 'amqp://' + rabbitMQConfig.host + ':' + rabbitMQConfig.port;
 const autoBlockIpJobFn = require('./jobs/auto-block-ip');
 
 const detectSessionJobFn = require('./jobs/detect-session');
-amqp.connect(url, (error, connection) => {
-  if (error) {
-    console.log(error);
-    return;
-  }
-  connection.createChannel((error1, channel) => {
-    if (error1) {
-      console.log(error1);
+
+require('./database/db')(() => {
+  console.log('Connect to mongo successfully');
+
+  amqp.connect(url, (error, connection) => {
+    if (error) {
+      console.log(error);
       return;
     }
+    connection.createChannel((error1, channel) => {
+      if (error1) {
+        console.log(error1);
+        return;
+      }
 
-    console.log('RabbitMQ is waiting..');
-    const queues = [
-      'DEV_BLOCK_IP',
-      'DEV_DETECT_SESSION',
-      'DEV_REMOVE_BLOCK_IP'
-    ];
-    
-    queues.forEach(q => {
-      channel.assertQueue(q, {
-        durable: false
-      });
+      console.log('RabbitMQ is waiting..');
+      const queues = [
+        'DEV_BLOCK_IP',
+        'DEV_DETECT_SESSION',
+        'DEV_REMOVE_BLOCK_IP'
+      ];
 
-      channel.consume(q, function(msg) {
-        console.log(" [x] Received %s", msg.content.toString());
+      queues.forEach(q => {
+        channel.assertQueue(q, {
+          durable: false
+        });
 
-        switch (q) {
-          case 'DEV_BLOCK_IP':
-            autoBlockIpJobFn(msg);
-            break;
-          case 'DEV_DETECT_SESSION':
-            detectSessionJobFn(msg);
-            break;
-        }
-      }, {
+        channel.consume(q, function(msg) {
+          console.log(" [x] Received %s", msg.content.toString());
+
+          switch (q) {
+            case 'DEV_BLOCK_IP':
+              autoBlockIpJobFn(msg);
+              break;
+            case 'DEV_DETECT_SESSION':
+              detectSessionJobFn(msg);
+              break;
+          }
+        }, {
           noAck: true
         });
+      });
     });
   });
 });
+
+
 
 app.listen(port, err => {
     if (err)

@@ -78,7 +78,7 @@ const insertAdStatHistory = (saleIds, logData, type) => {
   });*/
 };
 
-const detectSession = (log) => {
+const detectSession = (logId) => {
   connectRabbitMQ(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, (err, channel, conn) => {
     if (err) {
       console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION}`, err);
@@ -86,7 +86,7 @@ const detectSession = (log) => {
     }
 
     const message = {
-      log
+      logId
     };
     channel.sendToQueue(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, new Buffer(JSON.stringify(message)));
     console.log(`Send queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION} message: ${JSON.stringify(message)}`);
