@@ -41,7 +41,7 @@ const checkSessionExpiration = (session) => {
 
 
 
-const detectSession = async (channel, data) => {
+const detectSession = async (channel, data, msg) => {
     try {
         const {logId} = data;
         const log = await getDetailLogById(logId);
@@ -91,7 +91,7 @@ const detectSession = async (channel, data) => {
 module.exports = async (channel, msg) => {
     try {
         const data = JSON.parse(msg.content.toString());
-        await detectSession(channel, data);
+        await detectSession(channel, data, msg);
     } catch (e) {
         console.log(e);
         channel.ack(msg);
