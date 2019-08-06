@@ -7,6 +7,7 @@ const config = require('config');
 const Async = require('async');
 const db = require('./database/db');
 const autoBlockIpJobFn = require('./jobs/auto-block-ip');
+const detectSessionFn = require('./jobs/detect-session');
 
 db(() => {
   console.log('Connect to mongodb successfully');
@@ -41,6 +42,9 @@ db(() => {
               switch (q) {
                 case 'DEV_BLOCK_IP':
                   await autoBlockIpJobFn(channel, msg);
+                  break;
+                case 'DEV_DETECT_SESSION':
+                  await detectSessionFn(channel, msg);
                   break;
               }
             }, {

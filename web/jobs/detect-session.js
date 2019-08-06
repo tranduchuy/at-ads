@@ -41,12 +41,13 @@ const checkSessionExpiration = (session) => {
 
 
 
-const detectSession = async (data) => {
+const detectSession = async (channel, data) => {
     try {
         const {logId} = data;
         const log = await getDetailLogById(logId);
         if (!log) {
             console.log('detectSession::detectSession::notFound. Sale not found, sale id', logId);
+            channel.ack(msg);
             return;
         }
 
@@ -78,19 +79,22 @@ const detectSession = async (data) => {
                 await session.save();
             }
         }
+        channel.ack(msg);
     } catch (e) {
+        channel.ack(msg);
         console.log('detectSession::detectSession', e);
     }
 
 
 };
 
-module.exports = async (msg) => {
+module.exports = async (channel, msg) => {
     try {
         const data = JSON.parse(msg.content.toString());
-        await detectSession(data);
+        await detectSession(channel, data);
     } catch (e) {
         console.log(e);
+        channel.ack(msg);
     }
 };
 
