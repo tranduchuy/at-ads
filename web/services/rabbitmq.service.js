@@ -46,6 +46,7 @@ const detectSession = (logId) => {
     };
     channel.sendToQueue(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, Buffer.from(JSON.stringify(message)));
     console.log(`Send queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION} message: ${JSON.stringify(message)}`);
+    conn.close();
   });
 };
 
@@ -65,11 +66,8 @@ const sendMessages  = (queue, message) => {
         chn.assertQueue(queue, {durable: true});
         chn.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
         logger.info('rabbitMQService::sendMessages: Msg was send');
-    });
-    setTimeout(() => {
         conn.close();
-        process.exit(0);
-    }, 500);
+    });
   });
 };
 
