@@ -20,16 +20,15 @@ const createSession = async ({
             uuid,
             accountKey
         });
-
         return await newSession.save();
     } catch (e) {
         console.log(e);
-        return e;
+        return null;
     }
 };
 
 
-const checkSessionExpiration = async (session) => {
+const checkSessionExpiration = (session) => {
     const searchDate = new Date();
     searchDate.setMinutes(searchDate.getMinutes() - 30);
 
@@ -92,3 +91,5 @@ module.exports = async (msg) => {
         console.log(e);
     }
 };
+
+
