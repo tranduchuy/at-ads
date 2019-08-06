@@ -102,6 +102,10 @@ const sendMessages  = (queue, message) => {
         chn.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
         logger.info('rabbitMQService::sendMessages: Msg was send');
     });
+    setTimeout(() => {
+        conn.close();
+        process.exit(0);
+    }, 500);
   });
 };
 
