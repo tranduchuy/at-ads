@@ -63,6 +63,10 @@ const detectSession = async (data) => {
             await log.save();
             await session.save();
         } else {
+            if(session && session.lastHitAt){
+                session.endedAt = session.lastHitAt;
+                await session.save();
+            }
             session = await createSession({
                 ip: log.ip,
                 uuid: log.uuid,
