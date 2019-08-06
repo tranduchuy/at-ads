@@ -1,5 +1,5 @@
 const CONFIG = {
-  hostApi: 'http://159.65.11.195:7000'
+  hostApi: 'https://api-click.appnet.edu.vn'
 };
 
 function loadCDNFile(filename, filetype) {
