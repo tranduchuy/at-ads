@@ -92,7 +92,8 @@ const getAccountsAdsByUserId = async (userId) => {
         id: account._id,
         adsId: account.adsId,
         createdAt: account.createdAt,
-        numberOfWebsites
+        numberOfWebsites,
+        key: account.key
       }
     });
     return await Promise.all(promises);

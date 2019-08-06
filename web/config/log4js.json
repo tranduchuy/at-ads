@@ -44,6 +44,13 @@
       "filename": "./logs/Utils.log",
       "category": "Utils",
       "alwaysIncludePattern": true
+    },
+    {
+      "type": "dateFile",
+      "maxLogSize": 20480,
+      "filename": "./logs/Tasks.log",
+      "category": "Tasks",
+      "alwaysIncludePattern": true
     }
   ]
 }
