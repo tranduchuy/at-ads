@@ -58,6 +58,8 @@ var ResponseMessages;
     let Website;
     (function (Website) {
         Website.ACCOUNT_ID_NOT_FOUND = 'Không tìm thấy thông tin adword';
+
+        Website.NOT_VALID = 'Domain không hợp lệ';
         let Register;
         (function (Register) {
             Register.DOMAIN_DUPLICATE = 'Domain đã tồn tại trong hệ thống';
