@@ -10,6 +10,7 @@ const Url = require('url-parse');
 const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
+const RabbitMQService = require('../../services/rabbitmq.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 
 const logTrackingBehavior = async (req, res, next) => {
@@ -55,6 +56,18 @@ const logTrackingBehavior = async (req, res, next) => {
     };
 
     await UserBehaviorLogService.createUserBehaviorLog(data);
+    
+    if(type === global.LOGGING_TYPES.CLICK)
+    {
+      const message = {
+        ip,
+        accountKey: key,
+        isPrivateBrowsing
+      };
+      
+      RabbitMQService.sendMessages("DEV_BLOCK_IP", message);
+    }
+ 
 
     return res.json({
       status: HttpStatus.OK,
