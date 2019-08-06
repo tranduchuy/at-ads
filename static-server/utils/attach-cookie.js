@@ -7,9 +7,9 @@ const attach_cookie = (path) => {
     if (req.path === path && key) {
       if(!req.cookies.uuid){
         const uuid = uuidv4();
-        res.cookie('uuid', uuid);
+        res.cookie('uuid', uuid, {domain: '.appnet.edu.vn'});
       }
-      res.cookie('key', key);
+      res.cookie('key', key, {domain: '.appnet.edu.vn'});
     }
     next();
   }
