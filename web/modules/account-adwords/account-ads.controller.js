@@ -6,8 +6,12 @@ const AccountAdsModel = require('./account-ads.model');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
+
+const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
+const Request = require('../../utils/Request');
+
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
@@ -21,6 +25,9 @@ const Async = require('async');
 const _ = require('lodash');
 const ManagerCustomerMsgs = require('../../constants/ManagerCustomerMsgs');
 const moment = require('moment');
+const { VerifyAcctachedCodeDomainsValidationSchema } = require('./validations/verify-acctached-code-domains.schema');
+
+const WebsiteModel = require('../website/website.model');
 
 const addAccountAds = async (req, res, next) => {
   logger.info('AccountAdsController::addAccountAds is called');
@@ -154,7 +161,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
     {
       logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + ' is called');
       const blackList = req.adsAccount.setting.customBlackList || [];
-      
+
       const checkIpsInBlackList = AccountAdsService.checkIpIsNotOnTheBlackList(blackList, arrAfterRemoveIdenticalElement);
 
       if(checkIpsInBlackList.length !== 0)
@@ -235,7 +242,7 @@ const autoBlockIp = (req, res, next) => {
   logger.info('AccountAdsController::autoBlockIp is called');
   try{
     const { error } = Joi.validate(req.body, AutoBlockingIpValidationSchema);
-   
+
     if (error) {
        return requestUtil.joiValidationResponse(error, res);
     }
@@ -279,7 +286,7 @@ const autoBlockingRangeIp = (req, res, next) => {
   logger.info('AccountAdsController::autoBlockingRangeIp is called');
   try{
     const { error } = Joi.validate(req.body, AutoBlockingRangeIpValidationSchema);
-   
+
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
@@ -314,7 +321,7 @@ const autoBlocking3g4g = (req, res, next) => {
   logger.info('AccountAdsController::autoBlock3g4g is called');
   try{
     const { error } = Joi.validate(req.body, AutoBlocking3g4gValidationSchema);
-   
+
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
@@ -349,7 +356,7 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
   logger.info('AccountAdsController::addCampaignsForAAccountAds is called');
   try{
     const { error } = Joi.validate(req.body, AddCampaingsValidationSchema);
-   
+
     if (error) {
        return requestUtil.joiValidationResponse(error, res);
     }
@@ -438,7 +445,7 @@ const connectionConfirmation = async(req, res, next) => {
         data: {
           isConnected: false
         }
-      }); 
+      });
     }).catch(async err => {
       const message = GoogleAdwordsService.mapManageCustomerErrorMessage(err);
       let isConnected = false;
@@ -453,7 +460,7 @@ const connectionConfirmation = async(req, res, next) => {
             messages: [message]
           });
       }
-      
+
       const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
       if(error)
       {
@@ -543,7 +550,7 @@ const getReportOnDevice = async(req, res, next) => {
 };
 
 const setUpCampaignsByOneDevice = async(req, res, next) => {
-  const info = { 
+  const info = {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
     device: req.body.device,
@@ -604,7 +611,7 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
 };
 
 const blockSampleIp = (req, res, next) => {
-  const info = { 
+  const info = {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
     ip: req.body.ip
@@ -669,7 +676,7 @@ const blockSampleIp = (req, res, next) => {
               messages: ['Thêm ip không thành công.']
             });
           }
-  
+
           logger.info('AccountAdsController::blockSampleIp::addSampleBlockingIp::success', info);
           return res.status(HttpStatus.OK).json({
             messages: ['Thêm ip thành công.']
@@ -689,7 +696,7 @@ const blockSampleIp = (req, res, next) => {
 };
 
 const unblockSampleIp = (req, res, next) => {
-  const info = { 
+  const info = {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
     ip: req.body.ip
@@ -718,7 +725,7 @@ const unblockSampleIp = (req, res, next) => {
 
     const campaignIds = req.campaignIds || [];
     const adsId = req.adsAccount.adsId;
-    const accountId= req.adsAccount._id; 
+    const accountId= req.adsAccount._id;
 
     AccountAdsService.removeSampleBlockingIp(adsId, accountId, campaignIds)
     .then(result => {
@@ -747,7 +754,7 @@ const unblockSampleIp = (req, res, next) => {
 };
 
 const getIpInSampleBlockIp = (req, res, next) => {
-  const info = { 
+  const info = {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
   };
@@ -770,7 +777,7 @@ const getIpInSampleBlockIp = (req, res, next) => {
 };
 
 const getIpsInCustomBlackList = (req, res, next) => {
-  const info = { 
+  const info = {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
   };
@@ -784,6 +791,57 @@ const getIpsInCustomBlackList = (req, res, next) => {
       ips
     }
   });
+};
+
+const verifyAcctachedCodeDomains = async (req, res, next) => {
+  logger.info('AccountAdsController::verifyAcctachedCodeDomains is called, userId:', req.user._id, '::accountId:', req.params.account_id);
+  try {
+    const { error } = Joi.validate(req.params, VerifyAcctachedCodeDomainsValidationSchema);
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { accountId } = req.params;
+
+    const adsAccount = await AccountAdsModel.findOne({_id: accountId});
+    if (!adsAccount) {
+      const result = {
+        messages: [messages.ResponseMessages.AccountAds.ACCOUNT_NOT_FOUND],
+      };
+
+      logger.info('AccountAdsController::verifyAcctachedCodeDomains::AccountAdsNotFound::userId:', req.user._id, '::accountId:', req.params.accountId);
+      return res.status(HttpStatus.NOT_FOUND).json(result);
+    }
+
+    let websites = await WebsiteModel.find({
+      accountAd: accountId
+    });
+    websites = await Promise.all(websites.map( async (website) => {
+      const html = await Request.getHTML(website.domain);
+      if(html !== null){
+        const script =  AdAccountConstant.trackingScript.replace('{accountKey}', adsAccount.key);
+        website.isValid = true;
+        website.isTracking = html.indexOf(script) !== -1 ? true : false;
+      } else {
+        website.isValid = false;
+        website.isTracking = false;
+      };
+      return await website.save();
+    }));
+    const result = {
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        websites
+      }
+    };
+
+    logger.info('WebsiteController::verifyAcctachedCodeDomains::success::userId:', req.user._id, '::accountId:', req.params.accountId);
+    return res.status(HttpStatus.OK).json(result);
+
+  } catch (e) {
+    logger.error('WebsiteController::verifyAcctachedCodeDomains::error', e);
+    return next(e);
+  }
 };
 
 module.exports = {
@@ -801,6 +859,7 @@ module.exports = {
   blockSampleIp,
   unblockSampleIp,
   getIpInSampleBlockIp,
-  getIpsInCustomBlackList
+  getIpsInCustomBlackList,
+  verifyAcctachedCodeDomains
 };
 

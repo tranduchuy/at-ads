@@ -1,4 +1,5 @@
 
+const RabbitMQService = require('../../services/rabbitmq.service');
 const messages = require("../../constants/messages");
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
@@ -54,7 +55,12 @@ const logTrackingBehavior = async (req, res, next) => {
       ...ua
     };
 
-    await UserBehaviorLogService.createUserBehaviorLog(data);
+    const log = await UserBehaviorLogService.createUserBehaviorLog(data);
+
+
+    console.log('detect session');
+    // detect session
+    RabbitMQService.detectSession(log._id);
 
     return res.json({
       status: HttpStatus.OK,

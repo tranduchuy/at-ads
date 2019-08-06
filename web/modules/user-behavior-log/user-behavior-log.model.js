@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const userBehaviorLogSchema = new Schema({
+  session: String,
   uuid: String,
   accountKey: String,
   pathname: String,

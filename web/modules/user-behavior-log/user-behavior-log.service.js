@@ -1,5 +1,6 @@
 const UserBehaviorLogModel = require('./user-behavior-log.model');
 
+
 const createUserBehaviorLog = async ({
                                        ip, utmMedium, utmSource, utmCampaign, type,
                                        referrer, userAgent, browser, engine, isPrivateBrowsing,
@@ -33,6 +34,7 @@ const createUserBehaviorLog = async ({
     });
 
     return await newUserBehaviorLog.save();
+
   } catch (e) {
     console.log(e);
     return e;

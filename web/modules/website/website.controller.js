@@ -174,6 +174,7 @@ const deleteDomain = async (req, res, next) => {
   }
 };
 
+
 module.exports = {
   addDomainForAccountAds,
   getWebsitesByAccountId,
