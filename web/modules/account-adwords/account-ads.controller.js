@@ -769,6 +769,23 @@ const getIpInSampleBlockIp = (req, res, next) => {
   });
 };
 
+const getIpsInCustomBlackList = (req, res, next) => {
+  const info = { 
+    userId: req.adsAccount.user,
+    adsId: req.adsAccount.adsId,
+  };
+  logger.info('AccountAdsController::getIpsInCustomBlackList is called\n', info);
+  const ips = req.adsAccount.setting.customBlackList;
+
+  logger.info('AccountAdsController::getIpsInCustomBlackList::success\n', info);
+  return res.status(HttpStatus.OK).json({
+    messages: ['Lấy ip thành công.'],
+    data: {
+      ips
+    }
+  });
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -783,6 +800,7 @@ module.exports = {
   setUpCampaignsByOneDevice,
   blockSampleIp,
   unblockSampleIp,
-  getIpInSampleBlockIp
+  getIpInSampleBlockIp,
+  getIpsInCustomBlackList
 };
 
