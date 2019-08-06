@@ -6,8 +6,12 @@ const AccountAdsModel = require('./account-ads.model');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
+
+const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
+const Request = require('../../utils/Request');
+
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
@@ -797,11 +801,7 @@ const verifyAcctachedCodeDomains = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-
     const { accountId } = req.params;
-
-
-    console.log(accountId);
 
     const adsAccount = await AccountAdsModel.findOne({_id: accountId});
     if (!adsAccount) {
@@ -813,18 +813,29 @@ const verifyAcctachedCodeDomains = async (req, res, next) => {
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
-    const websites = await WebsiteModel.find({
+    let websites = await WebsiteModel.find({
       accountAd: accountId
     });
-    console.log(websites);
+    websites = await Promise.all(websites.map( async (website) => {
+      const html = await Request.getHTML(website.domain);
+      if(html !== null){
+        const script =  AdAccountConstant.trackingScript.replace('{accountKey}', adsAccount.key);
+        website.isValid = true;
+        website.isTracking = html.indexOf(script) !== -1 ? true : false;
+      } else {
+        website.isValid = false;
+        website.isTracking = false;
+      };
+      return await website.save();
+    }));
     const result = {
-      messages: [messages.ResponseMessages.Website.Delete.DELETE_SUCCESS],
+      messages: [messages.ResponseMessages.SUCCESS],
       data: {
         websites
       }
     };
 
-    logger.info('WebsiteController::verifyAcctachedCodeDomains::success::userId:', req.user._id, '::code:',  code);
+    logger.info('WebsiteController::verifyAcctachedCodeDomains::success::userId:', req.user._id, '::accountId:', req.params.accountId);
     return res.status(HttpStatus.OK).json(result);
 
   } catch (e) {

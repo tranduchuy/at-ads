@@ -8,7 +8,8 @@ const websiteSchema = new Schema({
   domain: {type: String, unique: true},
   accountAd: Schema.Types.ObjectId,
   expiredAt: { type: Date, default: WebsiteConstant.expiredAt},
-  isTracking: { type: Boolean, default: false}
+  isTracking: { type: Boolean, default: false},
+  isValid: {type: Boolean, default: false}
 
 }, { timestamps: true });
 

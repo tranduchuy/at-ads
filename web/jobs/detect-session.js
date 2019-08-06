@@ -71,10 +71,12 @@ const detectSession = async (data) => {
                 uuid: log.uuid,
                 accountKey: log.accountKey
             });
-            session.lastHitAt = log.createdAt;
-            log.session = session._id;
-            await log.save();
-            await session.save();
+            if(session !== null){
+                session.lastHitAt = log.createdAt;
+                log.session = session._id;
+                await log.save();
+                await session.save();
+            }
         }
     } catch (e) {
         console.log('detectSession::detectSession', e);
