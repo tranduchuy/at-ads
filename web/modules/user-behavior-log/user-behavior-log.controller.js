@@ -11,7 +11,6 @@ const Url = require('url-parse');
 const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
-const RabbitMQService = require('../../services/rabbitmq.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 
 const logTrackingBehavior = async (req, res, next) => {
