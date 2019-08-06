@@ -63,7 +63,7 @@ const sendMessages  = (queue, message) => {
             return;
         }
         chn.assertQueue(queue, {durable: true});
-        chn.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
+        chn.sendToQueue(queue, Buffer.alloc(JSON.stringify(message)));
         logger.info('rabbitMQService::sendMessages: Msg was send');
     });
     setTimeout(() => {
