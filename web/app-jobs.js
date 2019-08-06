@@ -31,19 +31,19 @@ db(() => {
       
           queues.forEach(q => {
             channel.assertQueue(q, {
-              durable: false
+              durable: true
             });
           
-            channel.consume(q, (msg) => {
+            channel.consume(q, async msg => {
               console.log(" [x] Received %s", msg.content.toString());
       
               switch (q) {
                 case 'DEV_BLOCK_IP':
-                  autoBlockIpJobFn(msg);
+                  await autoBlockIpJobFn(channel, msg);
                   break;
               }
             }, {
-                noAck: true
+                noAck: false
               });
           });
         });

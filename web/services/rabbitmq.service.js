@@ -98,7 +98,7 @@ const sendMessages  = (queue, message) => {
             logger.error('rabbitMQService::sendMessages:error ', e);
             return;
         }
-        chn.assertQueue(queue, {durable: false});
+        chn.assertQueue(queue, {durable: true});
         chn.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
         logger.info('rabbitMQService::sendMessages: Msg was send');
     });
@@ -116,7 +116,7 @@ const addIpAndCriterionIdInAutoBlackListIp = (accountInfo, callback) => {
   const accountId = accountInfo.accountId;
   const adsId = accountInfo.adsId;
   const updateQuery = {accountId, campaignId};
-  const updateingData ={ip, criterionId};
+  const updateingData ={ip, criterionId, createdAt: new Date()};
 
   BlockingCriterionsModel
   .update(updateQuery,{$push: {autoBlackListIp: updateingData}})

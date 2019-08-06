@@ -8,10 +8,11 @@ const log4js = require('log4js');
 const logger = log4js.getLogger('Tasks');
 const moment = require('moment');
 
-module.exports = async(msg) => {
+module.exports = async(channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
     try{
         const infoAfterCatchEvent = JSON.parse(msg.content.toString());
+        const isPrivateBrowsing = infoAfterCatchEvent.isPrivateBrowsing;
         const key = infoAfterCatchEvent.accountKey;
         const ip = infoAfterCatchEvent.ip;
         const accountAds = await AccountAdsModel.findOne({key});
@@ -19,6 +20,7 @@ module.exports = async(msg) => {
         if(!accountAds)
         {
             logger.info('jobs::autoBlockIp::accountAdsNotFound.');
+            channel.ack(msg);
             return;
         }
 
@@ -32,6 +34,7 @@ module.exports = async(msg) => {
         if(ips.length!== 0)
         {
             logger.info('jobs::autoBlockIp::ipExistsInBlackList.');
+            channel.ack(msg);
             return;
         }
 
@@ -41,6 +44,7 @@ module.exports = async(msg) => {
         if(campaignsOfAccount.length === 0)
         {
             logger.info('jobs::autoBlockIp::accountAdsWithoutCampaign.');
+            channel.ack(msg);
             return;
         }
 
@@ -59,10 +63,14 @@ module.exports = async(msg) => {
 
         const maxClick = accountAds.setting.autoBlockByMaxClick;
 
-        if(maxClick === -1 || countClick < maxClick)
+        if(!isPrivateBrowsing)
         {
-            logger.info('jobs::autoBlockIp::success.');
-            return;
+            if(maxClick === -1 || countClick < maxClick)
+            {
+                logger.info('jobs::autoBlockIp::success.');
+                channel.ack(msg);
+                return;
+            }
         }
         
         const campaignIds = campaignsOfAccount.map(campaign => campaign.campaignId);
@@ -80,26 +88,29 @@ module.exports = async(msg) => {
           }, error => {
             if (error) {
               logger.error('jobs::autoBlockIp::error', error);
+            //   channel.ack(msg); // TODO: improve call google api limited.
               return;
             }
             
-            const IpInAutoBlackListIp = accountAds.setting.autoBlackListIp;
-            IpInAutoBlackListIp.push(ip);
+            const updateData = {$push: {"setting.autoBlackListIp": ip}};
 
             AccountAdsModel
-             .update({key: accountAds.key},{$set: {"setting.autoBlackListIp": IpInAutoBlackListIp}})
+             .update({key}, updateData)
              .exec(err => {
                 if(err)
                 {
                     logger.error('jobs::autoBlockIp::error', err);
+                    channel.ack(msg);
                     return;
                 }
                 logger.info('jobs::autoBlockIp::success');
+                channel.ack(msg);
                 return;
              });
           });
     }catch(e){
         logger.error('jobs::autoBlockIp::error', e);
+        channel.ack(msg);
         return;
     }
 };
