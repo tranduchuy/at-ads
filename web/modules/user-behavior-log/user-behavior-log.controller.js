@@ -57,7 +57,7 @@ const logTrackingBehavior = async (req, res, next) => {
 
     await UserBehaviorLogService.createUserBehaviorLog(data);
 
-    if(type === global.LOGGING_TYPES.CLICK)
+    if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {
       const message = {
         ip,
