@@ -1,3 +1,7 @@
+const CONFIG = {
+  hostApi: 'http://159.65.11.195:7000'
+};
+
 function loadCDNFile(filename, filetype) {
   if (filetype == "js") {
     var cssNode = document.createElement('script');
@@ -48,7 +52,7 @@ function detectPrivateMode(callback) {
 let ip = '';
 let isPrivateBrowsing = false;
 let oldUrl = window.document.referrer;
-const logAPI = "http://localhost:3000/api/user-behaviors/log";
+const logAPI = CONFIG.hostApi + "/api/user-behaviors/log";
 let userAgent = '';
 let userLocation = null;
 const intervalTime = 500; // ms
@@ -70,11 +74,13 @@ getGeoIp = async () => {
   userLocation = data;
   delete userLocation.IPv4;
 };
+
 checkPrivate = async () => {
   await detectPrivateMode((isPrivate)=>{
     isPrivateBrowsing = isPrivate;
   });
 };
+
 log = async() => {
   try{
     if (window.location.href == oldUrl) {
@@ -101,7 +107,9 @@ log = async() => {
       browserResolution,
       screenResolution
     };
+
     let json = JSON.stringify(info);
+
     const res = await fetch(logAPI, {
       method: 'post',
       credentials: 'include',
