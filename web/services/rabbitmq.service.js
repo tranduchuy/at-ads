@@ -118,8 +118,6 @@ const checkIpIsBlackListed = (blackList, ip) => {
 
 module.exports = {
   connect: connectRabbitMQ,
-  updateAdRank,
-  insertAdStatHistory,
   sendMessages,
   addIpAndCriterionIdInAutoBlackListIp,
   checkIpIsBlackListed,
