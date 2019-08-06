@@ -4,10 +4,6 @@ const BlockingCriterionsModel = require('../modules/blocking-criterions/blocking
 const log4js = require('log4js');
 const logger = log4js.getLogger('Service');
 const _ = require('lodash');
-
-/*const amqp = require('amqplib/callback_api');
-const config = require('config');
-const rabbitMQConfig = config.get('rabbitmq');
 const RABBIT_MQ_NAMES = require('../config/rabbit-mq-channels');
 const uri = [
   'amqp://',
@@ -18,10 +14,10 @@ const uri = [
   rabbitMQConfig.host,
   ':',
   rabbitMQConfig.port
-].join('');*/
+].join('');
 
 const connectRabbitMQ = (queueName, cb) => {
-/*  console.log('rabbitMQ uri', uri);
+  console.log('rabbitMQ uri', uri);
   amqp.connect(uri, function (err, conn) {
     if (err) {
       return cb(err);
@@ -32,57 +28,25 @@ const connectRabbitMQ = (queueName, cb) => {
         return cb(err);
       }
 
-      ch.assertQueue(queueName, {durable: true});
+      ch.assertQueue(queueName, {durable: false});
       return cb(null, ch, conn);
     });
-  });*/
+  });
 };
 
-/**
- *
- * @param {string[]} saleIds
- * @param {number} updateField
- */
-const updateAdRank = (saleIds, updateField) => {
-/*  // updateField should be CLICK or IMPRESSION
-  connectRabbitMQ(RABBIT_MQ_NAMES.UPDATE_AD_RANK_OF_SALES, (err, channel, conn) => {
+const detectSession = (logId) => {
+  connectRabbitMQ(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, (err, channel, conn) => {
     if (err) {
-      console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.UPDATE_AD_RANK_OF_SALES}`, err);
+      console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION}`, err);
       return;
     }
 
     const message = {
-      saleIds,
-      updateField
+      logId
     };
-
-    channel.sendToQueue(RABBIT_MQ_NAMES.UPDATE_AD_RANK_OF_SALES, new Buffer(JSON.stringify(message)));
-    console.log(`Send queue ${RABBIT_MQ_NAMES.UPDATE_AD_RANK_OF_SALES} message: ${JSON.stringify(message)}`);
-  });*/
-};
-
-/**
- *
- * @param {string[]} saleIds
- * @param {{utmSource, utmCampaign, utmMedium, browser, referrer, version, device, os}} logData
- * @param {string} type
- */
-const insertAdStatHistory = (saleIds, logData, type) => {
-/*  // type should be: VIEW or CLICK
-  connectRabbitMQ(RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE, (err, channel, conn) => {
-    if (err) {
-      console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE}`, err);
-      return;
-    }
-
-    const message = {
-      saleIds,
-      logData,
-      type
-    };
-    channel.sendToQueue(RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE, new Buffer(JSON.stringify(message)));
-    console.log(`Send queue ${RABBIT_MQ_NAMES.INSERT_VIEW_STAT_WHEN_VIEW_SALE} message: ${JSON.stringify(message)}`);
-  });*/
+    channel.sendToQueue(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, new Buffer(JSON.stringify(message)));
+    console.log(`Send queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION} message: ${JSON.stringify(message)}`);
+  });
 };
 
 const sendMessages  = (queue, message) => {
@@ -91,7 +55,7 @@ const sendMessages  = (queue, message) => {
     {
         logger.error('rabbitMQService::sendMessages:error ', err);
         return;
-    }  
+    }
     conn.createChannel((e, chn) => {
         if(e)
         {
@@ -137,9 +101,9 @@ const addIpAndCriterionIdInAutoBlackListIp = (accountInfo, callback) => {
 };
 
 /**
- * 
- * @param {customBlackList: array, autoBlackListIp: array, sampleBlockip: string} blackList 
- * @param {Array} ip 
+ *
+ * @param {{customBlackList: array, autoBlackListIp: array, sampleBlockingip: string}} blackList
+ * @param {Array} ip
  */
 const checkIpIsBlackListed = (blackList, ip) => {
   if(blackList.ipInSampleBlockIp)
@@ -158,5 +122,6 @@ module.exports = {
   insertAdStatHistory,
   sendMessages,
   addIpAndCriterionIdInAutoBlackListIp,
-  checkIpIsBlackListed
+  checkIpIsBlackListed,
+  detectSession
 };

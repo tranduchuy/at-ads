@@ -1,4 +1,5 @@
 
+const RabbitMQService = require('../../services/rabbitmq.service');
 const messages = require("../../constants/messages");
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
@@ -56,7 +57,7 @@ const logTrackingBehavior = async (req, res, next) => {
     };
 
     await UserBehaviorLogService.createUserBehaviorLog(data);
-    
+
     if(type === global.LOGGING_TYPES.CLICK)
     {
       const message = {
@@ -64,10 +65,16 @@ const logTrackingBehavior = async (req, res, next) => {
         accountKey: key,
         isPrivateBrowsing
       };
-      
+
       RabbitMQService.sendMessages("DEV_BLOCK_IP", message);
     }
- 
+
+    const log = await UserBehaviorLogService.createUserBehaviorLog(data);
+
+
+    console.log('detect session');
+    // detect session
+    RabbitMQService.detectSession(log._id);
 
     return res.json({
       status: HttpStatus.OK,
