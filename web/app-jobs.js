@@ -3,13 +3,14 @@ const express = require('express');
 const rabbitMQConfig = require('config').get('rabbitMQ');
 const app = express();
 const { queues } = require('./constants/queues-rabbitMQ.constant');
-const { port } = require('./constants/appJobs.constant');
+const config = require('config');
 const Async = require('async');
 const db = require('./database/db');
 const autoBlockIpJobFn = require('./jobs/auto-block-ip');
 
 db(() => {
   console.log('Connect to mongodb successfully');
+  const port = config.get('appJob').port;
   app.listen(port, err => {
       if (err)
           return console.error(err);
