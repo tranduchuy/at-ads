@@ -50,12 +50,25 @@ let isPrivateBrowsing = false;
 let oldUrl = window.document.referrer;
 const logAPI = "http://localhost:3000/api/user-behaviors/log";
 let userAgent = '';
+let userLocation = null;
 const intervalTime = 500; // ms
 
-getIp = async () => {
-  const res = await fetch("https://api.ipify.org?format=json");
+let browserResolution = {
+  width: window.outerWidth,
+  height: window.outerHeight
+};
+
+let screenResolution = {
+  width: screen.width,
+  height: screen.height
+};
+
+getGeoIp = async () => {
+  const res = await fetch("https://geoip-db.com/json/");
   const data = await res.json();
-  ip = data.ip;
+  ip = data.IPv4;
+  userLocation = data;
+  delete userLocation.IPv4;
 };
 checkPrivate = async () => {
   await detectPrivateMode((isPrivate)=>{
@@ -74,12 +87,19 @@ log = async() => {
     oldUrl = window.location.href;
     const userAgent = window.navigator.userAgent;
     const href = window.location.href;
+
+    browserResolution.width = window.outerWidth;
+    browserResolution.height = window.outerHeight;
+
     const info = {
       ip,
       href,
+      location: userLocation,
       referrer,
       userAgent,
-      isPrivateBrowsing
+      isPrivateBrowsing,
+      browserResolution,
+      screenResolution
     };
     let json = JSON.stringify(info);
     const res = await fetch(logAPI, {
@@ -99,7 +119,7 @@ log = async() => {
 
 init = async () => {
   // get ip.
-  await getIp();
+  await getGeoIp();
   // get is Private Browsing.
   await checkPrivate();
   //get userAgent.
