@@ -28,7 +28,7 @@ const connectRabbitMQ = (queueName, cb) => {
         return cb(err);
       }
 
-      ch.assertQueue(queueName, {durable: false});
+      ch.assertQueue(queueName, {durable: true});
       return cb(null, ch, conn);
     });
   });
