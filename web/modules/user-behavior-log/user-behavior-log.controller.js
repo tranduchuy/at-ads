@@ -11,11 +11,28 @@ const Url = require('url-parse');
 const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
+
+const WebsiteService = require('../website/website.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 
 const logTrackingBehavior = async (req, res, next) => {
   try {
+    const href = req.body.href;
+    const hrefURL = new Url(href);
+    const domains = await WebsiteService.getValidDomains();
+
+    const hrefOrigin = hrefURL.origin;
+
+    if(domains.indexOf(hrefOrigin) === -1){
+      return res.json({
+        status: HttpStatus.UNAUTHORIZED,
+        data: {},
+        messages: [messages.ResponseMessages.UNAUTHORIZED]
+      });
+    }
+
     const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
+
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
@@ -29,8 +46,7 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
 
-    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer, href} = req.body;
-    const hrefURL = new Url(href);
+    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer} = req.body;
     const referrerURL = new Url(referrer);
     let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
     if(googleUrls.includes(referrerURL.hostname.replace('www.', ''))){
@@ -61,7 +77,6 @@ const logTrackingBehavior = async (req, res, next) => {
       ...ua
     };
 
-    await UserBehaviorLogService.createUserBehaviorLog(data);
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {

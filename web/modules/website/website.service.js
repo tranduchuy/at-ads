@@ -46,8 +46,19 @@ const isOwnDomain = async (accountId, userId) => {
   return account.user === userId.toString();
 };
 
+const getValidDomains = async ()=> {
+  const websites = await WebsiteModel.find({
+    isValid: true
+  });
+  const domains = websites.map(website => {
+    return website.domain;
+  });
+  return domains;
+};
+
 module.exports = {
   createDomain,
   getWebsitesByAccountId,
-  isOwnDomain
+  isOwnDomain,
+  getValidDomains
 };

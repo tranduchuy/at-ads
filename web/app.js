@@ -19,18 +19,9 @@ log4js.configure('./config/log4js.json');
 const loggerApp = log4js.getLogger('app');
 
 const app = express();
-const whitelist = [
-  'http://localhost:4200', 
-  'http://click.appnet.edu.vn',
-  'https://hecta.vn'
-];
 const corsOptionsDelegate = function (req, callback) {
   let corsOptions;
-  if (whitelist.indexOf(req.header('Origin')) !== -1) {
-    corsOptions = { origin: true, credentials: true } // reflect (enable) the requested origin in the CORS response
-  } else {
-    corsOptions = { origin: false } // disable CORS for this request
-  }
+  corsOptions = { origin: true, credentials: true }; // reflect (enable) the requested origin in the CORS response
   callback(null, corsOptions) // callback expects two parameters: error and options
 };
 app.use(cors(corsOptionsDelegate));
