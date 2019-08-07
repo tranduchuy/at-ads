@@ -12,12 +12,16 @@ const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
 
+
+const adAccountModel = require('../account-adwords/account-ads.model');
 const WebsiteService = require('../website/website.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 
 const logTrackingBehavior = async (req, res, next) => {
   try {
     const href = req.body.href;
+    let { key, uuid} = req.cookies;
+
     const hrefURL = new Url(href);
     const domains = await WebsiteService.getValidDomains();
 
@@ -31,6 +35,19 @@ const logTrackingBehavior = async (req, res, next) => {
       });
     }
 
+    const accountOfKey = await adAccountModel.findOne({
+      key: key
+    });
+
+    console.log(accountOfKey);
+
+    if(!accountOfKey){
+      key = '';
+    }
+
+    console.log(key);
+
+
     const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
 
     if (error) {
@@ -42,8 +59,6 @@ const logTrackingBehavior = async (req, res, next) => {
     if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
       localIp = localIp.substr(7);
     }
-    const { key, uuid} = req.cookies;
-
     const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
 
     const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer} = req.body;
