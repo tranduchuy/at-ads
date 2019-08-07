@@ -40,7 +40,8 @@ const userBehaviorLogSchema = new Schema({
   cpu: Object,
   type: Number,
   isPrivateBrowsing: {type: Boolean, default: false},
-  createdAt: {type: Date, default: Date()}
+  isSpam: {type: Boolean, default: false},
+  createdAt: {type: Date, default: Date.now()}
 });
 
 const UserBehaviorLogSchema = mongoose.model('UserBehaviorLog', userBehaviorLogSchema, 'UserBehaviorLogs');

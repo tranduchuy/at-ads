@@ -15,6 +15,7 @@ module.exports = async(channel, msg) => {
         const isPrivateBrowsing = infoAfterCatchEvent.isPrivateBrowsing;
         const key = infoAfterCatchEvent.accountKey;
         const ip = infoAfterCatchEvent.ip;
+        const id = infoAfterCatchEvent.id;
         const accountAds = await AccountAdsModel.findOne({key});
 
         if(!accountAds)
@@ -77,8 +78,12 @@ module.exports = async(channel, msg) => {
         const adsId = accountAds.adsId;
         const accountId = accountAds._id;
 
+        const queryUpdate = {_id: id};
+        const dataUpdate = {$set: {isSpam: true}};
+
+        const resultUpdate = await UserBehaviorLogsModel.updateOne(queryUpdate, dataUpdate);
+
         Async.eachSeries(campaignIds, (campaignId, callback)=> {
-            console.log(campaignId + '\n\n\n\n\n');
             GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
               .then((result) => {
                 const accountInfo = { result, accountId, campaignId, adsId, ip };

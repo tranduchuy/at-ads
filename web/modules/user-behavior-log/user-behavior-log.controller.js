@@ -16,6 +16,8 @@ const UserBehaviorLogService = require('./user-behavior-log.service');
 const adAccountModel = require('../account-adwords/account-ads.model');
 const WebsiteService = require('../website/website.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
+const Config = require('config');
+const rabbitChannels = Config.get('rabbitChannels');
 
 const logTrackingBehavior = async (req, res, next) => {
   try {
@@ -92,21 +94,19 @@ const logTrackingBehavior = async (req, res, next) => {
       ...ua
     };
 
+    const log = await UserBehaviorLogService.createUserBehaviorLog(data);
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {
       const message = {
         ip,
+        id: log._id,
         accountKey: key,
         isPrivateBrowsing
       };
 
-      RabbitMQService.sendMessages("DEV_BLOCK_IP", message);
+      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, message);
     }
-
-    const log = await UserBehaviorLogService.createUserBehaviorLog(data);
-
-
     console.log('detect session');
     // detect session
     RabbitMQService.detectSession(log._id);

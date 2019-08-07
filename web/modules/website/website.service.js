@@ -47,9 +47,7 @@ const isOwnDomain = async (accountId, userId) => {
 };
 
 const getValidDomains = async ()=> {
-  const websites = await WebsiteModel.find({
-    isValid: true
-  });
+  const websites = await WebsiteModel.find();
   const domains = websites.map(website => {
     return website.domain;
   });

@@ -8,7 +8,6 @@ const cors = require('cors');
 const HttpStatus = require('http-status-codes');
 const fs = require('fs');
 
-
 // create logs folder
 if (!fs.existsSync('./logs')) {
   fs.mkdirSync('./logs');
