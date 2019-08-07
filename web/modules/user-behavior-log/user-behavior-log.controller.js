@@ -13,7 +13,7 @@ const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
 
 
-const adAccountModel = require('../account-adwords/account-ads.model');
+const AdAccountModel = require('../account-adwords/account-ads.model');
 const WebsiteService = require('../website/website.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 const Config = require('config');
@@ -37,7 +37,7 @@ const logTrackingBehavior = async (req, res, next) => {
       });
     }
 
-    const accountOfKey = await adAccountModel.findOne({
+    const accountOfKey = await AdAccountModel.findOne({
       key: key
     });
 
