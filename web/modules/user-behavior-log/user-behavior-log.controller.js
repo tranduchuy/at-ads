@@ -41,8 +41,6 @@ const logTrackingBehavior = async (req, res, next) => {
       key: key
     });
 
-    console.log(accountOfKey);
-
     if(!accountOfKey){
       key = '';
     }
