@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ResponseMessages;
 (function (ResponseMessages) {
     ResponseMessages.SUCCESS = 'Thành công';
+    ResponseMessages.UNAUTHORIZED = 'Không hợp lệ';
     ResponseMessages.INVALID_ID = 'ID không hợp lệ';
     let User;
     (function (User) {

@@ -1,10 +1,11 @@
 const amqp = require('amqplib/callback_api');
+const config = require('config');
 const rabbitMQConfig = require('config').get('rabbitMQ');
 const BlockingCriterionsModel = require('../modules/blocking-criterions/blocking-criterions.model');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Service');
 const _ = require('lodash');
-const RABBIT_MQ_NAMES = require('../config/rabbit-mq-channels');
+const RABBIT_MQ_NAMES = config.get('rabbitChannels');
 const uri = [
   'amqp://',
   rabbitMQConfig.username,
@@ -35,17 +36,17 @@ const connectRabbitMQ = (queueName, cb) => {
 };
 
 const detectSession = (logId) => {
-  connectRabbitMQ(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, (err, channel, conn) => {
+  connectRabbitMQ(RABBIT_MQ_NAMES.DETECT_SESSION, (err, channel, conn) => {
     if (err) {
-      console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION}`, err);
+      console.error(`Cannot connect queue ${RABBIT_MQ_NAMES.DETECT_SESSION}`, err);
       return;
     }
 
     const message = {
       logId
     };
-    channel.sendToQueue(RABBIT_MQ_NAMES.DEV_DETECT_SESSION, Buffer.from(JSON.stringify(message)));
-    console.log(`Send queue ${RABBIT_MQ_NAMES.DEV_DETECT_SESSION} message: ${JSON.stringify(message)}`);
+    channel.sendToQueue(RABBIT_MQ_NAMES.DETECT_SESSION, Buffer.from(JSON.stringify(message)));
+    console.log(`Send queue ${RABBIT_MQ_NAMES.DETECT_SESSION} message: ${JSON.stringify(message)}`);
     setTimeout(() => {
       conn.close();
     }, 500); 

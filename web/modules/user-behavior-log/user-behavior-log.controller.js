@@ -11,21 +11,44 @@ const Url = require('url-parse');
 const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
+
+const WebsiteService = require('../website/website.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
+const Config = require('config');
+const rabbitChannels = Config.get('rabbitChannels');
 
 const logTrackingBehavior = async (req, res, next) => {
   try {
+    const href = req.body.href;
+    const hrefURL = new Url(href);
+    const domains = await WebsiteService.getValidDomains();
+
+    const hrefOrigin = hrefURL.origin;
+
+    if(domains.indexOf(hrefOrigin) === -1){
+      return res.json({
+        status: HttpStatus.UNAUTHORIZED,
+        data: {},
+        messages: [messages.ResponseMessages.UNAUTHORIZED]
+      });
+    }
+
     const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
+
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
 
+    let localIp = req.ip; // trust proxy sets ip to the remote client (not to the ip of the last reverse proxy server)
+
+    if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
+      localIp = localIp.substr(7);
+    }
     const { key, uuid} = req.cookies;
 
     const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
 
-    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer, href} = req.body;
-    const hrefURL = new Url(href);
+    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer} = req.body;
     const referrerURL = new Url(referrer);
     let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
     if(googleUrls.includes(referrerURL.hostname.replace('www.', ''))){
@@ -45,6 +68,7 @@ const logTrackingBehavior = async (req, res, next) => {
       userAgent,
       location: location,
       accountKey: key,
+      localIp,
       isPrivateBrowsing,
       domain: hrefURL.origin,
       pathname: hrefURL.pathname,
@@ -66,9 +90,8 @@ const logTrackingBehavior = async (req, res, next) => {
         isPrivateBrowsing
       };
 
-      RabbitMQService.sendMessages("DEV_BLOCK_IP", message);
+      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, message);
     }
-
     console.log('detect session');
     // detect session
     RabbitMQService.detectSession(log._id);
