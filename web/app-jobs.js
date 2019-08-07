@@ -1,13 +1,13 @@
 const amqp = require('amqplib/callback_api');
 const express = require('express');
 const app = express();
-const { queues } = require('./constants/queues-rabbitMQ.constant');
 const config = require('config');
 const db = require('./database/db');
 
 // RabbitMQ's config
 const rabbitMQConfig = config.get('rabbitMQ');
 const rabbitChannels = config.get('rabbitChannels');
+const queues = Object.values(rabbitChannels);
 
 // Job functions
 const autoBlockIpJobFn = require('./jobs/auto-block-ip');
@@ -41,7 +41,7 @@ db(() => {
             });
           
             channel.consume(q, async msg => {
-              console.log(" [x] Received %s", msg.content.toString());
+              console.log(q, " [x] Received %s", msg.content.toString());
       
               switch (q) {
                 case rabbitChannels.BLOCK_IP:
