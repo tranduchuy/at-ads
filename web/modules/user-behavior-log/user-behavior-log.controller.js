@@ -20,6 +20,11 @@ const logTrackingBehavior = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
+    let localIp = req.ip; // trust proxy sets ip to the remote client (not to the ip of the last reverse proxy server)
+
+    if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
+      localIp = localIp.substr(7);
+    }
     const { key, uuid} = req.cookies;
 
     const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
@@ -45,6 +50,7 @@ const logTrackingBehavior = async (req, res, next) => {
       userAgent,
       location: location,
       accountKey: key,
+      localIp,
       isPrivateBrowsing,
       domain: hrefURL.origin,
       pathname: hrefURL.pathname,

@@ -5,7 +5,7 @@ const createUserBehaviorLog = async ({
                                        ip, utmMedium, utmSource, utmCampaign, type,
                                        referrer, userAgent, browser, engine, isPrivateBrowsing,
                                        device, os, cpu, domain, pathname, uuid, accountKey, location,
-                                       browserResolution, screenResolution, keyword, href
+                                       browserResolution, screenResolution, keyword, href, localIp
                                      }) => {
   try {
     const newUserBehaviorLog = new UserBehaviorLogModel({
@@ -15,6 +15,7 @@ const createUserBehaviorLog = async ({
       href,
       ip,
       referrer,
+      localIp,
       userAgent,
       location,
       domain,
