@@ -31,7 +31,8 @@ const createUserBehaviorLog = async ({
       engine: engine || null,
       device: device || null,
       os: os || null,
-      cpu: cpu || null
+      cpu: cpu || null,
+      createdAt: new Date()
     });
 
     return await newUserBehaviorLog.save();

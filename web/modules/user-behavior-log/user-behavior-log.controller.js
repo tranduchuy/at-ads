@@ -77,6 +77,7 @@ const logTrackingBehavior = async (req, res, next) => {
     }
 
     const log = await UserBehaviorLogService.createUserBehaviorLog(data);
+    logger.info('UserController::logTrackingBehavior::success', log._id);
     console.log('detect session');
     // detect session
     RabbitMQService.detectSession(log._id);
