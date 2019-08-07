@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { SPAMCLICK } = require('./user-behavior-log.constant');
 const Schema = mongoose.Schema;
 const userBehaviorLogSchema = new Schema({
   session: String,
@@ -40,6 +41,7 @@ const userBehaviorLogSchema = new Schema({
   cpu: Object,
   type: Number,
   isPrivateBrowsing: {type: Boolean, default: false},
+  isSpamClick: {type: Number, default: SPAMCLICK.NO},
   createdAt: {type: Date, default: Date.now()}
 });
 

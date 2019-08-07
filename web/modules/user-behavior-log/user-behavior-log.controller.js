@@ -63,21 +63,19 @@ const logTrackingBehavior = async (req, res, next) => {
       ...ua
     };
 
-    await UserBehaviorLogService.createUserBehaviorLog(data);
+    const log = await UserBehaviorLogService.createUserBehaviorLog(data);
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {
       const message = {
         ip,
+        id: log._id,
         accountKey: key,
         isPrivateBrowsing
       };
 
       RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, message);
     }
-
-    const log = await UserBehaviorLogService.createUserBehaviorLog(data);
-    logger.info('UserController::logTrackingBehavior::success', log._id);
     console.log('detect session');
     // detect session
     RabbitMQService.detectSession(log._id);
