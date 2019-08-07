@@ -23,6 +23,8 @@ const whitelist = [
   'http://localhost:4200',
   'http://192.168.1.133:4200',
   'http://click.appnet.edu.vn',
+  'https://baohanhnguyenkim.com/',
+  'http://baohanhnguyenkim.com/',
   'https://hecta.vn'
 ];
 const corsOptionsDelegate = function (req, callback) {
