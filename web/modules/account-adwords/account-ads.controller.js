@@ -20,6 +20,7 @@ const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-bloc
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const { sampleBlockingIpValidationSchema } = require('./validations/sample-blocking-ip.schema');
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
+const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
@@ -844,6 +845,27 @@ const verifyAcctachedCodeDomains = async (req, res, next) => {
   }
 };
 
+const getReportForAccount = (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId:  req.adsAccount.adsId
+  }
+  logger.info('WebsiteController::getReportForAccount::is called\n', info);
+  try{
+    const {from, to} = req.query;
+
+    logger.info('AccountAdsController::getReportForAccount::success\n', info);
+    return res.status(HttpStatus.OK).json({
+      from,
+      to  
+    });
+
+  }catch(e){
+    logger.error('WebsiteController::getReportForAccount::error', e, '\n', info);
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -860,6 +882,7 @@ module.exports = {
   unblockSampleIp,
   getIpInSampleBlockIp,
   getIpsInCustomBlackList,
-  verifyAcctachedCodeDomains
+  verifyAcctachedCodeDomains,
+  getReportForAccount
 };
 
