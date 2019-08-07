@@ -786,6 +786,44 @@ const getIpsInCustomBlackList = (req, res, next) => {
   });
 };
 
+const getCampaignsInDB = (req, res, next) => {
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  }
+  logger.info('AccountAdsController::getCampaignsInDB is called\n', info);
+
+  try{
+    const accountId = req.adsAccount._id;
+    BlockingCriterionsModel.find({accountId})
+    .exec((err, campaigns) => {
+      if(err)
+      {
+        logger.error('AccountAdsController::getCampaignsInDB::error', err, '\n', info);
+        return next(err);
+      }
+
+      let campaignIds = [];
+
+      if(campaigns.length !== 0)
+      {
+        campaignIds = campaigns.map(campaign => campaign.campaignId);
+      }
+      
+      logger.info('AccountAdsController::getCampaignsInDB::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ['Lấy chiến dịch thành công.'],
+        data: {
+          campaignIds
+        }
+      });
+    });
+  }catch(e){
+    logger.error('AccountAdsController::getCampaignsInDB::error', e, '\n', info);
+    next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -801,6 +839,7 @@ module.exports = {
   blockSampleIp,
   unblockSampleIp,
   getIpInSampleBlockIp,
-  getIpsInCustomBlackList
+  getIpsInCustomBlackList,
+  getCampaignsInDB
 };
 
