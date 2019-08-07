@@ -20,7 +20,8 @@ const loggerApp = log4js.getLogger('app');
 
 const app = express();
 const whitelist = [
-  'http://localhost:4200', 
+  'http://localhost:4200',
+  'http://192.168.1.133:4200',
   'http://click.appnet.edu.vn',
   'https://hecta.vn'
 ];

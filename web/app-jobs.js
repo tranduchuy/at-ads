@@ -1,11 +1,15 @@
 const amqp = require('amqplib/callback_api');
 const express = require('express');
-const rabbitMQConfig = require('config').get('rabbitMQ');
 const app = express();
 const { queues } = require('./constants/queues-rabbitMQ.constant');
 const config = require('config');
-const Async = require('async');
 const db = require('./database/db');
+
+// RabbitMQ's config
+const rabbitMQConfig = config.get('rabbitMQ');
+const rabbitChannels = config.get('rabbitChannels');
+
+// Job functions
 const autoBlockIpJobFn = require('./jobs/auto-block-ip');
 const detectSessionFn = require('./jobs/detect-session');
 
@@ -40,10 +44,10 @@ db(() => {
               console.log(" [x] Received %s", msg.content.toString());
       
               switch (q) {
-                case 'DEV_BLOCK_IP':
+                case rabbitChannels.BLOCK_IP:
                   await autoBlockIpJobFn(channel, msg);
                   break;
-                case 'DEV_DETECT_SESSION':
+                case rabbitChannels.DETECT_SESSION:
                   await detectSessionFn(channel, msg);
                   break;
               }
