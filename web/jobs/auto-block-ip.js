@@ -7,6 +7,7 @@ const Async = require('async');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Tasks');
 const moment = require('moment');
+const { SPAMCLICK } = require('../modules/user-behavior-log/user-behavior-log.constant');
 
 module.exports = async(channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
@@ -15,6 +16,7 @@ module.exports = async(channel, msg) => {
         const isPrivateBrowsing = infoAfterCatchEvent.isPrivateBrowsing;
         const key = infoAfterCatchEvent.accountKey;
         const ip = infoAfterCatchEvent.ip;
+        const id = infoAfterCatchEvent.id;
         const accountAds = await AccountAdsModel.findOne({key});
 
         if(!accountAds)
@@ -77,8 +79,12 @@ module.exports = async(channel, msg) => {
         const adsId = accountAds.adsId;
         const accountId = accountAds._id;
 
+        const queryUpdate = {_id: id};
+        const dataUpdate = {$set: {isSpamClick: SPAMCLICK.YES}};
+
+        const resultUpdate = await UserBehaviorLogsModel.updateOne(queryUpdate, dataUpdate);
+
         Async.eachSeries(campaignIds, (campaignId, callback)=> {
-            console.log(campaignId + '\n\n\n\n\n');
             GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
               .then((result) => {
                 const accountInfo = { result, accountId, campaignId, adsId, ip };
