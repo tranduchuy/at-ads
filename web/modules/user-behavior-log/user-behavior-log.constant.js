@@ -207,13 +207,7 @@ const GOOGLE_URLs = [
   "google.co.zw"
 ];
 
-const SPAMCLICK = {
-  YES: 1,
-  NO: 2
-}
-
 module.exports = {
   LOGGING_TYPES,
-  GOOGLE_URLs,
-  SPAMCLICK
+  GOOGLE_URLs
 };

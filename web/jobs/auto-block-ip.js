@@ -7,7 +7,6 @@ const Async = require('async');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Tasks');
 const moment = require('moment');
-const { SPAMCLICK } = require('../modules/user-behavior-log/user-behavior-log.constant');
 
 module.exports = async(channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
@@ -80,7 +79,7 @@ module.exports = async(channel, msg) => {
         const accountId = accountAds._id;
 
         const queryUpdate = {_id: id};
-        const dataUpdate = {$set: {isSpamClick: SPAMCLICK.YES}};
+        const dataUpdate = {$set: {isSpam: true}};
 
         const resultUpdate = await UserBehaviorLogsModel.updateOne(queryUpdate, dataUpdate);
 
