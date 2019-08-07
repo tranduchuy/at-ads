@@ -82,10 +82,13 @@ const addAccountAds = async (req, res, next) => {
             });
         }
 
-        await AccountAdsService.createAccountAdsHaveIsConnectedStatus({userId: _id, adsId: adWordId}, isConnected);
+        const account = await AccountAdsService.createAccountAdsHaveIsConnectedStatus({userId: _id, adsId: adWordId}, isConnected);
         logger.info('AccountAdsController::addAccountAds::success');
         return res.status(HttpStatus.OK).json({
-          messages: [message]
+          messages: [message],
+          data: {
+            account
+          }
         });
       });
   } catch (e) {

@@ -36,6 +36,7 @@ const userBehaviorLogSchema = new Schema({
   os: Object,
   time: Object,
   ip: Object,
+  localIp: String,
   cpu: Object,
   type: Number,
   isPrivateBrowsing: {type: Boolean, default: false},
