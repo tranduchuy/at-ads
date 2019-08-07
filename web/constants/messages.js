@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ResponseMessages;
 (function (ResponseMessages) {
     ResponseMessages.SUCCESS = 'Thành công';
+    ResponseMessages.UNAUTHORIZED = 'Không hợp lệ';
     ResponseMessages.INVALID_ID = 'ID không hợp lệ';
     let User;
     (function (User) {
@@ -58,6 +59,8 @@ var ResponseMessages;
     let Website;
     (function (Website) {
         Website.ACCOUNT_ID_NOT_FOUND = 'Không tìm thấy thông tin adword';
+
+        Website.NOT_VALID = 'Domain không hợp lệ';
         let Register;
         (function (Register) {
             Register.DOMAIN_DUPLICATE = 'Domain đã tồn tại trong hệ thống';

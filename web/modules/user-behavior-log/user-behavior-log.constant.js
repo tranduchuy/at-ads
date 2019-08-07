@@ -207,7 +207,6 @@ const GOOGLE_URLs = [
   "google.co.zw"
 ];
 
-
 module.exports = {
   LOGGING_TYPES,
   GOOGLE_URLs

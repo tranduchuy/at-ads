@@ -1,15 +1,21 @@
 const amqp = require('amqplib/callback_api');
 const express = require('express');
-const rabbitMQConfig = require('config').get('rabbitMQ');
 const app = express();
-const { queues } = require('./constants/queues-rabbitMQ.constant');
-const { port } = require('./constants/appJobs.constant');
-const Async = require('async');
+const config = require('config');
 const db = require('./database/db');
+
+// RabbitMQ's config
+const rabbitMQConfig = config.get('rabbitMQ');
+const rabbitChannels = config.get('rabbitChannels');
+const queues = Object.values(rabbitChannels);
+
+// Job functions
 const autoBlockIpJobFn = require('./jobs/auto-block-ip');
+const detectSessionFn = require('./jobs/detect-session');
 
 db(() => {
   console.log('Connect to mongodb successfully');
+  const port = config.get('appJob').port;
   app.listen(port, err => {
       if (err)
           return console.error(err);
@@ -35,11 +41,14 @@ db(() => {
             });
           
             channel.consume(q, async msg => {
-              console.log(" [x] Received %s", msg.content.toString());
+              console.log(q, " [x] Received %s", msg.content.toString());
       
               switch (q) {
-                case 'DEV_BLOCK_IP':
+                case rabbitChannels.BLOCK_IP:
                   await autoBlockIpJobFn(channel, msg);
+                  break;
+                case rabbitChannels.DETECT_SESSION:
+                  await detectSessionFn(channel, msg);
                   break;
               }
             }, {

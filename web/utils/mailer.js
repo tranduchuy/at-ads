@@ -22,7 +22,7 @@ const Mailer = {
       from: 'snowyflowervietnam.com@gmail.com',
       to: email,
       subject: "Hecta VN - Xác nhận đăng kí",
-      text: "http://localhost:3000/account-confirm/" + token
+      text: "http://click.appnet.edu.vn/#/account-confirm/" + token
     };
 
     transporter.sendMail(mailOptions, function (error, info) {

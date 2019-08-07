@@ -21,5 +21,6 @@ router.put('/:accountId/report/device',CheckTokenMiddleware , CheckAccountIdMidd
 router.post('/:accountId/block-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.blockSampleIp);
 router.get('/:accountId/block-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.getIpInSampleBlockIp);
 router.post('/:accountId/unblock-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.unblockSampleIp);
+router.get('/:accountId/verify-acctached-code-domains', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.verifyAcctachedCodeDomains);
 
 module.exports = router;

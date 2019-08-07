@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const userBehaviorLogSchema = new Schema({
+  session: String,
   uuid: String,
   accountKey: String,
   pathname: String,
@@ -35,9 +36,11 @@ const userBehaviorLogSchema = new Schema({
   os: Object,
   time: Object,
   ip: Object,
+  localIp: String,
   cpu: Object,
   type: Number,
   isPrivateBrowsing: {type: Boolean, default: false},
+  isSpam: {type: Boolean, default: false},
   createdAt: {type: Date, default: Date.now()}
 });
 

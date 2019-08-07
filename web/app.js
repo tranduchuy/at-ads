@@ -8,7 +8,6 @@ const cors = require('cors');
 const HttpStatus = require('http-status-codes');
 const fs = require('fs');
 
-
 // create logs folder
 if (!fs.existsSync('./logs')) {
   fs.mkdirSync('./logs');
@@ -19,14 +18,9 @@ log4js.configure('./config/log4js.json');
 const loggerApp = log4js.getLogger('app');
 
 const app = express();
-const whitelist = ['http://localhost:63342', 'https://yame.vn','https://www.leflair.vn' , 'http://localhost:4200', 'http://click.appnet.edu.vn'];
 const corsOptionsDelegate = function (req, callback) {
   let corsOptions;
-  if (whitelist.indexOf(req.header('Origin')) !== -1) {
-    corsOptions = { origin: true, credentials: true } // reflect (enable) the requested origin in the CORS response
-  } else {
-    corsOptions = { origin: false } // disable CORS for this request
-  }
+  corsOptions = { origin: true, credentials: true }; // reflect (enable) the requested origin in the CORS response
   callback(null, corsOptions) // callback expects two parameters: error and options
 };
 app.use(cors(corsOptionsDelegate));
