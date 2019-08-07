@@ -45,9 +45,6 @@ const logTrackingBehavior = async (req, res, next) => {
       key = '';
     }
 
-    console.log(key);
-
-
     const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
 
     if (error) {
