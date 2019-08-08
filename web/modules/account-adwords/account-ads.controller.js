@@ -4,6 +4,7 @@ const Joi = require('@hapi/joi');
 const HttpStatus = require('http-status-codes');
 const AccountAdsModel = require('./account-ads.model');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
+const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
 const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
 
@@ -20,6 +21,7 @@ const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-bloc
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const { sampleBlockingIpValidationSchema } = require('./validations/sample-blocking-ip.schema');
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
+const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
@@ -796,6 +798,44 @@ const getIpsInCustomBlackList = (req, res, next) => {
   });
 };
 
+const getCampaignsInDB = (req, res, next) => {
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  }
+  logger.info('AccountAdsController::getCampaignsInDB is called\n', info);
+
+  try{
+    const accountId = req.adsAccount._id;
+    BlockingCriterionsModel.find({accountId})
+    .exec((err, campaigns) => {
+      if(err)
+      {
+        logger.error('AccountAdsController::getCampaignsInDB::error', err, '\n', info);
+        return next(err);
+      }
+
+      let campaignIds = [];
+
+      if(campaigns.length !== 0)
+      {
+        campaignIds = campaigns.map(campaign => campaign.campaignId);
+      }
+      
+      logger.info('AccountAdsController::getCampaignsInDB::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ['Lấy chiến dịch thành công.'],
+        data: {
+          campaignIds
+        }
+      });
+    });
+  }catch(e){
+    logger.error('AccountAdsController::getCampaignsInDB::error', e, '\n', info);
+    next(e);
+  }
+};
+
 const verifyAcctachedCodeDomains = async (req, res, next) => {
   logger.info('AccountAdsController::verifyAcctachedCodeDomains is called, userId:', req.user._id, '::accountId:', req.params.account_id);
   try {
@@ -838,13 +878,135 @@ const verifyAcctachedCodeDomains = async (req, res, next) => {
       }
     };
 
-    logger.info('WebsiteController::verifyAcctachedCodeDomains::success::userId:', req.user._id, '::accountId:', req.params.accountId);
+    logger.info('AccountAdsController::verifyAcctachedCodeDomains::success::userId:', req.user._id, '::accountId:', req.params.accountId);
     return res.status(HttpStatus.OK).json(result);
 
   } catch (e) {
-    logger.error('WebsiteController::verifyAcctachedCodeDomains::error', e);
+    logger.error('AccountAdsController::verifyAcctachedCodeDomains::error', e);
     return next(e);
   }
+};
+
+const getReportForAccount = async(req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId:  req.adsAccount.adsId
+  }
+  logger.info('AccountAdsController::getReportForAccount::is called\n', info);
+  try{
+
+    const { error } = Joi.validate(req.query, getReportForAccountValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let {from, to} = req.query;
+
+    from = moment(from, 'DD-MM-YYYY');
+    to = moment(to, 'DD-MM-YYYY');
+
+    if(to.isBefore(from))
+    {
+      logger.info('AccountAdsController::getReportForAccount::babRequest\n', info);
+      return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.'] 
+      });
+    }
+
+    const endDateTime = moment(to).endOf('day');
+
+    const startDate = from._d;
+    const endDate = endDateTime._d;
+
+    const matchStage =  {
+        $match: {
+            accountKey: req.adsAccount.key,
+            createdAt: {
+                $gte: startDate,
+                $lt: endDate
+            }
+        }  
+    };
+
+    const sort =  {
+        $sort: {
+            "createdAt": -1
+        }  
+    };
+
+    const groupStage = { 
+        $group: { 
+            _id: { 
+                $dateToString: { format: "%d-%m-%Y", date: "$createdAt"} 
+            }, 
+            spamClick: { 
+                $sum: {
+                    $cond : [{$eq: ["$isSpam", true]}, 1, 0]
+                },
+            },
+            realClick: { 
+              $sum: {
+                  $cond : [{$ne: ["$isSpam", true]}, 1, 0]
+              },
+          },
+          logs: {
+            $push: {
+                uuid: "$uuid",
+                createdAt: "$createdAt",
+                isSpam: "$isSpam",
+                ip: "$ip",
+                keyword: "$keyword",
+                location: "$location"
+            }
+        }
+      }
+    };
+
+  const result = await UserBehaviorLogModel.aggregate(
+    [
+        matchStage,
+        sort,
+        groupStage
+    ]
+  );
+
+  const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
+  const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
+
+    logger.info('AccountAdsController::getReportForAccount::success\n', info);
+    return res.status(HttpStatus.OK).json({
+      messages: ["Lấy report thành công"],
+      data: {
+        pieChart: {
+          spamClick: totalSpamClick,
+          realClick: totalRealClick
+        },
+        lineChart: result
+      }
+    });
+
+  }catch(e){
+    logger.error('AccountAdsController::getReportForAccount::error', e, '\n', info);
+    return next(e);
+  }
+};
+
+const getSettingOfAccountAds = (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId:  req.adsAccount.adsId
+  }
+  logger.info('AccountAdsController::getSettingOfAccountAds::is called\n', info);
+  const setting = req.adsAccount.setting;
+
+  logger.info('AccountAdsController::getIpsInCustomBlackList::success\n', info);
+  return res.status(HttpStatus.OK).json({
+    messages: ['Lấy thiết lập trong tài khoản thành công.'],
+    data: {
+      setting
+    }
+  });
 };
 
 module.exports = {
@@ -863,6 +1025,9 @@ module.exports = {
   unblockSampleIp,
   getIpInSampleBlockIp,
   getIpsInCustomBlackList,
-  verifyAcctachedCodeDomains
+  verifyAcctachedCodeDomains,
+  getReportForAccount,
+  getCampaignsInDB,
+  getSettingOfAccountAds
 };
 

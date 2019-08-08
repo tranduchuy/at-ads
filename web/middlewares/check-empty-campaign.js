@@ -11,7 +11,7 @@ module.exports = async(req, res, next) => {
         if(result.length === 0)
         {
             return res.status(HttpStatus.NOT_FOUND).json({
-                messages: ["Tài khoản hiện chưa có chiến dịch"]
+                messages: ["Tài khoản hiện chưa được thêm chiến dịch."]
             });
         }
         
