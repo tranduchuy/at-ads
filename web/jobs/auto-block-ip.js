@@ -20,7 +20,7 @@ module.exports = async(channel, msg) => {
 
         if(!accountAds)
         {
-            logger.info('jobs::autoBlockIp::accountAdsNotFound.');
+            logger.info('jobs::autoBlockIp::accountAdsNotFound.', {key});
             channel.ack(msg);
             return;
         }
