@@ -4,6 +4,10 @@ const config = require('config');
 const db = require('./database/db');
 const removeIp = require('./schedule-jobs/remove-ip-in-auto-blackList');
 
+const log4js = require('log4js');
+log4js.configure('./config/log4js.json');
+const loggerApp = log4js.getLogger('app');
+
 db(() => {
   console.log('Connect to mongodb successfully');
   const port = config.get('appScheduleJobs').port;

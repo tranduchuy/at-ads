@@ -369,18 +369,46 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
     let {campaignIds} = req.body;
     campaignIds = campaignIds.map(String);
     const campaignIdsAfterRemoveIdenticalElement = campaignIds.filter(AccountAdsService.onlyUnique);
+    const accountId = req.adsAccount._id;
+    const query = {
+      accountId: accountId,
+    };
+    
+    const campaigns = await BlockingCriterionsModel.find(query);
+    let campaignsNotInExistsInDB = campaignIdsAfterRemoveIdenticalElement;
 
-    const checkCampaignId =  await AccountAdsService.checkCampaign(req.adsAccount._id, campaignIdsAfterRemoveIdenticalElement);
-
-    if(!checkCampaignId)
+    if(campaigns.length !== 0)
     {
-      logger.info('AccountAdsController::addCampaignsForAAccountAds::error');
-      return res.status(HttpStatus.CONFLICT).json({
-        messages: ["Chiến dịch bị trùng"]
+        const allCampaignId = campaigns.map(campaign => campaign.campaignId);
+        const campaignIdHasDeletedStatusIsFalse = campaigns.filter(campaign => !campaign.isDeleted).map(c => c.campaignId);
+        const campaignIdHasDeletedStatusIsTrue = campaigns.filter(campaign => campaign.isDeleted).map(c => c.campaignId);
+
+        campaignsNotInExistsInDB = _.difference(campaignIdsAfterRemoveIdenticalElement, allCampaignId);
+        const campaignsExistsInDB = _.intersection(campaignIdsAfterRemoveIdenticalElement, allCampaignId);
+        const campaignIdHasDeletedStatusIsTrueAndExistsInDB = _.intersection(campaignIdHasDeletedStatusIsTrue, campaignsExistsInDB);
+        const campaign = _.difference(allCampaignId, campaignsExistsInDB);
+        const campaignIdHasDeletedStatusIsFalseAndExistsInDB = _.intersection(campaignIdHasDeletedStatusIsFalse, campaign);
+
+        if(campaignIdHasDeletedStatusIsTrueAndExistsInDB.length !==0)
+        {
+          const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsTrueAndExistsInDB, false);
+        }
+
+        if(campaignIdHasDeletedStatusIsFalseAndExistsInDB !== 0)
+        {
+          const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsFalseAndExistsInDB, true);
+        }
+    }
+
+    if(campaignsNotInExistsInDB.length === 0)
+    {
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::success');
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thêm chiến dịch thành công"]
       });
     }
 
-    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignIdsAfterRemoveIdenticalElement);
+    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignsNotInExistsInDB);
 
     BlockingCriterionsModel.insertMany(campaignsArr, (err)=>{
       if(err)
@@ -503,7 +531,11 @@ const connectionConfirmation = async(req, res, next) => {
 const getReportOnDevice = async(req, res, next) => {
   logger.info('AccountAdsController::getReportOnDevice is called');
   try{
-    const campaigns = await BlockingCriterionsModel.find({'accountId': req.adsAccount._id })
+    const query = {
+      accountId: req.adsAccount._id,
+      isDeleted: false
+    };
+    const campaigns = await BlockingCriterionsModel.find(query)
 
     if(campaigns.length === 0)
     {
@@ -572,7 +604,11 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
     }
 
     const { device, isEnabled } = req.body;
-    const campaigns = await BlockingCriterionsModel.find({accountId: req.adsAccount._id});
+    const query = {
+      accountId: req.adsAccount._id,
+      isDeleted: false
+    }
+    const campaigns = await BlockingCriterionsModel.find(query);
 
     if(campaigns.length === 0)
     {
@@ -807,7 +843,11 @@ const getCampaignsInDB = (req, res, next) => {
 
   try{
     const accountId = req.adsAccount._id;
-    BlockingCriterionsModel.find({accountId})
+    const query = {
+      accountId,
+      isDeleted: false
+    };
+    BlockingCriterionsModel.find(query)
     .exec((err, campaigns) => {
       if(err)
       {
