@@ -17,8 +17,12 @@ const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
         const accountId = accountAds._id;
         const adsId =  accountAds.adsId;
         const key = accountAds.key;
+        const query = {
+            accountId,
+            isDeleted: false
+        };
     
-      BlockingCriterionsModel.find({accountId}).exec((err, campaigns) => {
+      BlockingCriterionsModel.find(query).exec((err, campaigns) => {
           if(err)
           {
               return cb(err);

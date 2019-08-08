@@ -20,7 +20,7 @@ module.exports = async(channel, msg) => {
 
         if(!accountAds)
         {
-            logger.info('jobs::autoBlockIp::accountAdsNotFound.', {key});
+            logger.info('jobs::autoBlockIp::accountAdsNotFound.', infoAfterCatchEvent);
             channel.ack(msg);
             return;
         }
@@ -34,17 +34,17 @@ module.exports = async(channel, msg) => {
 
         if(ips.length!== 0)
         {
-            logger.info('jobs::autoBlockIp::ipExistsInBlackList.');
+            logger.info('jobs::autoBlockIp::ipExistsInBlackList.', infoAfterCatchEvent);
             channel.ack(msg);
             return;
         }
 
-        const query = {accountId: accountAds._id};
+        const query = {accountId: accountAds._id, isDeleted: false};
         const campaignsOfAccount = await BlockingCriterionsModel.find(query);
 
         if(campaignsOfAccount.length === 0)
         {
-            logger.info('jobs::autoBlockIp::accountAdsWithoutCampaign.');
+            logger.info('jobs::autoBlockIp::accountAdsWithoutCampaign.', infoAfterCatchEvent);
             channel.ack(msg);
             return;
         }
@@ -68,7 +68,7 @@ module.exports = async(channel, msg) => {
         {
             if(maxClick === -1 || countClick < maxClick)
             {
-                logger.info('jobs::autoBlockIp::success.');
+                logger.info('jobs::autoBlockIp::success.', infoAfterCatchEvent);
                 channel.ack(msg);
                 return;
             }
@@ -93,7 +93,7 @@ module.exports = async(channel, msg) => {
               .catch(err => callback(err));
           }, error => {
             if (error) {
-              logger.error('jobs::autoBlockIp::error', error);
+              logger.error('jobs::autoBlockIp::error', error, infoAfterCatchEvent);
             //   channel.ack(msg); // TODO: improve call google api limited.
               return;
             }
@@ -105,11 +105,11 @@ module.exports = async(channel, msg) => {
              .exec(err => {
                 if(err)
                 {
-                    logger.error('jobs::autoBlockIp::error', err);
+                    logger.error('jobs::autoBlockIp::error', err, infoAfterCatchEvent);
                     channel.ack(msg);
                     return;
                 }
-                logger.info('jobs::autoBlockIp::success');
+                logger.info('jobs::autoBlockIp::success', infoAfterCatchEvent);
                 channel.ack(msg);
                 return;
              });

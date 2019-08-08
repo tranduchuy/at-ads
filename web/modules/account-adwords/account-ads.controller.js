@@ -117,7 +117,9 @@ const handleManipulationGoogleAds = async(req, res, next) => {
     {
       logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' is called');
       const ipInSampleBlocked = req.adsAccount.setting.sampleBlockingIp;
-      const ipsArr = AccountAdsService.checkIpIsBlackListed(req.adsAccount.setting.customBlackList, arrAfterRemoveIdenticalElement, ipInSampleBlocked);
+      const customBlackList = req.adsAccount.setting.customBlackList;
+      const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
+      const ipsArr = AccountAdsService.checkIpIsBlackListed(customBlackList, arrAfterRemoveIdenticalElement, ipInSampleBlocked, autoBlackListIp);
 
       if(ipsArr.length !== 0)
       {
@@ -358,7 +360,11 @@ const autoBlocking3g4g = (req, res, next) => {
 };
 
 const addCampaignsForAAccountAds = async(req, res, next) => {
-  logger.info('AccountAdsController::addCampaignsForAAccountAds is called');
+  const info = {
+    id: req.adsAccount._id,
+    adsId:  req.adsAccount.adsId
+  };
+  logger.info('AccountAdsController::addCampaignsForAAccountAds is called\n', info);
   try{
     const { error } = Joi.validate(req.body, AddCampaingsValidationSchema);
 
@@ -369,28 +375,56 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
     let {campaignIds} = req.body;
     campaignIds = campaignIds.map(String);
     const campaignIdsAfterRemoveIdenticalElement = campaignIds.filter(AccountAdsService.onlyUnique);
+    const accountId = req.adsAccount._id;
+    const query = {
+      accountId: accountId,
+    };
+    
+    const campaigns = await BlockingCriterionsModel.find(query);
+    let campaignsNotInExistsInDB = campaignIdsAfterRemoveIdenticalElement;
 
-    const checkCampaignId =  await AccountAdsService.checkCampaign(req.adsAccount._id, campaignIdsAfterRemoveIdenticalElement);
-
-    if(!checkCampaignId)
+    if(campaigns.length !== 0)
     {
-      logger.info('AccountAdsController::addCampaignsForAAccountAds::error');
-      return res.status(HttpStatus.CONFLICT).json({
-        messages: ["Chiến dịch bị trùng"]
+        const allCampaignId = campaigns.map(campaign => campaign.campaignId);
+        const campaignIdHasDeletedStatusIsFalse = campaigns.filter(campaign => !campaign.isDeleted).map(c => c.campaignId);
+        const campaignIdHasDeletedStatusIsTrue = campaigns.filter(campaign => campaign.isDeleted).map(c => c.campaignId);
+
+        campaignsNotInExistsInDB = _.difference(campaignIdsAfterRemoveIdenticalElement, allCampaignId);
+        const campaignsExistsInDB = _.intersection(campaignIdsAfterRemoveIdenticalElement, allCampaignId);
+        const campaignIdHasDeletedStatusIsTrueAndExistsInDB = _.intersection(campaignIdHasDeletedStatusIsTrue, campaignsExistsInDB);
+        const campainInDBAndNotInThePostingCampaign = _.difference(allCampaignId, campaignsExistsInDB);
+        const campaignIdHasDeletedStatusIsFalseAndExistsInDB = _.intersection(campaignIdHasDeletedStatusIsFalse, campainInDBAndNotInThePostingCampaign);
+
+        if(campaignIdHasDeletedStatusIsTrueAndExistsInDB.length !== 0)
+        {
+          const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsTrueAndExistsInDB, false);
+        }
+
+        if(campaignIdHasDeletedStatusIsFalseAndExistsInDB !== 0)
+        {
+          const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsFalseAndExistsInDB, true);
+        }
+    }
+
+    if(campaignsNotInExistsInDB.length === 0)
+    {
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thêm chiến dịch thành công"]
       });
     }
 
-    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignIdsAfterRemoveIdenticalElement);
+    const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignsNotInExistsInDB);
 
     BlockingCriterionsModel.insertMany(campaignsArr, (err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', err);
+        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', err, '\n', info);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thêm chiến dịch không thành công"]
         });
       }
-      logger.info('AccountAdsController::addCampaignsForAAccountAds::success');
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thêm chiến dịch thành công"]
       });
@@ -503,7 +537,11 @@ const connectionConfirmation = async(req, res, next) => {
 const getReportOnDevice = async(req, res, next) => {
   logger.info('AccountAdsController::getReportOnDevice is called');
   try{
-    const campaigns = await BlockingCriterionsModel.find({'accountId': req.adsAccount._id })
+    const query = {
+      accountId: req.adsAccount._id,
+      isDeleted: false
+    };
+    const campaigns = await BlockingCriterionsModel.find(query)
 
     if(campaigns.length === 0)
     {
@@ -572,7 +610,11 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
     }
 
     const { device, isEnabled } = req.body;
-    const campaigns = await BlockingCriterionsModel.find({accountId: req.adsAccount._id});
+    const query = {
+      accountId: req.adsAccount._id,
+      isDeleted: false
+    }
+    const campaigns = await BlockingCriterionsModel.find(query);
 
     if(campaigns.length === 0)
     {
@@ -634,7 +676,9 @@ const blockSampleIp = (req, res, next) => {
     const campaignIds = req.campaignIds || [];
     const adsId = req.adsAccount.adsId;
     const accountId= req.adsAccount._id;
-    const checkIpInDB = req.adsAccount.setting.customBlackList.filter(ele => ele === ip);
+    let allIpInBlackList = req.adsAccount.setting.customBlackList;
+    allIpInBlackList = allIpInBlackList.concat(req.adsAccount.setting.autoBlackListIp);
+    const checkIpInDB = allIpInBlackList.filter(ele => ele === ip);
 
     if(checkIpInDB.length !== 0)
     {
@@ -807,7 +851,11 @@ const getCampaignsInDB = (req, res, next) => {
 
   try{
     const accountId = req.adsAccount._id;
-    BlockingCriterionsModel.find({accountId})
+    const query = {
+      accountId,
+      isDeleted: false
+    };
+    BlockingCriterionsModel.find(query)
     .exec((err, campaigns) => {
       if(err)
       {
@@ -922,6 +970,7 @@ const getReportForAccount = async(req, res, next) => {
     const matchStage =  {
         $match: {
             accountKey: req.adsAccount.key,
+            type: 1,
             createdAt: {
                 $gte: startDate,
                 $lt: endDate

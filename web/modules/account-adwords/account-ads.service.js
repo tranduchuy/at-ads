@@ -41,11 +41,13 @@ const createAccountAdsHaveIsConnectedStatus = async ({ userId, adsId }, isConnec
 };
 
 
-const checkIpIsBlackListed = (blackList, ips, ipInSampleBlockIp) => {
+const checkIpIsBlackListed = (blackList, ips, ipInSampleBlockIp, autoBlackListIp) => {
     if(ipInSampleBlockIp)
     {
       blackList = blackList.concat(ipInSampleBlockIp);
     }
+
+    blackList = blackList.concat(autoBlackListIp);
 
     return _.intersection(blackList, ips);
 };
@@ -107,24 +109,6 @@ const createCampaign = (accountId, campaignId) => {
     campaignId: campaignId.toString()
   })
   return newCampaign;
-};
-
-const checkCampaign = async(accountId, campaignIds) => {
-  try{
-     const result = await BlockingCriterionsModel
-    .find({accountId:accountId, campaignId: {$in: campaignIds}})
-
-    if(!result || result.length === 0)
-    {
-      return true;
-    }
-    return false;
-  }
-  catch(e)
-  {
-    logger.error('AccountAdsService::checkCampaign::error', e);
-    return false;
-  }
 };
 
 const createdCampaignArr = (accountId, campaignIds) =>
@@ -439,13 +423,30 @@ const addIpAndCriterionIdForSampleBlockingIp = (accountInfo, callback) => {
     });
 };
 
+const updateIsDeletedStatus = async (accountId, campaignId, isDeleted) => {
+  const updateQuery = {
+    accountId: accountId,
+    campaignId: { 
+      $in: campaignId 
+    }
+  };
+
+  const dataUpdate = {
+    $set: {
+      isDeleted
+    }
+  };
+
+  return await BlockingCriterionsModel
+   .updateMany(updateQuery, dataUpdate);
+}
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
   checkIpIsBlackListed,
   addIpsToBlackListOfOneCampaign,
   getAccountsAdsByUserId,
-  checkCampaign,
   createdCampaignArr,
   getIdAndNameCampaignInCampaignsList,
   onlyUnique,
@@ -455,5 +456,6 @@ module.exports = {
   convertCSVToJSON,
   reportTotalOnDevice,
   removeSampleBlockingIp,
-  addSampleBlockingIp
+  addSampleBlockingIp,
+  updateIsDeletedStatus
 };
