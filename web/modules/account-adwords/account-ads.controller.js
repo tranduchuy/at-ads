@@ -117,7 +117,9 @@ const handleManipulationGoogleAds = async(req, res, next) => {
     {
       logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' is called');
       const ipInSampleBlocked = req.adsAccount.setting.sampleBlockingIp;
-      const ipsArr = AccountAdsService.checkIpIsBlackListed(req.adsAccount.setting.customBlackList, arrAfterRemoveIdenticalElement, ipInSampleBlocked);
+      const customBlackList = req.adsAccount.setting.customBlackList;
+      const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
+      const ipsArr = AccountAdsService.checkIpIsBlackListed(customBlackList, arrAfterRemoveIdenticalElement, ipInSampleBlocked, autoBlackListIp);
 
       if(ipsArr.length !== 0)
       {
@@ -386,10 +388,10 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
         campaignsNotInExistsInDB = _.difference(campaignIdsAfterRemoveIdenticalElement, allCampaignId);
         const campaignsExistsInDB = _.intersection(campaignIdsAfterRemoveIdenticalElement, allCampaignId);
         const campaignIdHasDeletedStatusIsTrueAndExistsInDB = _.intersection(campaignIdHasDeletedStatusIsTrue, campaignsExistsInDB);
-        const campaign = _.difference(allCampaignId, campaignsExistsInDB);
-        const campaignIdHasDeletedStatusIsFalseAndExistsInDB = _.intersection(campaignIdHasDeletedStatusIsFalse, campaign);
+        const campainInDBAndNotInThePostingCampaign = _.difference(allCampaignId, campaignsExistsInDB);
+        const campaignIdHasDeletedStatusIsFalseAndExistsInDB = _.intersection(campaignIdHasDeletedStatusIsFalse, campainInDBAndNotInThePostingCampaign);
 
-        if(campaignIdHasDeletedStatusIsTrueAndExistsInDB.length !==0)
+        if(campaignIdHasDeletedStatusIsTrueAndExistsInDB.length !== 0)
         {
           const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsTrueAndExistsInDB, false);
         }
@@ -670,7 +672,9 @@ const blockSampleIp = (req, res, next) => {
     const campaignIds = req.campaignIds || [];
     const adsId = req.adsAccount.adsId;
     const accountId= req.adsAccount._id;
-    const checkIpInDB = req.adsAccount.setting.customBlackList.filter(ele => ele === ip);
+    let allIpInBlackList = req.adsAccount.setting.customBlackList;
+    allIpInBlackList = allIpInBlackList.concat(req.adsAccount.setting.autoBlackListIp);
+    const checkIpInDB = allIpInBlackList.filter(ele => ele === ip);
 
     if(checkIpInDB.length !== 0)
     {
@@ -962,6 +966,7 @@ const getReportForAccount = async(req, res, next) => {
     const matchStage =  {
         $match: {
             accountKey: req.adsAccount.key,
+            type: 1,
             createdAt: {
                 $gte: startDate,
                 $lt: endDate

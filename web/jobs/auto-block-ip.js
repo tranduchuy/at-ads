@@ -82,6 +82,7 @@ module.exports = async(channel, msg) => {
         const dataUpdate = {$set: {isSpam: true}};
 
         const resultUpdate = await UserBehaviorLogsModel.updateOne(queryUpdate, dataUpdate);
+        logger.info(`jobs::autoBlockIp::udpate query ${queryUpdate}. Result ${resultUpdate}`);
 
         Async.eachSeries(campaignIds, (campaignId, callback)=> {
             GoogleAdsService.addIpBlackList(adsId, campaignId, ip)

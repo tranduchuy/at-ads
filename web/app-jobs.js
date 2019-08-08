@@ -4,9 +4,9 @@ const app = express();
 const config = require('config');
 const db = require('./database/db');
 
+// config log4js
 const log4js = require('log4js');
 log4js.configure('./config/log4js.json');
-const loggerApp = log4js.getLogger('app');
 
 // RabbitMQ's config
 const rabbitMQConfig = config.get('rabbitMQ');

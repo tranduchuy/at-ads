@@ -41,11 +41,13 @@ const createAccountAdsHaveIsConnectedStatus = async ({ userId, adsId }, isConnec
 };
 
 
-const checkIpIsBlackListed = (blackList, ips, ipInSampleBlockIp) => {
+const checkIpIsBlackListed = (blackList, ips, ipInSampleBlockIp, autoBlackListIp) => {
     if(ipInSampleBlockIp)
     {
       blackList = blackList.concat(ipInSampleBlockIp);
     }
+
+    blackList = blackList.concat(autoBlackListIp);
 
     return _.intersection(blackList, ips);
 };
