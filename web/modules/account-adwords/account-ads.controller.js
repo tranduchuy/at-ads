@@ -878,11 +878,11 @@ const verifyAcctachedCodeDomains = async (req, res, next) => {
       }
     };
 
-    logger.info('WebsiteController::verifyAcctachedCodeDomains::success::userId:', req.user._id, '::accountId:', req.params.accountId);
+    logger.info('AccountAdsController::verifyAcctachedCodeDomains::success::userId:', req.user._id, '::accountId:', req.params.accountId);
     return res.status(HttpStatus.OK).json(result);
 
   } catch (e) {
-    logger.error('WebsiteController::verifyAcctachedCodeDomains::error', e);
+    logger.error('AccountAdsController::verifyAcctachedCodeDomains::error', e);
     return next(e);
   }
 };
@@ -892,7 +892,7 @@ const getReportForAccount = async(req, res, next) => {
     id: req.adsAccount._id,
     adsId:  req.adsAccount.adsId
   }
-  logger.info('WebsiteController::getReportForAccount::is called\n', info);
+  logger.info('AccountAdsController::getReportForAccount::is called\n', info);
   try{
 
     const { error } = Joi.validate(req.query, getReportForAccountValidationSchema);
@@ -987,9 +987,26 @@ const getReportForAccount = async(req, res, next) => {
     });
 
   }catch(e){
-    logger.error('WebsiteController::getReportForAccount::error', e, '\n', info);
+    logger.error('AccountAdsController::getReportForAccount::error', e, '\n', info);
     return next(e);
   }
+};
+
+const getSettingOfAccountAds = (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId:  req.adsAccount.adsId
+  }
+  logger.info('AccountAdsController::getSettingOfAccountAds::is called\n', info);
+  const setting = req.adsAccount.setting;
+
+  logger.info('AccountAdsController::getIpsInCustomBlackList::success\n', info);
+  return res.status(HttpStatus.OK).json({
+    messages: ['Lấy thiết lập trong tài khoản thành công.'],
+    data: {
+      setting
+    }
+  });
 };
 
 module.exports = {
@@ -1010,6 +1027,7 @@ module.exports = {
   getIpsInCustomBlackList,
   verifyAcctachedCodeDomains,
   getReportForAccount,
-  getCampaignsInDB
+  getCampaignsInDB,
+  getSettingOfAccountAds
 };
 
