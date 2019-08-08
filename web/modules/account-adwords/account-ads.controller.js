@@ -360,7 +360,11 @@ const autoBlocking3g4g = (req, res, next) => {
 };
 
 const addCampaignsForAAccountAds = async(req, res, next) => {
-  logger.info('AccountAdsController::addCampaignsForAAccountAds is called');
+  const info = {
+    id: req.adsAccount._id,
+    adsId:  req.adsAccount.adsId
+  };
+  logger.info('AccountAdsController::addCampaignsForAAccountAds is called\n', info);
   try{
     const { error } = Joi.validate(req.body, AddCampaingsValidationSchema);
 
@@ -404,7 +408,7 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
 
     if(campaignsNotInExistsInDB.length === 0)
     {
-      logger.info('AccountAdsController::addCampaignsForAAccountAds::success');
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thêm chiến dịch thành công"]
       });
@@ -415,12 +419,12 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
     BlockingCriterionsModel.insertMany(campaignsArr, (err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', err);
+        logger.error('AccountAdsController::addCampaignsForAAccountAds::error', err, '\n', info);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thêm chiến dịch không thành công"]
         });
       }
-      logger.info('AccountAdsController::addCampaignsForAAccountAds::success');
+      logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thêm chiến dịch thành công"]
       });
