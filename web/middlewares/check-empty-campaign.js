@@ -6,7 +6,11 @@ const logger = log4js.getLogger('Middleware');
 module.exports = async(req, res, next) => {
     logger.info('Middlewares::check-empty-campaign is called');
     try{
-        const result = await BlockingCriterions.find({accountId: req.adsAccount._id});
+        const query = {
+            accountId: req.adsAccount._id,
+            isDeleted: false
+        };
+        const result = await BlockingCriterions.find(query);
 
         if(result.length === 0)
         {
