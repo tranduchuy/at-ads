@@ -45,7 +45,10 @@ const getNetworkCompanyByIP = async (ip) => {
         value: null
       }
     } else{
-      return null;
+      return {
+        name: null,
+        value: -1
+      };
     }
   } catch (e) {
     logger.error(`getIpInfo error: ${JSON.stringify(e)}. ip: ${JSON.stringify(ip)}`);
