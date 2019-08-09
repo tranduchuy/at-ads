@@ -1,5 +1,5 @@
 const UserBehaviorLogModel = require('./user-behavior-log.model');
-
+const IPLookupService = require('../../services/ip-lookup.service');
 
 const createUserBehaviorLog = async ({
                                        ip, utmMedium, utmSource, utmCampaign, type,
@@ -8,10 +8,13 @@ const createUserBehaviorLog = async ({
                                        browserResolution, screenResolution, keyword, href, localIp
                                      }) => {
   try {
+    const company = await IPLookupService.getNetworkCompanyByIP(ip);
+
     const newUserBehaviorLog = new UserBehaviorLogModel({
       uuid,
       accountKey,
       type,
+      networkCompany: company || null,
       href,
       ip,
       referrer,
