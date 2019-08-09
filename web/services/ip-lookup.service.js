@@ -14,10 +14,13 @@ const companies = [
     name: 'vnpt',
     value: 3
   },
-
   {
     name: 'vinaphone',
     value: 4
+  },
+  {
+    name: 'mobifone',
+    value: 5
   }
 ];
 

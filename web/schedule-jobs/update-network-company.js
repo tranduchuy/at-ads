@@ -7,7 +7,7 @@ const UPDATE_LOG_NETWORK_COMPANY_TIMER = timeConfig.interval_time_check; // minu
 const IPLookupService = require('../services/ip-lookup.service');
 
 const findLogScheduleNeedToBeUpdate = async () => {
-  return await UserBehaviorLogModel.find({networkCompany: null}).limit(100);
+  return await UserBehaviorLogModel.find({networkCompany: null, accountKey: '9sRBcVAZE'}).limit(100);
 };
 
 const processUpdateLogNetworkCompany = async (logSchedules) => {
@@ -28,12 +28,10 @@ const processUpdateLogNetworkCompany = async (logSchedules) => {
 };
 
 const updateNetworkCompany = async () => {
-/*
   console.log('WORKER::UpdateLogNetworkCompany::Init');
 
   schedule.scheduleJob(`${UPDATE_LOG_NETWORK_COMPANY_TIMER} * * * *`, async () => {
     console.log('WORKER::UpdateLogNetworkCompany::Start at', new Date());
-*/
 
     try {
       const logSchedules = await findLogScheduleNeedToBeUpdate();
@@ -41,7 +39,7 @@ const updateNetworkCompany = async () => {
     } catch (e) {
       console.log('WORKER::UpdateLogNetworkCompany::error', e);
     }
-/*  });*/
+  });
 };
 
 module.exports = {
