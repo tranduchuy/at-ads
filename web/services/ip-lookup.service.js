@@ -33,7 +33,8 @@ const getNetworkCompanyByIP = async (ip) => {
     const data = await res.json();
     const company = companies.find(company => {
       const as = data.as.toLowerCase();
-      return as.indexOf(company.name) !== -1;
+      const isp = data.isp.toLowerCase();
+      return as.indexOf(company.name) !== -1 || isp.indexOf(company.name) !== -1;
     });
     if (company) {
       return company;
