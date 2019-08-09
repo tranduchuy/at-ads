@@ -3,6 +3,8 @@ const schedule = require('node-schedule');
 const timeConfig = config.get('update_log_network_company');
 const UserBehaviorLogModel = require('../modules/user-behavior-log/user-behavior-log.model');
 const UPDATE_LOG_NETWORK_COMPANY_TIMER = timeConfig.interval_time_check; // minute
+const log4js = require('log4js');
+const logger = log4js.getLogger('Services');
 
 const IPLookupService = require('../services/ip-lookup.service');
 
@@ -12,7 +14,7 @@ const findLogScheduleNeedToBeUpdate = async () => {
 
 const processUpdateLogNetworkCompany = async (logSchedules) => {
   await Promise.all(logSchedules.map(async (log) => {
-      console.log(`WORKER::UpdateLogNetworkCompany::processUpdateLogNetworkCompany. Update log ip ${log.ip}`);
+    logger.info(`WORKER::UpdateLogNetworkCompany::processUpdateLogNetworkCompany. Update log ip ${log.ip}`);
 
       const company = await IPLookupService.getNetworkCompanyByIP(log.ip);
 
@@ -23,20 +25,20 @@ const processUpdateLogNetworkCompany = async (logSchedules) => {
       }
       await log.save();
 
-      console.log(`WORKER::UpdateLogNetworkCompany::processUpdateLogNetworkCompany. Finish updating log ip ${log.ip}. networkCompany ${log.networkCompany}`);
+    logger.info(`WORKER::UpdateLogNetworkCompany::processUpdateLogNetworkCompany. Finish updating log ip ${log.ip}. networkCompany ${log.networkCompany}`);
   }));
 };
 
 const updateNetworkCompany = async () => {
-  console.log('WORKER::UpdateLogNetworkCompany::Init');
+  logger.info('WORKER::UpdateLogNetworkCompany::Init');
 
   schedule.scheduleJob(`${UPDATE_LOG_NETWORK_COMPANY_TIMER} * * * *`, async () => {
-    console.log('WORKER::UpdateLogNetworkCompany::Start at', new Date());
+    logger.info('WORKER::UpdateLogNetworkCompany::Start at', new Date());
     try {
       const logSchedules = await findLogScheduleNeedToBeUpdate();
       await processUpdateLogNetworkCompany(logSchedules);
     } catch (e) {
-      console.log('WORKER::UpdateLogNetworkCompany::error', e);
+      logger.error('WORKER::UpdateLogNetworkCompany::error', e);
     }
   });
 };

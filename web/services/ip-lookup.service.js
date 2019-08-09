@@ -1,5 +1,8 @@
 const fetch = require('node-fetch');
 const apiEndpoint = 'https://www.iplocate.io/api/lookup/{ip}';
+const log4js = require('log4js');
+const logger = log4js.getLogger('Services');
+
 const companies = [
   {
     name: 'viettel',
@@ -24,7 +27,7 @@ const companies = [
 ];
 
 const getNetworkCompanyByIP = async (ip) => {
-  console.log('IPLookupService::getIpInfo was called with: ' + JSON.stringify(ip));
+  logger.info('IPLookupService::getIpInfo was called with: ' + JSON.stringify(ip));
 
   const uri = apiEndpoint.replace('{ip}', ip);
   try {
@@ -45,7 +48,7 @@ const getNetworkCompanyByIP = async (ip) => {
       return null;
     }
   } catch (e) {
-    console.log(`getIpInfo error: ${JSON.stringify(e)}. ip: ${JSON.stringify(ip)}`);
+    logger.error(`getIpInfo error: ${JSON.stringify(e)}. ip: ${JSON.stringify(ip)}`);
     return null;
   }
 };
