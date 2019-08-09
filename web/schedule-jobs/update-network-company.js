@@ -1,8 +1,6 @@
 const config = require('config');
 const schedule = require('node-schedule');
-const timeConfig = config.get('update_log_network_company');
 const UserBehaviorLogModel = require('../modules/user-behavior-log/user-behavior-log.model');
-const UPDATE_LOG_NETWORK_COMPANY_TIMER = timeConfig.interval_time_check; // minute
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
 
@@ -32,7 +30,7 @@ const processUpdateLogNetworkCompany = async (logSchedules) => {
 const updateNetworkCompany = async () => {
   logger.info('WORKER::UpdateLogNetworkCompany::Init');
 
-  schedule.scheduleJob(`${UPDATE_LOG_NETWORK_COMPANY_TIMER} * * * *`, async () => {
+  schedule.scheduleJob(`0 */5 * * * *`, async () => {
     logger.info('WORKER::UpdateLogNetworkCompany::Start at', new Date());
     try {
       const logSchedules = await findLogScheduleNeedToBeUpdate();
