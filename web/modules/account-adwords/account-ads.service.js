@@ -10,6 +10,7 @@ const _ = require('lodash');
 const { GoogleCampaignStatus } = require('../account-adwords/account-ads.constant');
 const DeviceConstant = require('../../constants/device.constant');
 const shortid = require('shortid');
+const criterionOfDevice = require('../../constants/criterionIdOfDevice.constant');
 
 /**
  *
@@ -439,7 +440,25 @@ const updateIsDeletedStatus = async (accountId, campaignId, isDeleted) => {
 
   return await BlockingCriterionsModel
    .updateMany(updateQuery, dataUpdate);
-}
+};
+
+const saveSetUpCampaignsByOneDevice = async(accountAds, device, isEnabled) => {
+  switch (device) {
+    case criterionOfDevice.computer:
+      accountAds.setting.devices.computer = isEnabled;
+      break;
+    case criterionOfDevice.mobile:
+      accountAds.setting.devices.mobile = isEnabled;
+      break;
+    case criterionOfDevice.tablet:
+      accountAds.setting.devices.tablet = isEnabled;
+      break;
+    default:
+      break;
+  }
+
+  return await accountAds.save();
+};
 
 module.exports = {
   createAccountAds,
@@ -457,5 +476,6 @@ module.exports = {
   reportTotalOnDevice,
   removeSampleBlockingIp,
   addSampleBlockingIp,
-  updateIsDeletedStatus
+  updateIsDeletedStatus,
+  saveSetUpCampaignsByOneDevice
 };
