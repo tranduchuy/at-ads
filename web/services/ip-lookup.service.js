@@ -1,6 +1,5 @@
 const fetch = require('node-fetch');
-const apiEndpoint = 'http://ip-api.com/json/{ip}';
-
+const apiEndpoint = 'https://www.iplocate.io/api/lookup/{ip}';
 const companies = [
   {
     name: 'viettel',
@@ -32,15 +31,14 @@ const getNetworkCompanyByIP = async (ip) => {
     const res = await fetch(uri);
     const data = await res.json();
     const company = companies.find(company => {
-      const as = data.as.toLowerCase();
-      const isp = data.isp.toLowerCase();
-      return as.indexOf(company.name) !== -1 || isp.indexOf(company.name) !== -1;
+      const org = data.org.toLowerCase();
+      return org.indexOf(company.name) !== -1;
     });
     if (company) {
       return company;
-    } else if (data.as) {
+    } else if (data.org) {
       return {
-        name: data.as,
+        name: data.org,
         value: null
       }
     } else{
