@@ -27,6 +27,7 @@ const userBehaviorLogSchema = new Schema({
   utmMedium: String,
   utmSource: String,
   utmCampaign: String,
+  gclid: String,
   referrer: String,
   href: String,
   userAgent: String,

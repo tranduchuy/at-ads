@@ -636,7 +636,7 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
         logger.error('AccountAdsController::setUpCampaignsByOneDevice::error', error, '\n', info);
         callback(error);
       });
-    },err => {
+    },async err => {
       if(err)
       {
         logger.error('AccountAdsController::setUpCampaignsByOneDevice::error', err, '\n', info);
@@ -644,6 +644,9 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
           messages: ['Thiết lập không thành công.']
         });
       }
+      
+      await AccountAdsService.saveSetUpCampaignsByOneDevice(req.adsAccount, device, isEnabled);
+
       logger.info('AccountAdsController::setUpCampaignsByOneDevice::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ['Thiết lập thành công.']

@@ -7,34 +7,45 @@ const Async = require('async');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Tasks');
 const moment = require('moment');
+const mongoose = require("mongoose");
 
 module.exports = async(channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
     try{
-        const infoAfterCatchEvent = JSON.parse(msg.content.toString());
-        const isPrivateBrowsing = infoAfterCatchEvent.isPrivateBrowsing;
-        const key = infoAfterCatchEvent.accountKey;
-        const ip = infoAfterCatchEvent.ip;
-        const id = infoAfterCatchEvent.id;
+        const id = JSON.parse(msg.content.toString());
+
+        const log = await UserBehaviorLogsModel.findOne({_id: id});
+        
+        if(!log)
+        {
+            logger.info('jobs::autoBlockIp::CannotFindLog.', {id});
+            channel.ack(msg);
+            return;
+        }
+        
+        const isPrivateBrowsing = log.isPrivateBrowsing;
+        const key = log.accountKey;
+        const ip = log.ip;
+
         const accountAds = await AccountAdsModel.findOne({key});
 
         if(!accountAds)
         {
-            logger.info('jobs::autoBlockIp::accountAdsNotFound.', infoAfterCatchEvent);
+            logger.info('jobs::autoBlockIp::accountAdsNotFound.', {id});
             channel.ack(msg);
             return;
         }
 
-        const backList = { 
+        const blackList = { 
             customBlackList: accountAds.setting.customBlackList,
             autoBlackListIp: accountAds.setting.autoBlackListIp,
             sampleBlockingIp: accountAds.setting.sampleBlockingIp
         };
-        const ips = RabbitMQService.checkIpIsBlackListed(backList, [ip]);
+        const ips = RabbitMQService.checkIpIsBlackListed(blackList, [ip]);
 
         if(ips.length!== 0)
         {
-            logger.info('jobs::autoBlockIp::ipExistsInBlackList.', infoAfterCatchEvent);
+            logger.info('jobs::autoBlockIp::ipExistsInBlackList.', {id});
             channel.ack(msg);
             return;
         }
@@ -44,12 +55,12 @@ module.exports = async(channel, msg) => {
 
         if(campaignsOfAccount.length === 0)
         {
-            logger.info('jobs::autoBlockIp::accountAdsWithoutCampaign.', infoAfterCatchEvent);
+            logger.info('jobs::autoBlockIp::accountAdsWithoutCampaign.', {id});
             channel.ack(msg);
             return;
         }
 
-        const yesterday = moment().subtract(1, 'day').format('MM/DD/YYYY');
+        const yesterday = moment().format('MM/DD/YYYY');
         const tomorrow = moment().subtract(-1, 'day').format('MM/DD/YYYY');
         const countQuery = {
             ip,
@@ -66,9 +77,9 @@ module.exports = async(channel, msg) => {
 
         if(!isPrivateBrowsing)
         {
-            if(maxClick === -1 || countClick < maxClick)
+            if(maxClick === -1 || countClick < maxClick || !log.gclid)
             {
-                logger.info('jobs::autoBlockIp::success.', infoAfterCatchEvent);
+                logger.info('jobs::autoBlockIp::success.', {id});
                 channel.ack(msg);
                 return;
             }
@@ -93,7 +104,7 @@ module.exports = async(channel, msg) => {
               .catch(err => callback(err));
           }, error => {
             if (error) {
-              logger.error('jobs::autoBlockIp::error', error, infoAfterCatchEvent);
+              logger.error('jobs::autoBlockIp::error', error, {id});
             //   channel.ack(msg); // TODO: improve call google api limited.
               return;
             }
@@ -105,11 +116,11 @@ module.exports = async(channel, msg) => {
              .exec(err => {
                 if(err)
                 {
-                    logger.error('jobs::autoBlockIp::error', err, infoAfterCatchEvent);
+                    logger.error('jobs::autoBlockIp::error', err, {id});
                     channel.ack(msg);
                     return;
                 }
-                logger.info('jobs::autoBlockIp::success', infoAfterCatchEvent);
+                logger.info('jobs::autoBlockIp::success', {id});
                 channel.ack(msg);
                 return;
              });

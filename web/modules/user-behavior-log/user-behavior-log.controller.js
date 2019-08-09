@@ -66,6 +66,7 @@ const logTrackingBehavior = async (req, res, next) => {
     }
 
     const hrefQuery = queryString.parse(hrefURL.query);
+
     const ua = parser(userAgent);
     const data = {
       uuid,
@@ -82,6 +83,7 @@ const logTrackingBehavior = async (req, res, next) => {
       isPrivateBrowsing,
       domain: hrefURL.origin,
       pathname: hrefURL.pathname,
+      gclid: hrefQuery.gclid || null,
       utmCampaign: hrefQuery.utm_campaign || null,
       utmMedium: hrefQuery.utm_medium || null,
       utmSource: hrefQuery.utm_source || null,
@@ -93,14 +95,7 @@ const logTrackingBehavior = async (req, res, next) => {
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {
-      const message = {
-        ip,
-        id: log._id,
-        accountKey: key,
-        isPrivateBrowsing
-      };
-
-      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, message);
+      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
     }
     console.log('detect session');
     // detect session
