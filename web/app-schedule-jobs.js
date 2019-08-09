@@ -4,6 +4,8 @@ const config = require('config');
 const db = require('./database/db');
 const removeIp = require('./schedule-jobs/remove-ip-in-auto-blackList');
 
+const {updateNetworkCompany} = require('./schedule-jobs/update-network-company');
+
 // config log4js
 const log4js = require('log4js');
 log4js.configure('./config/log4js.json');
@@ -17,5 +19,6 @@ db(() => {
 
     console.log(`Server is listening on port ${port}`);
     removeIp();
+    updateNetworkCompany();
   });
 });
