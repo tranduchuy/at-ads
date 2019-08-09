@@ -21,7 +21,12 @@ const accountAdsSchema = new Schema({
             vinafone: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.vinafone },
             vietnammobile: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.vietnammobile },
         },
-        sampleBlockingIp: {type: String, default: AccountAdsConstant.setting.sampleBlockingIp}
+        sampleBlockingIp: {type: String, default: AccountAdsConstant.setting.sampleBlockingIp},
+        devices: {
+            computer: {type: Boolean, default: null},
+            tablet: {type: Boolean, default: null},
+            mobile: {type: Boolean, default: null}
+        }
     }
 }, { timestamps: true });
 
