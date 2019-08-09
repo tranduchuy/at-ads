@@ -40,7 +40,10 @@ const userBehaviorLogSchema = new Schema({
   localIp: String,
   cpu: Object,
   type: Number,
-  networkCompany: Object,
+  networkCompany: {
+    name: String,
+    value: Number
+  },
   isPrivateBrowsing: {type: Boolean, default: false},
   isSpam: {type: Boolean, default: false},
   createdAt: {type: Date, default: Date.now()}
