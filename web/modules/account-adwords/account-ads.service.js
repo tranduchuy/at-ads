@@ -512,6 +512,13 @@ const getReportForAccount = (accountKey, from, to) => {
         }
       };
 
+      const queryInfo = JSON.stringify([
+        matchStage,
+        sort,
+        groupStage  
+      ]);
+      logger.info('AccountAdsService::getReportForAccount::query', {accountId, queryInfo});
+
       const result = await UserBehaviorLogsModel.aggregate(
         [
             matchStage,
@@ -593,6 +600,15 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
         }
       };
 
+      const queryInfo =  JSON.stringify([
+        matchStage,
+        groupStage,
+        projectStage,
+        conditionToRemove,
+        facetStage   
+      ]);
+      logger.info('AccountAdsService::getDailyClicking::query', {accountId, queryInfo});
+
       const result = await UserBehaviorLogsModel.aggregate(
         [
           matchStage,
@@ -664,7 +680,17 @@ const getAllIpInAutoBlackListIp = (accountId) =>
             network: "$log.networkCompany.name"
           }
         };
-    
+        
+      const queryInfo = JSON.stringify([
+        matchStage,
+        unwindStage,
+        groupStage,
+        lookupStage,
+        projectStage,
+        projectStage1   
+      ]);
+      logger.info('AccountAdsService::getAllIpInAutoBlackListIp::query', {accountId, queryInfo});
+      
       const result = await BlockingCriterionsModel.aggregate([
         matchStage,
         unwindStage,
