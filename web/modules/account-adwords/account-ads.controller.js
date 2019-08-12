@@ -1093,6 +1093,30 @@ const getDetailAccountAdword = async (req, res) => {
     return next(e);
   }
 }
+const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
+    const info = {
+      id: req.adsAccount._id,
+      adsId:  req.adsAccount.adsId
+    }
+    logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::is called\n', info);
+    try{
+        const accountId = req.adsAccount._id;
+
+        const result = await AccountAdsService.getAllIpInAutoBlackListIp(accountId);
+
+        logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::success\n', info);
+        return res.status(HttpStatus.OK).json({
+          messages: ['Lấy dữ liệu thành công.'],
+          data: {
+            ips: result
+          }
+        });
+
+    }catch(e){
+      logger.error('AccountAdsController::getIpsInAutoBlackListOfAccount::error', e, '\n', info);
+      next(e);
+    }
+};
 
 module.exports = {
   addAccountAds,
@@ -1116,5 +1140,6 @@ module.exports = {
   getCampaignsInDB,
   getSettingOfAccountAds,
   getDailyClicking,
+  getIpsInAutoBlackListOfAccount
 };
 

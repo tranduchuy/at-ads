@@ -26,5 +26,6 @@ router.get('/:accountId/verify-acctached-code-domains', CheckTokenMiddleware, Ch
 router.get('/:accountId/report', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getReportForAccount);
 router.get('/:accountId/report/daily-clicking', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getDailyClicking);
 router.get('/:accountId/setting', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getSettingOfAccountAds);
+router.get('/:accountId/blocked-ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getIpsInAutoBlackListOfAccount);
 
 module.exports = router;
