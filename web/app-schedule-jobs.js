@@ -19,8 +19,8 @@ db(() => {
     return console.error(err);
 
     console.log(`Server is listening on port ${port}`);
-    // removeIp();
+    removeIp();
     updateCampaignName();
-    // updateNetworkCompany();
+    updateNetworkCompany();
   });
 });

@@ -9,7 +9,7 @@ const Async = require('async');
 // const config = require('config');
 // const timeDeleteIpInBlackList = config.get('appScheduleJobs').timeDeleteIpInBlackList;
 
-const getCampaignInAccount = async (accountAds, cb) => {
+const getCampaignInAccount = (accountAds, cb) => {
     const info = {
         adsId:  accountAds.adsId,
         _id: accountAds._id
@@ -68,6 +68,11 @@ const getCampaignInAccount = async (accountAds, cb) => {
     }
 };
 
+/**
+ * 
+ * @param {accountId: string, campaign: { id: string, name: string }} campaignInfo 
+ * @param {function} cb 
+ */
 const updateCampaignNameForOneCampaign = (campaignInfo, cb) => {
     logger.info('scheduleJobs::updateCampaignNameForOneCampaign::is called.\n', campaignInfo);
 
@@ -96,7 +101,7 @@ const updateCampaignNameForOneCampaign = (campaignInfo, cb) => {
 };
 
 module.exports =  () => {
-    schedule.scheduleJob('0 */1 * * * *', async() => {
+    schedule.scheduleJob('0 0 0 */1 * *', async() => {
         logger.info('scheduleJobs::updateCampaignName is called');
         try{
             const allAccountAds = await AccountAdsModel.find({isConnected : true});
