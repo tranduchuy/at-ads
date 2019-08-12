@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 const blockingCriterionsSchema = new Schema({
     accountId: String,
     campaignId: String,
+    campaignName: {type: String, default: null},
     isDeleted: {type: Boolean, default: false},
     sampleBlockingIp: {type: Object, default: null},
     customBlackList: {type: Array, default: []},

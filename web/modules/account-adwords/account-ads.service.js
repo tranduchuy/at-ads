@@ -517,7 +517,7 @@ const getReportForAccount = (accountKey, from, to) => {
         sort,
         groupStage  
       ]);
-      logger.info('AccountAdsService::getReportForAccount::query', {accountId, queryInfo});
+      logger.info('AccountAdsService::getReportForAccount::query', {queryInfo});
 
       const result = await UserBehaviorLogsModel.aggregate(
         [

@@ -90,6 +90,46 @@ const getListCampaigns = function (adwordId) {
   });
 };
 
+
+/**
+ * Get list campaign of an adword id
+ * @param {string} adwordId
+ * @return {Promise<[{id: string, name: string}]>}
+ */
+const getCampaignsName = function (adwordId, campaignIds) {
+  return new Promise((resolve, reject) => {
+    logger.info('GoogleAdsService::getCampaignsName', adwordId);
+
+    const user = new AdwordsUser({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+
+    let campaignService = user.getService('CampaignService', adwordConfig.version);
+    const selector = {
+      fields: ['Id','Name'],
+      predicates: [{field: 'Id', operator: 'IN', values: campaignIds}],
+    };
+
+    campaignService.get({ serviceSelector: selector }, (error, result) => {
+      if (error) {
+        logger.error('GoogleAdsService::getCampaignsName::error', error);
+        return reject(error);
+      }
+
+      logger.info('GoogleAdsService::getCampaignsName::success', result);
+      if (result.entries) {
+        return resolve(result.entries);
+      }
+
+      return resolve([]);
+    });
+  });
+};
 /**
  * Add an ip to blacklist
  * @param {string} adwordId
@@ -393,5 +433,6 @@ module.exports = {
   getAccountHierachy,
   getErrorCode,
   getReportOnDevice,
-  enabledOrPauseTheCampaignByDevice
+  enabledOrPauseTheCampaignByDevice,
+  getCampaignsName
 };
