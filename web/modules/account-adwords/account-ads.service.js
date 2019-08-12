@@ -11,6 +11,8 @@ const { GoogleCampaignStatus } = require('../account-adwords/account-ads.constan
 const DeviceConstant = require('../../constants/device.constant');
 const shortid = require('shortid');
 const criterionOfDevice = require('../../constants/criterionIdOfDevice.constant');
+const moment = require('moment');
+const UserBehaviorLogsModel = require('../user-behavior-log/user-behavior-log.model');
 
 /**
  *
@@ -460,6 +462,154 @@ const saveSetUpCampaignsByOneDevice = async(accountAds, device, isEnabled) => {
   return await accountAds.save();
 };
 
+const getReportForAccount = (accountKey, from, to) => {
+  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from, to});
+  return new Promise(async (res, rej) => {
+    try{
+      const matchStage =  {
+          $match: {
+              accountKey,
+              type: 1,
+              createdAt: {
+                  $gte: new Date(from),
+                  $lt: new Date(to)
+              }
+          }  
+      };
+
+      const sort =  {
+          $sort: {
+              "createdAt": -1
+          }  
+      };
+
+      const groupStage = { 
+          $group: { 
+              _id: { 
+                  $dateToString: { format: "%d-%m-%Y", date: "$createdAt"} 
+              }, 
+              spamClick: { 
+                  $sum: {
+                      $cond : [{$eq: ["$isSpam", true]}, 1, 0]
+                  },
+              },
+              realClick: { 
+                $sum: {
+                    $cond : [{$ne: ["$isSpam", true]}, 1, 0]
+                },
+            },
+            logs: {
+              $push: {
+                  uuid: "$uuid",
+                  createdAt: "$createdAt",
+                  isSpam: "$isSpam",
+                  ip: "$ip",
+                  keyword: "$keyword",
+                  location: "$location"
+              }
+          }
+        }
+      };
+
+      const result = await UserBehaviorLogsModel.aggregate(
+        [
+            matchStage,
+            sort,
+            groupStage
+        ]);
+      
+      logger.info('AccountAdsService::getReportForAccount::success ', {accountKey, from, to});
+      return res(result);
+    }catch(e){
+      logger.error('AccountAdsService::getReportForAccount::error ', e, {accountKey, from, to});
+      return rej(e);
+    }
+  });
+};
+
+const getDailyClicking =  (accountKey, maxClick, page, limit) => {
+  logger.info('AccountAdsService::getDailyClicking::is called ', {accountKey});
+
+  return new Promise(async (res, rej)=> {
+    try{
+      const now = moment().startOf('day');;
+      const tomorow = moment(now).endOf('day');
+
+      const matchStage = {
+          $match: {
+            accountKey,
+            type: 1,
+            createdAt: {
+                $gte: new Date(now),
+                $lt: new Date(tomorow)
+            }
+        }
+      };
+
+      const groupStage = { 
+          $group: { 
+            _id: "$ip", 
+            click: { 
+                $sum: 1
+            },
+            info: {
+                $push: {
+                location: '$location',
+                keyword: '$keyword',
+                os: '$os',
+                networkCompany: '$networkCompany',
+                browser: '$browser',
+                createdAt: '$createdAt'
+                }
+            }
+          }
+      };
+
+      const projectStage = {
+        $project: { 
+           id: 1,
+           click: 1,
+           info: { 
+               $slice: [ "$info", -1 ]
+            } 
+        }
+      };
+
+      const conditionToRemove = {
+        $match: {click: {$lt: maxClick}}  
+      };
+
+      const facetStage = {
+        $facet: 
+        {
+           entries: [
+             { $skip: (page - 1) * limit },
+             { $limit: limit }
+         ],
+         meta: [
+           {$group: {_id: null, totalItems: {$sum: 1}}},
+           ],
+        }
+      };
+
+      const result = await UserBehaviorLogsModel.aggregate(
+        [
+          matchStage,
+          groupStage,
+          projectStage,
+          conditionToRemove,
+          facetStage
+        ]);
+
+      logger.info('AccountAdsService::getDailyClicking::success ', {accountKey});
+      return res(result);
+    }catch(e){
+      logger.error('AccountAdsService::getDailyClicking::error ', e, {accountKey});
+      return rej(e);
+    }
+  });
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -477,5 +627,7 @@ module.exports = {
   removeSampleBlockingIp,
   addSampleBlockingIp,
   updateIsDeletedStatus,
-  saveSetUpCampaignsByOneDevice
+  saveSetUpCampaignsByOneDevice,
+  getDailyClicking,
+  getReportForAccount
 };

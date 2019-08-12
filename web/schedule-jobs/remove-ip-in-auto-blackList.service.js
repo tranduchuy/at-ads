@@ -13,6 +13,13 @@ const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
 
     logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::is called.\n', info);
     try{
+
+        if(!accountAds.setting.autoRemoveBlocking)
+        {
+            logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::success.\n', info);
+            return cb();
+        }
+
         const ipInAutoBlackList = accountAds.setting.autoBlackListIp;
         const accountId = accountAds._id;
         const adsId =  accountAds.adsId;
