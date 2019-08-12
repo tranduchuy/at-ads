@@ -610,6 +610,78 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
   });
 };
 
+const getAllIpInAutoBlackListIp = (accountId) => 
+{
+  logger.info('AccountAdsService::getDailyClicking::is called ', {accountId});
+  return new Promise(async (res, rej) => {
+    try{
+      const matchStage = {
+          $match: {
+            "accountId": accountId.toString()
+          }
+        };
+    
+      const unwindStage = {
+          $unwind: {
+              path: "$autoBlackListIp"
+          }
+        };
+    
+      const groupStage = {
+          $group: {
+              _id: "$autoBlackListIp.ip",
+              campaignIds: {
+                  $push: "$campaignId"
+              }
+          }
+        };
+    
+      const lookupStage = {
+          $lookup: {
+              "from": "UserBehaviorLogs",
+              "localField": "_id",
+              "foreignField": "ip",
+              "as": "logs"
+          }
+        };
+    
+      const projectStage = {
+          $project: {
+              _id: 1,
+              campaignIds: 1,
+              log: {
+                  $arrayElemAt: ["$logs", 0]
+              }
+            }
+        };
+    
+      const projectStage1 = {
+        $project: {
+            _id: 1,
+            campaignIds: 1,
+            numberOfCampaigns: {$size: "$campaignIds"},
+            network: "$log.networkCompany.name"
+          }
+        };
+    
+      const result = await BlockingCriterionsModel.aggregate([
+        matchStage,
+        unwindStage,
+        groupStage,
+        lookupStage,
+        projectStage,
+        projectStage1    
+      ]);
+    
+      logger.info('AccountAdsService::getAllIpInAutoBlackListIp::success ', {accountId});
+      return res(result);
+    }catch(e){
+      logger.error('AccountAdsService::getAllIpInAutoBlackListIp::error ', e, {accountId});
+      return rej(e);
+    }
+  });
+}
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -629,5 +701,6 @@ module.exports = {
   updateIsDeletedStatus,
   saveSetUpCampaignsByOneDevice,
   getDailyClicking,
-  getReportForAccount
+  getReportForAccount,
+  getAllIpInAutoBlackListIp
 };

@@ -1073,6 +1073,35 @@ const getDailyClicking = (req, res, next) => {
   }
 };
 
+const getIpsInAutoBlackListOfAccount = async(req, res, next) => {
+    const info = {
+      id: req.adsAccount._id,
+      adsId:  req.adsAccount.adsId
+    }
+    logger.info('AccountAdsController::getAutoBackListOfCampaign::is called\n', info);
+    try{
+        const accountId = req.adsAccount._id;
+
+        AccountAdsService.getAllIpInAutoBlackListIp(accountId)
+        .then(result => {
+            logger.info('AccountAdsController::getAutoBackListOfCampaign::success\n', info);
+            return res.status(HttpStatus.OK).json({
+              messages: ['Lấy dữ liệu thành công.'],
+              data: {
+                ips: result
+              }
+            });
+        }).catch(err => {
+          logger.error('AccountAdsController::getAutoBackListOfCampaign::error', err, '\n', info);
+          next(err);
+        });
+
+    }catch(e){
+      logger.error('AccountAdsController::getAutoBackListOfCampaign::error', e, '\n', info);
+      next(e);
+    }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -1094,5 +1123,6 @@ module.exports = {
   getCampaignsInDB,
   getSettingOfAccountAds,
   getDailyClicking,
+  getIpsInAutoBlackListOfAccount
 };
 
