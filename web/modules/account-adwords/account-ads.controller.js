@@ -1073,7 +1073,7 @@ const getDailyClicking = (req, res, next) => {
   }
 };
 
-const getIpsInAutoBlackListOfAccount = async(req, res, next) => {
+const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
     const info = {
       id: req.adsAccount._id,
       adsId:  req.adsAccount.adsId
@@ -1082,18 +1082,14 @@ const getIpsInAutoBlackListOfAccount = async(req, res, next) => {
     try{
         const accountId = req.adsAccount._id;
 
-        AccountAdsService.getAllIpInAutoBlackListIp(accountId)
-        .then(result => {
-            logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::success\n', info);
-            return res.status(HttpStatus.OK).json({
-              messages: ['Lấy dữ liệu thành công.'],
-              data: {
-                ips: result
-              }
-            });
-        }).catch(err => {
-          logger.error('AccountAdsController::getIpsInAutoBlackListOfAccount::error', err, '\n', info);
-          next(err);
+        const result = await AccountAdsService.getAllIpInAutoBlackListIp(accountId);
+
+        logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::success\n', info);
+        return res.status(HttpStatus.OK).json({
+          messages: ['Lấy dữ liệu thành công.'],
+          data: {
+            ips: result
+          }
         });
 
     }catch(e){
