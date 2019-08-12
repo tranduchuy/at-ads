@@ -92,12 +92,13 @@ const getAccountsAdsByUserId = async (userId) => {
   const accountsAds = await AccountAdsModel.find({ user: userId.toString() });
   if (accountsAds.length !== 0) {
     const promises = accountsAds.map(async (account) => {
-      const numberOfWebsites = await WebsiteModel.countDocuments({ accountAd: mongoose.Types.ObjectId(account._id) });
+      const websites = await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(account._id) });
       return {
         id: account._id,
         adsId: account.adsId,
         createdAt: account.createdAt,
-        numberOfWebsites,
+        isConnected: account.isConnected,
+        websites,
         key: account.key
       }
     });
