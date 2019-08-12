@@ -6,6 +6,7 @@ const CheckAccountIdMiddleWare = require('../../middlewares/check-account-id');
 const CheckEmptyCampaignMiddleWare = require('../../middlewares/check-empty-campaign');
 
 router.post('/', CheckTokenMiddleware, AccountAdsController.addAccountAds);
+router.get('/:accountId', CheckTokenMiddleware, AccountAdsController.getDetailAccountAdword);
 router.get('/:accountId/original-campaigns', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getListOriginalCampaigns);
 router.post('/:accountId/ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.handleManipulationGoogleAds);
 router.get('/:accountId/ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.getIpsInCustomBlackList);

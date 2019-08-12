@@ -1073,10 +1073,32 @@ const getDailyClicking = (req, res, next) => {
   }
 };
 
+const getDetailAccountAdword = async (req, res) => {
+  try {
+    const {accountId} = req.params;
+    const adsAccount = await AccountAdsModel.findOne({_id: accountId, user: req.user._id});
+    if (!adsAccount) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Account not found'],
+        data: null
+      })
+    }
+
+    return res.status(HttpStatus.OK).json({
+      messages: ['Get account successfully'],
+      data: adsAccount
+    });
+  } catch (e) {
+    logger.error('AccountAdsController::getDetailAccountAdword::error', e);
+    return next(e);
+  }
+}
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
   getAccountsAds,
+  getDetailAccountAdword,
   autoBlockIp,
   autoBlockingRangeIp,
   autoBlocking3g4g,
