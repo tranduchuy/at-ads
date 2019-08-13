@@ -13,6 +13,7 @@ const shortid = require('shortid');
 const criterionOfDevice = require('../../constants/criterionIdOfDevice.constant');
 const moment = require('moment');
 const UserBehaviorLogsModel = require('../user-behavior-log/user-behavior-log.model');
+const { LOGGING_TYPES } = require('../user-behavior-log/user-behavior-log.constant');
 
 /**
  *
@@ -546,7 +547,7 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
       const matchStage = {
           $match: {
             accountKey,
-            type: 1,
+            type: LOGGING_TYPES.CLICK,
             createdAt: {
                 $gte: new Date(now),
                 $lt: new Date(tomorow)
@@ -716,7 +717,7 @@ const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
       const matchStage =  {
         $match: {
           accountKey,
-          type: 1,
+          type: LOGGING_TYPES.CLICK,
           createdAt: {
             $gte: new Date(from),
             $lt: new Date(to)
