@@ -101,7 +101,7 @@ const updateCampaignNameForOneCampaign = (campaignInfo, cb) => {
 };
 
 module.exports =  () => {
-    schedule.scheduleJob('0 0 0 */1 * *', async() => {
+    schedule.scheduleJob('0 0 12 * * *', async() => {
         logger.info('scheduleJobs::updateCampaignName is called');
         try{
             const allAccountAds = await AccountAdsModel.find({isConnected : true});
