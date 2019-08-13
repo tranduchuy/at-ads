@@ -7,6 +7,7 @@ const BlockingCriterionsModel = require('../blocking-criterions/blocking-criteri
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
 const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
+const mongoose = require('mongoose');
 
 const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
@@ -1074,6 +1075,33 @@ const getDailyClicking = (req, res, next) => {
   }
 };
 
+const getDetailAccountAdword = async (req, res) => {
+  try {
+    const {accountId} = req.params;
+    if (!mongoose.Types.ObjectId.isValid(accountId)) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ["Wrong account id"],
+        data: null
+      });
+    }
+
+    const adsAccount = await AccountAdsModel.findOne({_id: accountId, user: req.user._id});
+    if (!adsAccount) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Account not found'],
+        data: null
+      })
+    }
+
+    return res.status(HttpStatus.OK).json({
+      messages: ['Get account successfully'],
+      data: adsAccount
+    });
+  } catch (e) {
+    logger.error('AccountAdsController::getDetailAccountAdword::error', e);
+    return next(e);
+  }
+}
 const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
     const info = {
       id: req.adsAccount._id,
@@ -1171,6 +1199,7 @@ module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
   getAccountsAds,
+  getDetailAccountAdword,
   autoBlockIp,
   autoBlockingRangeIp,
   autoBlocking3g4g,
