@@ -96,12 +96,13 @@ module.exports = async(channel, msg) => {
         logger.info(`jobs::autoBlockIp::udpate query ${queryUpdate}. Result ${resultUpdate}`);
 
         Async.eachSeries(campaignIds, (campaignId, callback)=> {
-            GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
-              .then((result) => {
-                const accountInfo = { result, accountId, campaignId, adsId, ip };
-                RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
-              })
-              .catch(err => callback(err));
+            console.log(adsId + '  ' + campaignId + ' ' + ip);
+            callback();
+            // GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
+            //   .then((result) => {
+            //     const accountInfo = { result, accountId, campaignId, adsId, ip };
+            //     RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
+            //   }).catch(err => callback(err));
           }, error => {
             if (error) {
               logger.error('jobs::autoBlockIp::error', error, {id});
