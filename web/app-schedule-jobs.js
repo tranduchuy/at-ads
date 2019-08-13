@@ -3,6 +3,7 @@ const app = express();
 const config = require('config');
 const db = require('./database/db');
 const removeIp = require('./schedule-jobs/remove-ip-in-auto-blackList');
+const updateCampaignName = require('./schedule-jobs/update-campaign-name');
 
 const {updateNetworkCompany} = require('./schedule-jobs/update-network-company');
 
@@ -19,6 +20,7 @@ db(() => {
 
     console.log(`Server is listening on port ${port}`);
     removeIp();
+    updateCampaignName();
     updateNetworkCompany();
   });
 });
