@@ -49,7 +49,7 @@ const Mailer = {
         from: 'snowyflowervietnam.com@gmail.com',
         to: email,
         subject: "AT ADS - Đổi mật khẩu",
-        text: "http://localhost:4200/reset-password/" + token
+        text: "http://click.appnet.edu.vn/#/auth/reset-password/" + token
       };
 
       transporter.sendMail(mailOptions, function (error) {
