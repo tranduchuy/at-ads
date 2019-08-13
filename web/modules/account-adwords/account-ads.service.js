@@ -517,7 +517,7 @@ const getReportForAccount = (accountKey, from, to) => {
         sort,
         groupStage  
       ]);
-      logger.info('AccountAdsService::getReportForAccount::query', {accountId, queryInfo});
+      logger.info('AccountAdsService::getReportForAccount::query', {accountKey, queryInfo});
 
       const result = await UserBehaviorLogsModel.aggregate(
         [
@@ -607,7 +607,7 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
         conditionToRemove,
         facetStage   
       ]);
-      logger.info('AccountAdsService::getDailyClicking::query', {accountId, queryInfo});
+      logger.info('AccountAdsService::getDailyClicking::query', {accountKey, queryInfo});
 
       const result = await UserBehaviorLogsModel.aggregate(
         [
