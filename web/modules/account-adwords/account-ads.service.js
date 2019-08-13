@@ -707,7 +707,112 @@ const getAllIpInAutoBlackListIp = (accountId) =>
       return rej(e);
     }
   });
-}
+};
+
+const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
+  logger.info('AccountAdsService::getIpsInfoInClassD::is called ', {accountKey});
+  return new Promise(async(res, rej) => {
+    try{
+      const matchStage =  {
+        $match: {
+          accountKey,
+          type: 1,
+          createdAt: {
+            $gte: new Date(from),
+            $lt: new Date(to)
+          }
+        }  
+      };
+
+      const projectStage ={ $project: { 
+          keyword: 1,
+          networkCompany: 1,
+          location: 1,
+          createdAt: 1,
+          click: {sum: 1},
+          ip1: { $split: ["$ip", "."]}}
+      };
+
+      const projectStage1 ={ $project: {
+          keyword: 1,
+          networkCompany: 1,
+          location: 1,
+          createdAt: 1,
+          ip2: {$arrayElemAt: ["$ip1",0]},
+          ip3: {$arrayElemAt: ["$ip1",1]},
+          ip4: {$arrayElemAt: ["$ip1",2]}}
+      };
+
+      const projectStage2 = { $project: { 
+          keyword: 1,
+          networkCompany: 1,
+          location: 1,
+          createdAt: 1,
+          ipClassC: { $concat: [ "$ip2", ".", "$ip3", ".", "$ip4", ".*"]}}
+      };
+
+      const groupStage = { $group: { 
+        _id: "$ipClassC",
+        keywords: {$push: "$keyword"},
+        networks:{$push: "$networkCompany"},
+        locations: {$push: '$location'},
+        totalClick: {$sum: 1},
+        logTimes: {$push: "$createdAt"}}
+      };
+
+      const projectStage3 =  { $project: {
+        _id:1,
+        keywords: 1,
+        networks: 1,
+        locations: 1,
+        totalClick: 1,
+        logTime: { $arrayElemAt: ["$logTimes", -1] }}
+      };
+
+      const facetStage = {
+        $facet: 
+        {
+          entries: [
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+          ],
+          meta: [
+            {$group: {_id: null, totalItems: {$sum: 1}}},
+          ],
+        }
+      };
+
+      const query = JSON.stringify([
+        matchStage,
+        projectStage,
+        projectStage1,
+        projectStage2,
+        groupStage,
+        projectStage3,
+        facetStage
+      ]);
+
+      logger.info('AccountAdsService::getIpsInfoInClassD::query ', {accountKey, query});
+
+      const result = await UserBehaviorLogsModel.aggregate([
+        matchStage,
+        projectStage,
+        projectStage1,
+        projectStage2,
+        groupStage,
+        projectStage3,
+        facetStage
+      ]);
+
+      logger.info('AccountAdsService::getIpsInfoInClassD::success ', {accountKey});
+      return res(result);
+
+    }catch(e){
+      logger.error('AccountAdsService::getIpsInfoInClassD::error ', e, {accountKey});
+      return rej(e);
+    }
+  });
+};
 
 module.exports = {
   createAccountAds,
@@ -729,5 +834,6 @@ module.exports = {
   saveSetUpCampaignsByOneDevice,
   getDailyClicking,
   getReportForAccount,
-  getAllIpInAutoBlackListIp
+  getAllIpInAutoBlackListIp,
+  getIpsInfoInClassD
 };
