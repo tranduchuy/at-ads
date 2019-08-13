@@ -24,6 +24,7 @@ const { sampleBlockingIpValidationSchema } = require('./validations/sample-block
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
+const { getIpsInfoInClassDValidationSchema } = require('./validations/get-ips-info-in-ClassD.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
@@ -1126,6 +1127,74 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
     }
 };
 
+const getIpsInfoInClassD = async (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId:  req.adsAccount.adsId
+  }
+  logger.info('AccountAdsController::getIpsInfoInClassD::is called\n', info);
+  try{
+
+    const { error } = Joi.validate(req.query, getIpsInfoInClassDValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let {from, to} = req.query;
+    let { page, limit } = req.query;
+
+    if(!page)
+    {
+      page = 1;
+    }
+
+    if(!limit)
+    {
+      limit = 10;
+    }
+
+    page = Number(page);
+    limit = Number(limit);
+
+    from = moment(from, 'DD-MM-YYYY');
+    to = moment(to, 'DD-MM-YYYY');
+
+    if(to.isBefore(from))
+    {
+      logger.info('AccountAdsController::getIpsInfoInClassD::babRequest\n', info);
+      return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.'] 
+      });
+    }
+
+    const endDateTime = moment(to).endOf('day');
+    const accountKey = req.adsAccount.key;
+
+    const result = await AccountAdsService.getIpsInfoInClassD(accountKey, from, endDateTime, page, limit);
+    let rangeIps = [];
+    let totalItems = 0;
+    if(result.entries.length === 0)
+    {
+      rangeIps = result[0].entries;
+      totalItems = result[0].meta[0].totalItems
+    }
+
+    logger.info('AccountAdsController::getIpsInfoInClassD::success\n', info);
+    return res.status(HttpStatus.OK).json({
+      messages: ['Lấy dữ liệu thành công.'],
+      data: {
+        rangeIps,
+        totalItems
+      }
+    });
+
+  }catch(e){
+    logger.error('AccountAdsController::getIpsInfoInClassD::error', e, '\n', info);
+    next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -1148,6 +1217,7 @@ module.exports = {
   getCampaignsInDB,
   getSettingOfAccountAds,
   getDailyClicking,
-  getIpsInAutoBlackListOfAccount
+  getIpsInAutoBlackListOfAccount,
+  getIpsInfoInClassD
 };
 
