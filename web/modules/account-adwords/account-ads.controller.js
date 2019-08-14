@@ -1085,7 +1085,7 @@ const getDetailAccountAdword = async (req, res) => {
       });
     }
 
-    const adsAccount = await AccountAdsModel.findOne({_id: accountId, user: req.user._id});
+    let adsAccount = await AccountAdsModel.findOne({_id: accountId, user: req.user._id});
     if (!adsAccount) {
       return res.status(HttpStatus.BAD_REQUEST).json({
         messages: ['Account not found'],
@@ -1093,9 +1093,19 @@ const getDetailAccountAdword = async (req, res) => {
       })
     }
 
+    const query = {
+      accountId,
+      isDeleted: false
+    };
+
+    const campaignNumber = await BlockingCriterionsModel.countDocuments(query);
+
     return res.status(HttpStatus.OK).json({
       messages: ['Get account successfully'],
-      data: adsAccount
+      data: {
+        adsAccount,
+        campaignNumber
+      }
     });
   } catch (e) {
     logger.error('AccountAdsController::getDetailAccountAdword::error', e);
