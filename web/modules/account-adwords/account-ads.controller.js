@@ -336,8 +336,8 @@ const autoBlocking3g4g = (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const {viettel, mobifone, vinafone, vietnammobile} = req.body;
-    const mobiNetworks = {viettel, mobifone, vinafone, vietnammobile};
+    const {viettel, mobifone, vinafone, vietnammobile, fpt} = req.body;
+    const mobiNetworks = {viettel, mobifone, vinafone, vietnammobile, fpt};
 
     req.adsAccount.setting.mobileNetworks = mobiNetworks;
 

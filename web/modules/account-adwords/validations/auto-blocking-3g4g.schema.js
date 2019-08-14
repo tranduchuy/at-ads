@@ -4,7 +4,8 @@ const AutoBlocking3g4gValidationSchema = Joi.object().keys({
     viettel: Joi.boolean().required(),
     mobifone: Joi.boolean().required(),
     vinafone: Joi.boolean().required(),
-    vietnammobile: Joi.boolean().required()
+    vietnammobile: Joi.boolean().required(),
+    fpt: Joi.boolean().required()
 });
 
 module.exports = {
