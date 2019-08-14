@@ -38,12 +38,13 @@ db(() => {
           }
       
           console.log('RabbitMQ is waiting..');
-      
+          
+          channel.prefetch(1);
+  
           queues.forEach(q => {
             channel.assertQueue(q, {
               durable: true
             });
-          
             channel.consume(q, async msg => {
               console.log(q, " [x] Received %s", msg.content.toString());
       
