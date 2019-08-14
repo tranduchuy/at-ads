@@ -38,19 +38,18 @@ db(() => {
           }
       
           console.log('RabbitMQ is waiting..');
-      
+          
+          channel.prefetch(1);
+  
           queues.forEach(q => {
             channel.assertQueue(q, {
               durable: true
             });
-            channel.prefetch(1);
             channel.consume(q, async msg => {
               console.log(q, " [x] Received %s", msg.content.toString());
       
               switch (q) {
                 case rabbitChannels.BLOCK_IP:
-                  // console.log(JSON.parse(msg.content.toString()));
-                  // channel.ack(msg);
                   await autoBlockIpJobFn(channel, msg);
                   break;
                 case rabbitChannels.DETECT_SESSION:

@@ -7,13 +7,12 @@ const Async = require('async');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Tasks');
 const moment = require('moment');
-const mongoose = require("mongoose");
+const { LOGGING_TYPES } = require('../modules/user-behavior-log/user-behavior-log.constant');
 
 module.exports = async(channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
     try{
         const id = JSON.parse(msg.content.toString());
-
         const log = await UserBehaviorLogsModel.findOne({_id: id});
         
         if(!log)
@@ -26,7 +25,6 @@ module.exports = async(channel, msg) => {
         const isPrivateBrowsing = log.isPrivateBrowsing;
         const key = log.accountKey;
         const ip = log.ip;
-
         const accountAds = await AccountAdsModel.findOne({key});
 
         if(!accountAds)
@@ -60,19 +58,19 @@ module.exports = async(channel, msg) => {
             return;
         }
 
-        const yesterday = moment().format('MM/DD/YYYY');
-        const tomorrow = moment().subtract(-1, 'day').format('MM/DD/YYYY');
+        const now = moment().startOf('day');;
+        const tomorrow = moment(now).endOf('day');
+
         const countQuery = {
             ip,
-            type: 1,
+            type: LOGGING_TYPES.CLICK,
             createdAt: {
-                $gte: new Date(yesterday.toString()),
-                $lt: new Date(tomorrow.toString())
+                $gte: new Date(now),
+                $lt: new Date(tomorrow)
             }
         };
 
         const countClick = await UserBehaviorLogsModel.countDocuments(countQuery);
-
         const maxClick = accountAds.setting.autoBlockByMaxClick;
 
         if(!isPrivateBrowsing)
@@ -89,20 +87,12 @@ module.exports = async(channel, msg) => {
         const adsId = accountAds.adsId;
         const accountId = accountAds._id;
 
-        const queryUpdate = {_id: id};
-        const dataUpdate = {$set: {isSpam: true}};
-
-        const resultUpdate = await UserBehaviorLogsModel.updateOne(queryUpdate, dataUpdate);
-        logger.info(`jobs::autoBlockIp::udpate query ${queryUpdate}. Result ${resultUpdate}`);
-
         Async.eachSeries(campaignIds, (campaignId, callback)=> {
-            console.log(adsId + '  ' + campaignId + ' ' + ip);
-            callback();
-            // GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
-            //   .then((result) => {
-            //     const accountInfo = { result, accountId, campaignId, adsId, ip };
-            //     RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
-            //   }).catch(err => callback(err));
+            GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
+              .then((result) => {
+                const accountInfo = { result, accountId, campaignId, adsId, ip };
+                RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
+              }).catch(err => callback(err));
           }, error => {
             if (error) {
               logger.error('jobs::autoBlockIp::error', error, {id});
@@ -113,7 +103,7 @@ module.exports = async(channel, msg) => {
             const updateData = {$push: {"setting.autoBlackListIp": ip}};
 
             AccountAdsModel
-             .update({key}, updateData)
+             .updateOne({key}, updateData)
              .exec(err => {
                 if(err)
                 {
@@ -121,9 +111,25 @@ module.exports = async(channel, msg) => {
                     channel.ack(msg);
                     return;
                 }
-                logger.info('jobs::autoBlockIp::success', {id});
-                channel.ack(msg);
-                return;
+                const queryUpdate = {_id: id};
+                const dataUpdate = {$set: {isSpam: true}};
+                
+                logger.info(`jobs::autoBlockIp::udpate query ${queryUpdate}`);
+                
+                UserBehaviorLogsModel
+                .updateOne(queryUpdate, dataUpdate)
+                .exec(e => {
+                    if(e)
+                    {
+                        logger.error('jobs::autoBlockIp::error', e, {id});
+                        channel.ack(msg);
+                        return;
+                    }
+
+                    logger.info('jobs::autoBlockIp::success', {id});
+                    channel.ack(msg);
+                    return;
+                });
              });
           });
     }catch(e){
