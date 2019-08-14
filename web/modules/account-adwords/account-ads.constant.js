@@ -17,6 +17,6 @@ module.exports = {
   GoogleCampaignStatus: {
     ENABLED: 'ENABLED'
   },
-  trackingScript: `<script type="text/javascript" src="http://159.65.11.195:3001/static/tracking.js?key={accountKey}"></script>`
+  trackingScript: `<script type="text/javascript" src="https://static-click.appnet.edu.vn/static/tracking.js?key={accountKey}"></script>`
 
 };
