@@ -98,7 +98,7 @@ const getAccountsAdsByUserId = async (userId) => {
         accountId: mongoose.Types.ObjectId(account._id),
         isDeleted: false
       };
-      const campaignNumber = await BlockingCriterionsModel.count(query);
+      const campaignNumber = await BlockingCriterionsModel.countDocuments(query);
       return {
         id: account._id,
         adsId: account.adsId,
