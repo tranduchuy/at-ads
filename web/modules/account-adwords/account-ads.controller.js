@@ -1173,8 +1173,8 @@ const getIpsInfoInClassD = async (req, res, next) => {
 
     const result = await AccountAdsService.getIpsInfoInClassD(accountKey, from, endDateTime, page, limit);
     let rangeIps = [];
-    console.log(result);
     let totalItems = 0;
+    
     if(result.entries.length !== 0)
     {
       rangeIps = result[0].entries;
