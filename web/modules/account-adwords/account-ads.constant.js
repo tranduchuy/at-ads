@@ -9,7 +9,8 @@ module.exports = {
       viettel: false,
       mobifone: false,
       vinafone: false,
-      vietnammobile: false
+      vietnammobile: false,
+      fpt: false
     },
     sampleBlockingIp: ''
   },

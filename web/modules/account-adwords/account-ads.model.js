@@ -20,6 +20,7 @@ const accountAdsSchema = new Schema({
             mobifone: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.mobifone },
             vinafone: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.vinafone },
             vietnammobile: { type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.vietnammobile },
+            fpt: {type: Boolean, default: AccountAdsConstant.setting.mobileNetworks.fpt}
         },
         sampleBlockingIp: {type: String, default: AccountAdsConstant.setting.sampleBlockingIp},
         devices: {
