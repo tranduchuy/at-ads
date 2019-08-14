@@ -94,7 +94,7 @@ const getAccountsAdsByUserId = async (userId) => {
   if (accountsAds.length !== 0) {
     const promises = accountsAds.map(async (account) => {
       const websites = await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(account._id) });
-      const campaigns = await BlockingCriterionsModel.find({accountId: mongoose.Types.ObjectId(account._id)});
+      const campaigns = await BlockingCriterionsModel.find({ accountId: mongoose.Types.ObjectId(account._id) });
       return {
         id: account._id,
         adsId: account.adsId,
