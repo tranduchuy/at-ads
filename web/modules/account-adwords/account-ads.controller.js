@@ -64,11 +64,13 @@ const addAccountAds = async (req, res, next) => {
           });
         }
 
-        await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
+        const account = await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
         logger.info('AccountAdsController::addAccountAds::success', result);
         return res.status(HttpStatus.OK).json({
           messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
-          data: {}
+          data: {
+            account
+          }
         });
       })
       .catch(async error => {
