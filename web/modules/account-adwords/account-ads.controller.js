@@ -1187,7 +1187,7 @@ const getIpsInfoInClassD = async (req, res, next) => {
     let rangeIps = [];
     let totalItems = 0;
     
-    if(result.entries.length !== 0)
+    if(result[0].entries.length !== 0)
     {
       rangeIps = result[0].entries;
       totalItems = result[0].meta[0].totalItems
