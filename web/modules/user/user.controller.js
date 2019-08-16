@@ -291,6 +291,8 @@ const login = async (request, res, next) => {
         name: user.name,
         type: user.type,
         status: user.status,
+        phone: user.phone,
+        avatar: user.avatar,
         registerBy: user.registerBy
       }
     ;
@@ -359,8 +361,10 @@ const update = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    let { password, name, phone, birthday, gender, oldPassword, confirmedPassword } = req.body;
+    // let { password, name, phone, birthday, gender, oldPassword, confirmedPassword } = req.body;
+    let { password, name, phone, oldPassword, confirmedPassword } = req.body;
     const updateData = { email: user.email};
+
     if (oldPassword && password && confirmedPassword) {
       const isCorrectPassword = await UserService.isValidHashPassword(user.passwordHash, oldPassword);
 
@@ -382,19 +386,27 @@ const update = async (req, res, next) => {
       updateData.password = password;
     }
 
-    if (req.file) updateData.avatar = req.file.path;
-    if (name) updateData.name = name;
-    if (phone) updateData.phone = phone;
-    if (birthday) updateData.birthday = birthday;
-    if (gender) updateData.gender = gender;
+    // if (req.file) updateData.avatar = req.file.path;
+    // if (birthday) updateData.birthday = birthday;
+    // if (gender) updateData.gender = gender;
+    if (name){
+      updateData.name = name;
+      user.name = name;
+    }
+    if (phone){
+      updateData.phone = phone;
+      user.phone = phone;
+    } 
 
     await UserService.updateUser(updateData);
 
     const result = {
       messages: [messages.ResponseMessages.SUCCESS],
       data: {
-        meta: {},
-        entries: [req.body]
+        info: {
+          phone: user.phone,
+          name: user.name
+        }
       }
     };
 

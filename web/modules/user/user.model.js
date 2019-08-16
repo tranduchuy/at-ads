@@ -17,7 +17,8 @@ const userSchema = new Schema({
   passwordReminderToken: String,
   passwordReminderExpire: Date,
   googleId: String,
-  avatar: String
+  avatar: String,
+  phone: {type: String, default:null}
 }, {timestamps: true});
 
 const UserModel = mongoose.model('User', userSchema, 'Users');
