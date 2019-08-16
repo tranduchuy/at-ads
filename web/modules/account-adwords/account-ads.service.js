@@ -830,6 +830,52 @@ const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
   });
 };
 
+const getIpAndCampaigNumberInCustomBlockingIp = (accountId) => {
+  logger.info('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::is called ', {accountId});
+  return new Promise(async(res, rej) => {
+    try{
+      const matchStage = {
+        $match: {
+            accountId: accountId.toString(),
+            isDeleted: false
+        }  
+      };
+
+      const unwindStage = {
+        $unwind: {
+            path: "$customBlackList"
+        }
+      };
+
+      const groupStage = {
+        $group: { 
+            _id: "$customBlackList.ip",
+            campaignNumber: {$sum: 1}
+        }
+      };
+
+      const query = [
+        matchStage,
+        unwindStage,
+        groupStage
+      ];
+
+      const queryInfo = JSON.stringify(query);
+
+      logger.info('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::query ', {accountId, queryInfo});
+
+      const result = await BlockingCriterionsModel.aggregate(query);
+
+      logger.info('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::success ', {accountId});
+      console.log(result);
+      return res(result);
+    }catch(e){
+      logger.error('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::error ', e, {accountId});
+      return rej(e);
+    }
+  });
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -851,5 +897,6 @@ module.exports = {
   getDailyClicking,
   getReportForAccount,
   getAllIpInAutoBlackListIp,
-  getIpsInfoInClassD
+  getIpsInfoInClassD,
+  getIpAndCampaigNumberInCustomBlockingIp
 };

@@ -833,21 +833,28 @@ const getIpInSampleBlockIp = (req, res, next) => {
   });
 };
 
-const getIpsInCustomBlackList = (req, res, next) => {
+const getIpsInCustomBlackList = async (req, res, next) => {
   const info = {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
   };
-  logger.info('AccountAdsController::getIpsInCustomBlackList is called\n', info);
-  const ips = req.adsAccount.setting.customBlackList;
+  try{
+    logger.info('AccountAdsController::getIpsInCustomBlackList is called\n', info);
+    const accountId = req.adsAccount._id;
 
-  logger.info('AccountAdsController::getIpsInCustomBlackList::success\n', info);
-  return res.status(HttpStatus.OK).json({
-    messages: ['Lấy ip thành công.'],
-    data: {
-      ips
-    }
-  });
+    const ips = await AccountAdsService.getIpAndCampaigNumberInCustomBlockingIp(accountId);
+
+    logger.info('AccountAdsController::getIpsInCustomBlackList::success\n', info);
+    return res.status(HttpStatus.OK).json({
+      messages: ['Lấy ip thành công.'],
+      data: {
+        ips
+      }
+    });
+  }catch(e){
+    logger.error('AccountAdsController::getIpsInCustomBlackList::error', e, '\n', info);
+    next(e);
+  }
 };
 
 const getCampaignsInDB = (req, res, next) => {
