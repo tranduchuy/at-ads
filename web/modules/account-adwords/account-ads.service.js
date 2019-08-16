@@ -836,7 +836,7 @@ const getIpAndCampaigNumberInCustomBlockingIp = (accountId) => {
     try{
       const matchStage = {
         $match: {
-            accountId: accountId.toString(),
+            accountId: accountId,
             isDeleted: false
         }  
       };

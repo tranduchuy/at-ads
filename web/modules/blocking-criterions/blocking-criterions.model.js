@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const ObjectId = mongoose.Schema.Types.ObjectId;
 const blockingCriterionsSchema = new Schema({
-    accountId: String,
+    accountId: ObjectId,
     campaignId: String,
     campaignName: {type: String, default: null},
     isDeleted: {type: Boolean, default: false},
