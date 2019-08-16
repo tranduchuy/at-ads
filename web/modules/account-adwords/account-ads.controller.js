@@ -45,11 +45,11 @@ const addAccountAds = async (req, res, next) => {
 
     const { adWordId } = req.body;
     const { _id } = req.user;
-    const duplicateAdWordId = await AccountAdsModel.find({ adsId: adWordId, user: _id });
+    const duplicateAdWordId = await AccountAdsModel.find({ adsId: adWordId });
+
     if (duplicateAdWordId.length !== 0) {
       const result = {
         messages: [messages.ResponseMessages.AccountAds.Register.ACCOUNT_ADS_DUPLICATE],
-        data: {}
       };
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
@@ -73,32 +73,14 @@ const addAccountAds = async (req, res, next) => {
           }
         });
       })
-      .catch(async error => {
+      .catch(error => {
         const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
-        let isConnected = false;
-        switch (message) {
-          case ManagerCustomerMsgs.ALREADY_MANAGED_BY_THIS_MANAGER:
-            isConnected = true;
-            break;
-          case ManagerCustomerMsgs.ALREADY_INVITED_BY_THIS_MANAGER:
-            break;
-          default:
-            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-              messages: [message]
-            });
-        }
-
-        const account = await AccountAdsService.createAccountAdsHaveIsConnectedStatus({userId: _id, adsId: adWordId}, isConnected);
-        logger.info('AccountAdsController::addAccountAds::success');
-        return res.status(HttpStatus.OK).json({
-          messages: [message],
-          data: {
-            account
-          }
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: [message]
         });
       });
   } catch (e) {
-    logger.error('AccountAdsController::addAccountAds::error', e);
+    logger.error('AccountAdsController::addAccountAds::error', JSON.stringify(e));
     return next(e);
   }
 };
@@ -464,7 +446,11 @@ const getListOriginalCampaigns = async(req, res, next) => {
 };
 
 const connectionConfirmation = async(req, res, next) => {
-  logger.info('AccountAdsController::connectionConfirmation is called');
+  const info = {
+    adsId: req.body.adWordId,
+    _id: req.user._id
+  }
+  logger.info('AccountAdsController::connectionConfirmation is called\n', info);
   try{
     const { error } = Joi.validate(req.body, AddAccountAdsValidationSchema);
 
@@ -473,24 +459,43 @@ const connectionConfirmation = async(req, res, next) => {
     }
 
     const { adWordId } = req.body;
+    let user = req.user._id;
+
+    const account = await AccountAdsModel.findOne({ adsId: adWordId, user});
+
+    if(!account)
+    {
+      logger.info('AccountAdsController::connectionConfirmation::accountAdsNotFound\n', info);
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Không tìm thấy tài khoản adswords.'],
+      });
+    }
 
     GoogleAdwordsService.sendManagerRequest(adWordId)
-    .then(async result => {
-      const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
+    .then(result => {
       if(error)
       {
-        logger.error('AccountAdsController::connectionConfirmation::error', error);
+        logger.error('AccountAdsController::connectionConfirmation::error', error, '\n', info);
         return next(error);
       }
 
-      logger.info('AccountAdsController::connectionConfirmation::success');
-      return res.status(HttpStatus.OK).json({
-        messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
-        data: {
-          isConnected: false
+      account.isConnected = false;
+
+      account.save(err=> {
+        if(err)
+        {
+          logger.error('AccountAdsController::connectionConfirmation::error', err, '\n', info);
+          return next(err);
         }
+        logger.info('AccountAdsController::connectionConfirmation::success\n', info);
+        return res.status(HttpStatus.OK).json({
+          messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+          data: {
+            isConnected: false
+          }
+        });
       });
-    }).catch(async err => {
+    }).catch(err => {
       const message = GoogleAdwordsService.mapManageCustomerErrorMessage(err);
       let isConnected = false;
       switch (message) {
@@ -505,36 +510,27 @@ const connectionConfirmation = async(req, res, next) => {
           });
       }
 
-      const error = await AccountAdsService.createdAccountIfNotExists(req.user._id, adWordId);
-      if(error)
-      {
-        logger.error('AccountAdsController::connectionConfirmation::error', error);
-        return next(error);
-      }
+      account.isConnected = isConnected;
 
-      const queryUpdate = { adsId: adWordId };
-      const updatingData = { isConnected };
-      AccountAdsModel
-        .updateMany(queryUpdate, updatingData)
-        .exec(err => {
-          if(err)
-          {
-            logger.error('AccountAdsController::connectionConfirmation::error', err);
-            return next(err);
+      account.save(err => {
+        if(err)
+        {
+          logger.error('AccountAdsController::connectionConfirmation::error', err, '\n', info);
+          return next(err);
+        }
+        logger.info('AccountAdsController::connectionConfirmation::success\n', info);
+        return res.status(HttpStatus.OK).json({
+          messages: [message],
+          data: {
+            isConnected
           }
-          logger.info('AccountAdsController::connectionConfirmation::success');
-          return res.status(HttpStatus.OK).json({
-            messages: [message],
-            data: {
-              isConnected
-            }
-          });
         });
+      });
     });
   }
   catch(e)
   {
-    logger.error('AccountAdsController::connectionConfirmation::error', e);
+    logger.error('AccountAdsController::connectionConfirmation::error', e,'\n', info);
     return next(e);
   }
 };
