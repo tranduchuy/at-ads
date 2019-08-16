@@ -607,23 +607,32 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
         }
       };
 
-      const queryInfo =  JSON.stringify([
-        matchStage,
-        groupStage,
-        projectStage,
-        conditionToRemove,
-        facetStage   
-      ]);
-      logger.info('AccountAdsService::getDailyClicking::query', {queryInfo});
+      let query = []
 
-      const result = await UserBehaviorLogsModel.aggregate(
-        [
+      if(maxClick > 0)
+      {
+        query = [
           matchStage,
           groupStage,
           projectStage,
           conditionToRemove,
-          facetStage
-        ]);
+          facetStage   
+        ];
+      }
+      else
+      {
+        query = [
+          matchStage,
+          groupStage,
+          projectStage,
+          facetStage   
+        ];
+      }
+
+      const queryInfo =  JSON.stringify(query);
+      logger.info('AccountAdsService::getDailyClicking::query', {queryInfo});
+
+      const result = await UserBehaviorLogsModel.aggregate(query);
 
       logger.info('AccountAdsService::getDailyClicking::success ', {accountKey});
       return res(result);

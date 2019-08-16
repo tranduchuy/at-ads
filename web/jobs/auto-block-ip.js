@@ -8,6 +8,7 @@ const log4js = require('log4js');
 const logger = log4js.getLogger('Tasks');
 const moment = require('moment');
 const { LOGGING_TYPES } = require('../modules/user-behavior-log/user-behavior-log.constant');
+const NetworkCompanyName = require('../constants/networkCompanyName.contant');
 
 module.exports = async(channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
@@ -58,7 +59,7 @@ module.exports = async(channel, msg) => {
             return;
         }
 
-        const now = moment().startOf('day');;
+        const now = moment().startOf('day');
         const tomorrow = moment(now).endOf('day');
 
         const countQuery = {
@@ -75,11 +76,35 @@ module.exports = async(channel, msg) => {
 
         if(!isPrivateBrowsing)
         {
-            if(maxClick === -1 || countClick < maxClick || !log.gclid)
+            let flag = 0;
+
+            if(log.networkCompany.name)
             {
-                logger.info('jobs::autoBlockIp::success.', {id});
-                channel.ack(msg);
-                return;
+                const networkCompany = log.networkCompany.name;
+                const settingOfViettel = accountAds.setting.mobileNetworks.viettel;
+                const settingOfMobifone = accountAds.setting.mobileNetworks.mobifone;
+                const settingOfVNPT = accountAds.setting.mobileNetworks.vinafone;
+                const settingOfVietnamobile = accountAds.setting.mobileNetworks.vietnammobile;
+                const settingOfFpt = accountAds.setting.mobileNetworks.fpt;
+
+                if( networkCompany === NetworkCompanyName.VIETTEL && settingOfViettel ||
+                    networkCompany === NetworkCompanyName.MOBIFONE && settingOfMobifone ||
+                    networkCompany === NetworkCompanyName.VNPT && settingOfVNPT ||
+                    networkCompany === NetworkCompanyName.VIETNAMOBILE && settingOfVietnamobile ||
+                    networkCompany === NetworkCompanyName.FPT && settingOfFpt )
+                {
+                    flag = 1;
+                }
+            }
+
+            if(flag === 0)
+            {
+                if(maxClick === -1 || countClick < maxClick || !log.gclid)
+                {
+                    logger.info('jobs::autoBlockIp::success.', {id});
+                    channel.ack(msg);
+                    return;
+                }
             }
         }
         

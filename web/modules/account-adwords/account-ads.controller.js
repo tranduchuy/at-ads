@@ -64,11 +64,13 @@ const addAccountAds = async (req, res, next) => {
           });
         }
 
-        await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
+        const account = await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
         logger.info('AccountAdsController::addAccountAds::success', result);
         return res.status(HttpStatus.OK).json({
           messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
-          data: {}
+          data: {
+            account
+          }
         });
       })
       .catch(async error => {
@@ -1185,7 +1187,7 @@ const getIpsInfoInClassD = async (req, res, next) => {
     let rangeIps = [];
     let totalItems = 0;
     
-    if(result.entries.length !== 0)
+    if(result[0].entries.length !== 0)
     {
       rangeIps = result[0].entries;
       totalItems = result[0].meta[0].totalItems
