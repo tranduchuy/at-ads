@@ -80,7 +80,7 @@ const addAccountAds = async (req, res, next) => {
         });
       });
   } catch (e) {
-    logger.error('AccountAdsController::addAccountAds::error', JSON.stringify(e));
+    logger.error('AccountAdsController::addAccountAds::error', e);
     return next(e);
   }
 };
