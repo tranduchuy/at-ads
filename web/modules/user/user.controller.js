@@ -291,6 +291,8 @@ const login = async (request, res, next) => {
         name: user.name,
         type: user.type,
         status: user.status,
+        phone: user.phone,
+        avatar: user.avatar,
         registerBy: user.registerBy
       }
     ;
