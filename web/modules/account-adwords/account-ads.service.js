@@ -650,7 +650,7 @@ const getAllIpInAutoBlackListIp = (accountId) =>
     try{
       const matchStage = {
           $match: {
-            "accountId": accountId.toString()
+            accountId
           }
         };
     
@@ -836,7 +836,7 @@ const getIpAndCampaigNumberInCustomBlockingIp = (accountId) => {
     try{
       const matchStage = {
         $match: {
-            accountId: accountId,
+            accountId,
             isDeleted: false
         }  
       };
@@ -867,7 +867,6 @@ const getIpAndCampaigNumberInCustomBlockingIp = (accountId) => {
       const result = await BlockingCriterionsModel.aggregate(query);
 
       logger.info('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::success ', {accountId});
-      console.log(result);
       return res(result);
     }catch(e){
       logger.error('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::error ', e, {accountId});
