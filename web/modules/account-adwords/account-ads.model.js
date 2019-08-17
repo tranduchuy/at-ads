@@ -3,7 +3,7 @@ const AccountAdsConstant = require('./account-ads.constant');
 const Schema = mongoose.Schema;
 const accountAdsSchema = new Schema({
     user: String,
-    adsId: String,
+    adsId: { type: String, unique: true },
     key: String,
     isConnected: {type: Boolean, default: AccountAdsConstant.isConnected},
     setting: {
