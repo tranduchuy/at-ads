@@ -85,7 +85,21 @@ const addAccountAds = async (req, res, next) => {
 };
 
 const handleManipulationGoogleAds = async(req, res, next) => {
-  logger.info('AccountAdsController::handleManipulationGoogleAds is called');
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId,
+    action: req.body.action,
+    ips: req.body.ips
+  }
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('AccountAdsController::handleManipulationGoogleAds is called\n', info);
   try{
 
     const { error } = Joi.validate(req.body, blockIpsValidationSchema);
@@ -101,7 +115,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
     //ADD IPS IN CUSTOMBLACKLIST
     if(action === ActionConstant.ADD)
     {
-      logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' is called');
+      logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' is called\n', info);
       const ipInSampleBlocked = req.adsAccount.setting.sampleBlockingIp;
       const customBlackList = req.adsAccount.setting.customBlackList;
       const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
@@ -109,7 +123,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
 
       if(ipsArr.length !== 0)
       {
-        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::conflict');
+        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::conflict\n', info);
         return res.status(HttpStatus.CONFLICT).json({
           messages: ['Ip đã có trong blacklist.'],
           data: {
@@ -123,7 +137,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       },err => {
         if(err)
         {
-          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err);
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err, '\n', info);
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             messages: ['Thêm ips vào blacklist không thành công.']
           });
@@ -136,12 +150,12 @@ const handleManipulationGoogleAds = async(req, res, next) => {
         req.adsAccount.save(err=>{
           if(err)
           {
-            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err);
+            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err, '\n', info);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
               messages: ['Thêm ips vào blacklist không thành công.']
             });
           }
-          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::success');
+          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::success\n', info);
           return res.status(HttpStatus.OK).json({
             messages: ['Thêm ips vào blacklist thành công.']
           });
@@ -152,14 +166,14 @@ const handleManipulationGoogleAds = async(req, res, next) => {
     //REMOVE IPS IN CUSTOMBLACKLIST
     else
     {
-      logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + ' is called');
+      logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + ' is called\n', info);
       const blackList = req.adsAccount.setting.customBlackList || [];
 
       const checkIpsInBlackList = AccountAdsService.checkIpIsNotOnTheBlackList(blackList, arrAfterRemoveIdenticalElement);
 
       if(checkIpsInBlackList.length !== 0)
       {
-        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::notFound');
+        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::notFound\n', info);
         return res.status(HttpStatus.NOT_FOUND).json({
             messages: ['Ip không nằm trong blacklist.'],
             data :{
@@ -173,7 +187,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       },err => {
         if(err)
         {
-          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             messages: ['Xóa ip không thành công.']
           });
@@ -185,12 +199,12 @@ const handleManipulationGoogleAds = async(req, res, next) => {
         req.adsAccount.save((err)=>{
           if(err)
           {
-            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err);
+            logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
               messages: ['Xóa ip không thành công.']
             });
           }
-          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success');
+          logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success\n', info);
           return res.status(HttpStatus.OK).json({
             messages: ['Xóa ip thành công.']
           });
@@ -200,7 +214,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::handleManipulationGoogleAds::error', e);
+    logger.error('AccountAdsController::handleManipulationGoogleAds::error', e, '\n', info);
     return next(e);
   }
 };
@@ -232,7 +246,21 @@ const getAccountsAds = async (req, res, next) => {
 };
 
 const autoBlockIp = (req, res, next) => {
-  logger.info('AccountAdsController::autoBlockIp is called');
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId,
+    maxClick: req.body.maxClick,
+    autoRemove: req.body.autoRemove
+  }
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::autoBlockIp::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('AccountAdsController::autoBlockIp is called\n', info);
   try{
     const { error } = Joi.validate(req.body, AutoBlockingIpValidationSchema);
 
@@ -257,12 +285,12 @@ const autoBlockIp = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlockingIp::error', e);
+        logger.error('AccountAdsController::autoBlockingIp::error', e, '\n', info);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập block ip tự động không thành công"]
         });
       }
-      logger.info('AccountAdsController::autoBlockingIp::success');
+      logger.info('AccountAdsController::autoBlockingIp::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập block ip tự động thành công"]
       });
@@ -270,13 +298,27 @@ const autoBlockIp = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlockingIp::error', e);
+    logger.error('AccountAdsController::autoBlockingIp::error', e, '\n', info);
     return next(e);
   }
 };
 
 const autoBlockingRangeIp = (req, res, next) => {
-  logger.info('AccountAdsController::autoBlockingRangeIp is called');
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId,
+    classC: req.body.classC,
+    classD: req.body.classD
+  }
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::autoBlockingRangeIp::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('AccountAdsController::autoBlockingRangeIp is called\n', info);
   try{
     const { error } = Joi.validate(req.body, AutoBlockingRangeIpValidationSchema);
 
@@ -292,12 +334,12 @@ const autoBlockingRangeIp = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlockingRangeIp::error', e);
+        logger.error('AccountAdsController::autoBlockingRangeIp::error', e, '\n', info);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập chặn ip theo nhóm không thành công"]
         });
       }
-      logger.info('AccountAdsController::autoBlockingRangeIp::success');
+      logger.info('AccountAdsController::autoBlockingRangeIp::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập chặn ip theo nhóm thành công"]
       });
@@ -305,13 +347,30 @@ const autoBlockingRangeIp = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlockingRangeIp::error', e);
+    logger.error('AccountAdsController::autoBlockingRangeIp::error', e, '\n', info);
     return next(e);
   }
 };
 
 const autoBlocking3g4g = (req, res, next) => {
-  logger.info('AccountAdsController::autoBlock3g4g is called');
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId,
+    viettel: req.body.viettel,
+    vinafone: req.body.vinafone,
+    mobifone: req.body.mobifone,
+    vietnammobile: req.body.vietnammobile,
+    fpt: req.body.fpt
+  }
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::autoBlocking3g4g::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('AccountAdsController::autoBlock3g4g is called\n', info);
   try{
     const { error } = Joi.validate(req.body, AutoBlocking3g4gValidationSchema);
 
@@ -327,12 +386,12 @@ const autoBlocking3g4g = (req, res, next) => {
     req.adsAccount.save((err)=>{
       if(err)
       {
-        logger.error('AccountAdsController::autoBlocking3g4g::error', e);
+        logger.error('AccountAdsController::autoBlocking3g4g::error', e, '\n', info);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ["Thiết lập chặn ip theo 3G/4G không thành công"]
         });
       }
-      logger.info('AccountAdsController::autoBlocking3g4g::success');
+      logger.info('AccountAdsController::autoBlocking3g4g::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập chặn ip theo 3G/4G thành công"]
       });
@@ -340,16 +399,25 @@ const autoBlocking3g4g = (req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::autoBlocking3g4g::error', e);
+    logger.error('AccountAdsController::autoBlocking3g4g::error', e, '\n', info);
     return next(e);
   }
 };
 
 const addCampaignsForAAccountAds = async(req, res, next) => {
   const info = {
-    id: req.adsAccount._id,
-    adsId:  req.adsAccount.adsId
-  };
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId,
+    campaignIds: req.body.campaignIds
+  }
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::addCampaignsForAAccountAds::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
   logger.info('AccountAdsController::addCampaignsForAAccountAds is called\n', info);
   try{
     const { error } = Joi.validate(req.body, AddCampaingsValidationSchema);
@@ -418,7 +486,7 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
   }
   catch(e)
   {
-    logger.error('AccountAdsController::addCampaignsForAAccountAds::error', e);
+    logger.error('AccountAdsController::addCampaignsForAAccountAds::error', e, '\n', info);
     return next(e);
   }
 };
@@ -428,6 +496,14 @@ const getListOriginalCampaigns = async(req, res, next) => {
     id: req.adsAccount._id,
     adsId: req.adsAccount.adsId
   }
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::getListOriginalCampaigns::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
   logger.info('AccountAdsController::getListOriginalCampaigns is called\n', info);
   try{
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
@@ -539,7 +615,19 @@ const connectionConfirmation = async(req, res, next) => {
 };
 
 const getReportOnDevice = async(req, res, next) => {
-  logger.info('AccountAdsController::getReportOnDevice is called');
+  const info = {
+    id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  }
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::getReportOnDevice::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('AccountAdsController::getReportOnDevice is called\n', info);
   try{
     const query = {
       accountId: req.adsAccount._id,
@@ -549,7 +637,7 @@ const getReportOnDevice = async(req, res, next) => {
 
     if(campaigns.length === 0)
     {
-      logger.info('AccountAdsController::getReportOnDevice::success');
+      logger.info('AccountAdsController::getReportOnDevice::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: 'Lấy report thành công',
         data:{
@@ -569,7 +657,7 @@ const getReportOnDevice = async(req, res, next) => {
 
       if(jsonArr.length === 0)
       {
-        logger.info('AccountAdsController::getReportOnDevice::success');
+        logger.info('AccountAdsController::getReportOnDevice::success\n', info);
         return res.status(HttpStatus.OK).json({
           messages: 'Lấy report thành công',
           data:{
@@ -579,7 +667,7 @@ const getReportOnDevice = async(req, res, next) => {
       }
 
       const reportDevice = AccountAdsService.reportTotalOnDevice(jsonArr);
-      logger.info('AccountAdsController::getReportOnDevice::success');
+      logger.info('AccountAdsController::getReportOnDevice::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: 'Lấy report thành công',
         data:{
@@ -587,11 +675,11 @@ const getReportOnDevice = async(req, res, next) => {
         }
       });
     }).catch(err => {
-      logger.error('AccountAdsController::getReportOnDevice::error ', err);
+      logger.error('AccountAdsController::getReportOnDevice::error', err, '\n', info);
       next(err);
     });
   }catch(e){
-    logger.error('AccountAdsController::getReportOnDevice::error ', e);
+    logger.error('AccountAdsController::getReportOnDevice::error ', e, '\n', info);
     next(e);
   }
 };
@@ -603,6 +691,13 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
     device: req.body.device,
     isEnabled: req.body.isEnabled
   };
+  
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::setUpCampaignsByOneDevice::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
 
   logger.info('AccountAdsController::setUpCampaignsByOneDevice is called\n', info);
 
@@ -670,6 +765,13 @@ const blockSampleIp = (req, res, next) => {
     adsId: req.adsAccount.adsId,
     ip: req.body.ip
   };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::blockSampleIp::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
 
   logger.info('AccountAdsController::blockSampleIp\n', info);
   try{
@@ -758,6 +860,13 @@ const unblockSampleIp = (req, res, next) => {
     ip: req.body.ip
   };
 
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::unblockSampleIp::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
   logger.info('AccountAdsController::unblockSampleIp is called\n', info);
   try{
     const { error } = Joi.validate(req.body, sampleBlockingIpValidationSchema);
@@ -814,6 +923,7 @@ const getIpInSampleBlockIp = (req, res, next) => {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
   };
+
   logger.info('AccountAdsController::getIpInSampleBlockIp is called\n', info);
   const ip = req.adsAccount.setting.sampleBlockingIp;
   let ips = [];
@@ -837,6 +947,7 @@ const getIpsInCustomBlackList = async (req, res, next) => {
     userId: req.adsAccount.user,
     adsId: req.adsAccount.adsId,
   };
+
   try{
     logger.info('AccountAdsController::getIpsInCustomBlackList is called\n', info);
     const accountId = req.adsAccount._id;
@@ -861,6 +972,14 @@ const getCampaignsInDB = (req, res, next) => {
     _id: req.adsAccount._id,
     adsId: req.adsAccount.adsId
   }
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::getCampaignsInDB::accountAdsNotConnected\n', info);  
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
   logger.info('AccountAdsController::getCampaignsInDB is called\n', info);
 
   try{
@@ -1011,6 +1130,7 @@ const getSettingOfAccountAds = (req, res, next) => {
     id: req.adsAccount._id,
     adsId:  req.adsAccount.adsId
   }
+
   logger.info('AccountAdsController::getSettingOfAccountAds::is called\n', info);
   const setting = req.adsAccount.setting;
 
@@ -1125,6 +1245,14 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
       id: req.adsAccount._id,
       adsId:  req.adsAccount.adsId
     }
+
+    if(!req.adsAccount.isConnected){
+      logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::accountAdsNotConnected\n', info);  
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Tài khoản chưa được kết nối']
+      });
+    }
+
     logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::is called\n', info);
     try{
         const accountId = req.adsAccount._id;
