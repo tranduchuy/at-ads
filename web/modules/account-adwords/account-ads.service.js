@@ -7,7 +7,8 @@ const logger = log4js.getLogger('Services');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
-const { GoogleCampaignStatus } = require('../account-adwords/account-ads.constant');
+const { googleCampaignStatus } = require('../account-adwords/account-ads.constant');
+const { campaignStatus } = require('../account-adwords/account-ads.constant');
 const DeviceConstant = require('../../constants/device.constant');
 const shortid = require('shortid');
 const criterionOfDevice = require('../../constants/criterionIdOfDevice.constant');
@@ -134,11 +135,15 @@ const createdCampaignArr = (accountId, campaignIds) =>
    return campaignIdsArr;
 };
 
-const getIdAndNameCampaignInCampaignsList = (result) => {
+const filterTheCampaignInfoInTheCampaignList = (result) => {
     return result
-      .filter(campaign => campaign.status === GoogleCampaignStatus.ENABLED && campaign.networkSetting.targetGoogleSearch === true)
+      .filter(campaign => campaign.networkSetting.targetGoogleSearch === googleCampaignStatus.isTargetGoogleSearch)
       .map(c => {
-      return {id: c.id, name: c.name}
+        if(c.status === googleCampaignStatus.ENABLED)
+        {
+          return {id: c.id, name: c.name, status: campaignStatus[c.status], isEnabled: campaignStatus.ISENABLED}
+        }
+        return {id: c.id, name: c.name, status: campaignStatus[c.status], isEnabled: campaignStatus.ISDISABLED}
     });
 };
 
@@ -882,7 +887,7 @@ module.exports = {
   addIpsToBlackListOfOneCampaign,
   getAccountsAdsByUserId,
   createdCampaignArr,
-  getIdAndNameCampaignInCampaignsList,
+  filterTheCampaignInfoInTheCampaignList,
   onlyUnique,
   removeIpsToBlackListOfOneCampaign,
   checkIpIsNotOnTheBlackList,
