@@ -424,13 +424,17 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
 };
 
 const getListOriginalCampaigns = async(req, res, next) => {
-  logger.info('AccountAdsController::getListOriginalCampaigns is called');
+  const info = {
+    id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  }
+  logger.info('AccountAdsController::getListOriginalCampaigns is called\n', info);
   try{
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
 
-      const processCampaignList = AccountAdsService.getIdAndNameCampaignInCampaignsList(result);
+      const processCampaignList = AccountAdsService.filterTheCampaignInfoInTheCampaignList(result);
 
-      logger.info('AccountAdsController::getListOriginalCampaigns::success');
+      logger.info('AccountAdsController::getListOriginalCampaigns::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Lấy danh sách chiến dịch thành công."],
         data: {campaignList: processCampaignList}
@@ -439,7 +443,7 @@ const getListOriginalCampaigns = async(req, res, next) => {
   catch(e)
   {
     const message = GoogleAdwordsService.mapManageCustomerErrorMessage(e);
-    logger.error('AccountAdsController::getOriginalCampaigns::error', e);
+    logger.error('AccountAdsController::getOriginalCampaigns::error', e, '\n', info);
     return next(message);
   }
 };

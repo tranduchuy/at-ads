@@ -15,8 +15,15 @@ module.exports = {
     sampleBlockingIp: ''
   },
   isConnected: false,
-  GoogleCampaignStatus: {
-    ENABLED: 'ENABLED'
+  campaignStatus: {
+    ENABLED: 'Hoạt động',
+    PAUSED: 'Tạm dừng',
+    ISENABLED: true,
+    ISDISABLED: false
+  },
+  googleCampaignStatus: {
+    ENABLED: 'ENABLED',
+    isTargetGoogleSearch: true
   },
   trackingScript: `<script type="text/javascript" src="https://static-click.appnet.edu.vn/static/tracking.js?key={accountKey}"></script>`
 
