@@ -11,9 +11,6 @@ module.exports = async(req, res, next) => {
 
         if(adsAccount)
         {
-            if(!adsAccount.isConnected){
-                return res.status(HttpStatus.BAD_REQUEST).json({messages: ['Tài khoản chưa được kết nối']});
-            }
             req.adsAccount = adsAccount;
             logger.info('Middlewares::check-account-id::success'); 
             return next();
