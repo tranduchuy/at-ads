@@ -44,7 +44,6 @@ const addAccountAds = async (req, res, next) => {
     }
 
     const { adWordId } = req.body;
-    const { _id } = req.user;
     const duplicateAdWordId = await AccountAdsModel.find({ adsId: adWordId });
 
     if (duplicateAdWordId.length !== 0) {
@@ -64,7 +63,7 @@ const addAccountAds = async (req, res, next) => {
           });
         }
 
-        const account = await AccountAdsService.createAccountAds({userId: _id, adsId: adWordId });
+        const account = await AccountAdsService.createAccountAds({userId: req.user._id, adsId: adWordId });
         logger.info('AccountAdsController::addAccountAds::success', result);
         return res.status(HttpStatus.OK).json({
           messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
@@ -1211,6 +1210,21 @@ const getIpsInfoInClassD = async (req, res, next) => {
   }
 };
 
+const removeAccountAds = async (req, res, next) => {
+  logger.info('AccountAdsController::removeAccountAds::is called', {accountAdId: req.adsAccount._id.toString()});
+  try {
+    req.adsAccount.isDeleted = true;
+    await req.adsAccount.save();
+    logger.error('AccountAdsController::removeAccountAds::success. Account ad _id', req.adsAccount._id.toString());
+    return res.status(200).json({
+      messages: ['Xóa tài khoản ads thành công']
+    })
+  } catch (e) {
+    logger.error('AccountAdsController::removeAccountAds::error', e);
+    return next(e);
+  }
+}
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -1234,6 +1248,7 @@ module.exports = {
   getSettingOfAccountAds,
   getDailyClicking,
   getIpsInAutoBlackListOfAccount,
-  getIpsInfoInClassD
+  getIpsInfoInClassD,
+  removeAccountAds
 };
 

@@ -90,7 +90,11 @@ const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaig
  * @returns {array} account | null
  */
 const getAccountsAdsByUserId = async (userId) => {
-  const accountsAds = await AccountAdsModel.find({ user: userId.toString() });
+  const accountsAds = await AccountAdsModel.find({ 
+    user: userId.toString(),
+    isDeleted: false
+  });
+  
   if (accountsAds.length !== 0) {
     const promises = accountsAds.map(async (account) => {
       const websites = await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(account._id) });

@@ -28,5 +28,6 @@ router.get('/:accountId/report/daily-clicking', CheckTokenMiddleware, CheckAccou
 router.get('/:accountId/setting', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getSettingOfAccountAds);
 router.get('/:accountId/blocked-ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getIpsInAutoBlackListOfAccount);
 router.get('/:accountId/report/clicking-class-d-ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getIpsInfoInClassD);
+router.delete('/:accountId', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.removeAccountAds);
 
 module.exports = router;

@@ -2,10 +2,14 @@ const mongoose = require('mongoose');
 const AccountAdsConstant = require('./account-ads.constant');
 const Schema = mongoose.Schema;
 const accountAdsSchema = new Schema({
-    user: String,
+    user: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User'
+    },
     adsId: { type: String, unique: true },
     key: String,
     isConnected: {type: Boolean, default: AccountAdsConstant.isConnected},
+    isDeleted: {type: Boolean, default: false},
     setting: {
         autoBlockByMaxClick: { type: Number, default: AccountAdsConstant.setting.autoBlockByMaxClick },
         autoRemoveBlocking: { type: Boolean, default: AccountAdsConstant.setting.autoRemoveBlocking },
