@@ -93,7 +93,7 @@ const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaig
  */
 const getAccountsAdsByUserId = async (userId) => {
   const accountsAds = await AccountAdsModel.find({ 
-    user: userId.toString(),
+    user: userId,
     isDeleted: false
   });
   

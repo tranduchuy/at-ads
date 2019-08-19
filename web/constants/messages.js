@@ -54,6 +54,7 @@ var ResponseMessages;
         (function (Register) {
           Register.ACCOUNT_ADS_DUPLICATE = 'Tài khoản đã có trong hệ thống';
           Register.REGISTER_SUCCESS = 'Đăng kí thành công';
+          Register.ADWORDS_ID_BELONG_TO_ANOTHER_USER = 'Tài khoản adword này thuộc về người dùng khác';
         })(Register = AccountAds.Register || (AccountAds.Register = {}));
     })(AccountAds = ResponseMessages.AccountAds || (ResponseMessages.AccountAds = {}));
     let Website;

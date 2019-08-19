@@ -45,40 +45,103 @@ const addAccountAds = async (req, res, next) => {
     }
 
     const { adWordId } = req.body;
-    const duplicateAdWordId = await AccountAdsModel.find({ adsId: adWordId });
+    const duplicateAdWordId = await AccountAdsModel.findOne({ adsId: adWordId });
 
-    if (duplicateAdWordId.length !== 0) {
-      const result = {
-        messages: [messages.ResponseMessages.AccountAds.Register.ACCOUNT_ADS_DUPLICATE],
-      };
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
-    }
 
-    GoogleAdwordsService.sendManagerRequest(adWordId)
-      .then(async result => {
-        if (!result || !result.links) {
-          logger.error('AccountAdsController::addAccountAds::error', result);
+    if (duplicateAdWordId) {
+      if (duplicateAdWordId.user.toString() !== req.user._id.toString()) {
+        const result = {
+          messages: [messages.ResponseMessages.AccountAds.Register.ADWORDS_ID_BELONG_TO_ANOTHER_USER],
+        };
+        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
 
-          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            messages: ['Gửi request quản lý tài khoản adword không thành công']
+      if (duplicateAdWordId.isDeleted === false) {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ['Bạn đã kết nối tài khoản này: ' + duplicateAdWordId.adsId]
+        });
+      }
+
+      GoogleAdwordsService.sendManagerRequest(adWordId)
+        .then(async result => {
+          if (!result || !result.links) {
+            logger.error('AccountAdsController::addAccountAds::error', result);
+
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: ['Gửi request quản lý tài khoản adword không thành công']
+            });
+          }
+
+          duplicateAdWordId.isDeleted = false;
+          await duplicateAdWordId.save();
+          logger.info('AccountAdsController::addAccountAds::success', result);
+          return res.status(HttpStatus.OK).json({
+            messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+            data: {
+              account: duplicateAdWordId
+            }
           });
-        }
+        })
+        .catch(async error => {
+          switch (GoogleAdwordsService.getErrorCode(error)) {
+            case 'ALREADY_MANAGED_BY_THIS_MANAGER':
+              duplicateAdWordId.isDeleted = false;
+              duplicateAdWordId.isConnected = true;
+              await duplicateAdWordId.save();
 
-        const account = await AccountAdsService.createAccountAds({userId: req.user._id, adsId: adWordId });
-        logger.info('AccountAdsController::addAccountAds::success', result);
-        return res.status(HttpStatus.OK).json({
-          messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
-          data: {
-            account
+              logger.info('AccountAdsController::addAccountAds::reconnect success', duplicateAdWordId);
+              return res.status(HttpStatus.OK).json({
+                messages: ['Kết nối tài khoản thành công'],
+                data: {
+                  account: duplicateAdWordId
+                }
+              });
+            case 'ALREADY_INVITED_BY_THIS_MANAGER':
+              duplicateAdWordId.isDeleted = false;
+              duplicateAdWordId.isConnected = false;
+              await duplicateAdWordId.save();
+              logger.info('AccountAdsController::addAccountAds::reinvite success', duplicateAdWordId);
+              return res.status(HttpStatus.OK).json({
+                messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+                data: {
+                  account: duplicateAdWordId
+                }
+              });
+            default:
+              const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
+              logger.info('AccountAdsController::addAccountAds::error', JSON.stringify(error));
+              return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+                messages: [message]
+              });
           }
         });
-      })
-      .catch(error => {
-        const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
-        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          messages: [message]
+    } else {
+      GoogleAdwordsService.sendManagerRequest(adWordId)
+        .then(async result => {
+          if (!result || !result.links) {
+            logger.error('AccountAdsController::addAccountAds::error', result);
+
+            return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+              messages: ['Gửi request quản lý tài khoản adword không thành công']
+            });
+          }
+
+          const account = await AccountAdsService.createAccountAds({ userId: req.user._id, adsId: adWordId });
+          logger.info('AccountAdsController::addAccountAds::success', result);
+          return res.status(HttpStatus.OK).json({
+            messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+            data: {
+              account
+            }
+          });
+        })
+        .catch(error => {
+          const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: [message]
+          });
         });
-      });
+    }
   } catch (e) {
     logger.error('AccountAdsController::addAccountAds::error', e);
     return next(e);
