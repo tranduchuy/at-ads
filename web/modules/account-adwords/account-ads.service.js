@@ -15,6 +15,7 @@ const criterionOfDevice = require('../../constants/criterionIdOfDevice.constant'
 const moment = require('moment');
 const UserBehaviorLogsModel = require('../user-behavior-log/user-behavior-log.model');
 const { LOGGING_TYPES } = require('../user-behavior-log/user-behavior-log.constant');
+const { Paging } = require('./account-ads.constant');
 
 /**
  *
@@ -479,8 +480,8 @@ const saveSetUpCampaignsByOneDevice = async(accountAds, device, isEnabled) => {
   return await accountAds.save();
 };
 
-const getReportForAccount = (accountKey, from, to) => {
-  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from, to});
+const getReportForAccount = (accountKey, from, to, isConnected) => {
+  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from, to, isConnected});
   return new Promise(async (res, rej) => {
     try{
       const matchStage =  {
@@ -528,31 +529,46 @@ const getReportForAccount = (accountKey, from, to) => {
         }
       };
 
-      const queryInfo = JSON.stringify([
-        matchStage,
-        sort,
-        groupStage  
-      ]);
+      const limitStage = {
+        $limit: Paging.LIMIT
+      };
+
+      let query = [];
+
+      if(isConnected)
+      {
+        query = [
+          matchStage,
+          sort,
+          groupStage  
+        ];
+      }
+      else
+      {
+        query = [
+          matchStage,
+          sort,
+          limitStage,
+          groupStage  
+        ];
+      }
+
+      const queryInfo = JSON.stringify(query);
       logger.info('AccountAdsService::getReportForAccount::query', {queryInfo});
 
-      const result = await UserBehaviorLogsModel.aggregate(
-        [
-            matchStage,
-            sort,
-            groupStage
-        ]);
+      const result = await UserBehaviorLogsModel.aggregate(query);
       
-      logger.info('AccountAdsService::getReportForAccount::success ', {accountKey, from, to});
+      logger.info('AccountAdsService::getReportForAccount::success ', {accountKey, from, to, isConnected});
       return res(result);
     }catch(e){
-      logger.error('AccountAdsService::getReportForAccount::error ', e, {accountKey, from, to});
+      logger.error('AccountAdsService::getReportForAccount::error ', e, {accountKey, from, to, isConnected});
       return rej(e);
     }
   });
 };
 
 const getDailyClicking =  (accountKey, maxClick, page, limit) => {
-  logger.info('AccountAdsService::getDailyClicking::is called ', {accountKey});
+  logger.info('AccountAdsService::getDailyClicking::is called ', {accountKey, maxClick, page, limit});
 
   return new Promise(async (res, rej)=> {
     try{
@@ -643,10 +659,10 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
 
       const result = await UserBehaviorLogsModel.aggregate(query);
 
-      logger.info('AccountAdsService::getDailyClicking::success ', {accountKey});
+      logger.info('AccountAdsService::getDailyClicking::success ', {accountKey, maxClick, page, limit});
       return res(result);
     }catch(e){
-      logger.error('AccountAdsService::getDailyClicking::error ', e, {accountKey});
+      logger.error('AccountAdsService::getDailyClicking::error ', e, {accountKey, maxClick, page, limit});
       return rej(e);
     }
   });

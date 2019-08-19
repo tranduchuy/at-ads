@@ -7,7 +7,12 @@ module.exports = async(req, res, next) => {
     logger.info('Middlewares::check-account-id is called');
     try{
         const {accountId} = req.params;
-        const adsAccount = await AccountAdsModel.findOne({_id: accountId, user: req.user._id});
+        const query = {
+            _id: accountId,
+            user: req.user._id,
+            isDeleted: false
+        };
+        const adsAccount = await AccountAdsModel.findOne(query);
 
         if(adsAccount)
         {

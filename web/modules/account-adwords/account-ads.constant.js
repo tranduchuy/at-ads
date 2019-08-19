@@ -25,6 +25,10 @@ module.exports = {
     ENABLED: 'ENABLED',
     isTargetGoogleSearch: true
   },
+  Paging: {
+    PAGE: 1,
+    LIMIT: 10
+  },
   trackingScript: `<script type="text/javascript" src="https://static-click.appnet.edu.vn/static/tracking.js?key={accountKey}"></script>`
 
 };
