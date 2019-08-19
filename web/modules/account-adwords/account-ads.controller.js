@@ -29,6 +29,7 @@ const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
 const ManagerCustomerMsgs = require('../../constants/ManagerCustomerMsgs');
+const { Paging } = require('./account-ads.constant');
 const moment = require('moment');
 const { VerifyAcctachedCodeDomainsValidationSchema } = require('./validations/verify-acctached-code-domains.schema');
 
@@ -1131,7 +1132,7 @@ const verifyAcctachedCodeDomains = async (req, res, next) => {
   }
 };
 
-const getReportForAccount = (req, res, next) => {
+const getReportForAccount = async (req, res, next) => {
   const info = {
     id: req.adsAccount._id,
     adsId:  req.adsAccount.adsId
@@ -1160,27 +1161,22 @@ const getReportForAccount = (req, res, next) => {
 
     const endDateTime = moment(to).endOf('day');
     const accountKey = req.adsAccount.key;
+    const { isConnected } = req.adsAccount;
 
-    AccountAdsService.getReportForAccount(accountKey, from, endDateTime)
-    .then(result => {
-        const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
-        const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
-    
-        logger.info('AccountAdsController::getReportForAccount::success\n', info);
-        return res.status(HttpStatus.OK).json({
-          messages: ["Lấy report thành công"],
-          data: {
-            pieChart: {
-              spamClick: totalSpamClick,
-              realClick: totalRealClick
-            },
-            lineChart: result
-          }
-        });
-    })
-    .catch(err => {
-      logger.error('AccountAdsController::getReportForAccount::error', err, '\n', info);
-      return next(err);
+    let result = await AccountAdsService.getReportForAccount(accountKey, from, endDateTime, isConnected)
+    const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
+    const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
+
+    logger.info('AccountAdsController::getReportForAccount::success\n', info);
+    return res.status(HttpStatus.OK).json({
+      messages: ["Lấy report thành công"],
+      data: {
+        pieChart: {
+          spamClick: totalSpamClick,
+          realClick: totalRealClick
+        },
+        lineChart: result
+      }
     });
   }catch(e){
     logger.error('AccountAdsController::getReportForAccount::error', e, '\n', info);
@@ -1206,7 +1202,7 @@ const getSettingOfAccountAds = (req, res, next) => {
   });
 };
 
-const getDailyClicking = (req, res, next) => {
+const getDailyClicking = async (req, res, next) => {
   const info = {
     id: req.adsAccount._id,
     adsId:  req.adsAccount.adsId
@@ -1222,43 +1218,38 @@ const getDailyClicking = (req, res, next) => {
       const accountKey = req.adsAccount.key;
       const maxClick = req.adsAccount.setting.autoBlockByMaxClick;
       let { page, limit } = req.query;
+      const { isConnected } = req.adsAccount;
 
-      if(!page)
+      if(!page || !isConnected)
       {
-        page = 1;
+        page = Paging.PAGE;
       }
 
-      if(!limit)
+      if(!limit || !isConnected)
       {
-        limit = 10;
+        limit = Paging.LIMIT;
       }
 
       page = Number(page);
       limit = Number(limit);
 
-      AccountAdsService.getDailyClicking(accountKey, maxClick, page, limit)
-      .then(result => {
-        let entries = [];
-        let totalItems = 0;
+      const result = await AccountAdsService.getDailyClicking(accountKey, maxClick, page, limit)
+      let entries = [];
+      let totalItems = 0;
 
-        if(result[0].entries.length !== 0)
-        {
-          entries = result[0].entries;
-          totalItems = result[0].meta[0].totalItems
+      if(result[0].entries.length !== 0)
+      {
+        entries = result[0].entries;
+        totalItems = !isConnected?entries.length:result[0].meta[0].totalItems;
+      }
+
+      logger.info('AccountAdsController::getDailyClicking::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ['Lấy dữ liệu thành công.'],
+        data: {
+          entries,
+          totalItems
         }
-
-        logger.info('AccountAdsController::getDailyClicking::success\n', info);
-        return res.status(HttpStatus.OK).json({
-          messages: ['Lấy dữ liệu thành công.'],
-          data: {
-            entries,
-            totalItems
-          }
-        });
-      })
-      .catch(err => {
-        logger.error('AccountAdsController::getDailyClicking::error', err, '\n', info);
-        return next(err);
       });
   }catch(e){
       logger.error('AccountAdsController::getDailyClicking::error', e, '\n', info);
@@ -1352,15 +1343,16 @@ const getIpsInfoInClassD = async (req, res, next) => {
 
     let {from, to} = req.query;
     let { page, limit } = req.query;
+    const { isConnected } = req.adsAccount;
 
-    if(!page)
+    if(!page || !isConnected)
     {
-      page = 1;
+      page = Paging.PAGE;
     }
 
-    if(!limit)
+    if(!limit || !isConnected)
     {
-      limit = 10;
+      limit = Paging.LIMIT;
     }
 
     page = Number(page);
@@ -1387,7 +1379,7 @@ const getIpsInfoInClassD = async (req, res, next) => {
     if(result[0].entries.length !== 0)
     {
       rangeIps = result[0].entries;
-      totalItems = result[0].meta[0].totalItems
+      totalItems = !isConnected?rangeIps.length:result[0].meta[0].totalItems
     }
 
     logger.info('AccountAdsController::getIpsInfoInClassD::success\n', info);
