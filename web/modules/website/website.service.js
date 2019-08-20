@@ -32,7 +32,7 @@ const createDomain = async ({ domain, accountId }) => {
  * @returns {Promise<[{domain: string, code: string, expiredAt: Date, status: number}]>} list website.
  */
 const getWebsitesByAccountId = async (accountId) => {
-  return await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(accountId) }).select('domain code expiredAt status');
+  return await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(accountId) }).select('domain code expiredAt status isTracking');
 };
 
 /**
@@ -43,7 +43,7 @@ const getWebsitesByAccountId = async (accountId) => {
  */
 const isOwnDomain = async (accountId, userId) => {
   const account = await AccountAdsModel.findById(accountId);
-  return account.user === userId.toString();
+  return account.user.toString() === userId.toString();
 };
 
 const getValidDomains = async ()=> {

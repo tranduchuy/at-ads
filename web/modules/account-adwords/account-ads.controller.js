@@ -1301,9 +1301,12 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
     }
 
     if(!req.adsAccount.isConnected){
-      logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::accountAdsNotConnected\n', info);  
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        messages: ['Tài khoản chưa được kết nối']
+      logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ['Lấy dữ liệu thành công.'],
+        data: {
+          ips: []
+        }
       });
     }
 
