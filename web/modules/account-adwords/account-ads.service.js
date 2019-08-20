@@ -688,8 +688,11 @@ const getAllIpInAutoBlackListIp = (accountId) =>
       const groupStage = {
           $group: {
               _id: "$autoBlackListIp.ip",
-              campaignIds: {
-                  $push: "$campaignId"
+              campaigns: {
+                  $push: {
+                    campaignId: "$campaignId",
+                    campaignName: "$campaignName"
+                  }
               }
           }
         };
@@ -706,7 +709,7 @@ const getAllIpInAutoBlackListIp = (accountId) =>
       const projectStage = {
           $project: {
               _id: 1,
-              campaignIds: 1,
+              campaigns: 1,
               log: {
                   $arrayElemAt: ["$logs", 0]
               }
@@ -716,8 +719,8 @@ const getAllIpInAutoBlackListIp = (accountId) =>
       const projectStage1 = {
         $project: {
             _id: 1,
-            campaignIds: 1,
-            numberOfCampaigns: {$size: "$campaignIds"},
+            campaigns: 1,
+            numberOfCampaigns: {$size: "$campaigns"},
             network: "$log.networkCompany.name"
           }
         };
