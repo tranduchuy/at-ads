@@ -43,7 +43,7 @@ const getWebsitesByAccountId = async (accountId) => {
  */
 const isOwnDomain = async (accountId, userId) => {
   const account = await AccountAdsModel.findById(accountId);
-  return account.user === userId.toString();
+  return account.user.toString() === userId.toString();
 };
 
 const getValidDomains = async ()=> {
