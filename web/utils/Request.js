@@ -5,7 +5,8 @@ const getHTML = (uri) => {
     const options = {
       uri,
       method: 'GET',
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      timeout: 10000
     };
 
     request(options, (err, httpResponse, body) => {
