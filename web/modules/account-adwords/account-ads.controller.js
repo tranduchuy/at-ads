@@ -1405,7 +1405,7 @@ const removeAccountAds = async (req, res, next) => {
   try {
     req.adsAccount.isDeleted = true;
     await req.adsAccount.save();
-    logger.error('AccountAdsController::removeAccountAds::success. Account ad _id', req.adsAccount._id.toString());
+    logger.info('AccountAdsController::removeAccountAds::success. Account ad _id', req.adsAccount._id.toString());
     return res.status(200).json({
       messages: ['Xóa tài khoản ads thành công']
     })
