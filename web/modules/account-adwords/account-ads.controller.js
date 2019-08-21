@@ -557,7 +557,7 @@ const updateWhiteList = async (req, res, next) => {
     const whiteList = [];
 
     for (const ip of ips){
-      const convertedIP = AccountAdsService.checkIP(ip);
+      const convertedIP = AccountAdsService.checkAndConvertIP(ip);
       if(!convertedIP){
         const result = {
           messages: [`IP ${ip} không hợp lệ`],
