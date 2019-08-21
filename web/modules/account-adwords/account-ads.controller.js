@@ -14,6 +14,7 @@ const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('../../utils/Request');
 
+const {BlockByPrivateBrowserValidationSchema} =  require('./validations/block-by-private-browser.schema');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
@@ -25,6 +26,7 @@ const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set
 const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
 const { getIpsInfoInClassDValidationSchema } = require('./validations/get-ips-info-in-ClassD.schema');
+const { removeIpInAutoBlackListValidationSchema } = require('./validations/remove-Ip-In-Auto-Black-List-Ip.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
@@ -412,6 +414,54 @@ const autoBlockingRangeIp = (req, res, next) => {
   catch(e)
   {
     logger.error('AccountAdsController::autoBlockingRangeIp::error', e, '\n', info);
+    return next(e);
+  }
+};
+
+
+const blockByPrivateBrowser = (req, res, next) => {
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId,
+    blockByPrivate: req.body.blockByPrivate
+  };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::blockByPrivateBrowser::accountAdsNotConnected\n', info);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('AccountAdsController::blockByPrivateBrowser is called\n', info);
+  try{
+    const { error } = Joi.validate(req.body, BlockByPrivateBrowserValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {blockByPrivate} = req.body;
+
+    req.adsAccount.setting.blockByPrivateBrowser = blockByPrivate;
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::blockByPrivateBrowser::error', e, '\n', info);
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập chặn ip là trình ẩn danh thất bại"]
+        });
+      }
+      logger.info('AccountAdsController::blockByPrivateBrowser::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập chặn ip là trình ẩn danh thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::blockByPrivateBrowser::error', e, '\n', info);
     return next(e);
   }
 };
@@ -1405,7 +1455,7 @@ const removeAccountAds = async (req, res, next) => {
   try {
     req.adsAccount.isDeleted = true;
     await req.adsAccount.save();
-    logger.error('AccountAdsController::removeAccountAds::success. Account ad _id', req.adsAccount._id.toString());
+    logger.info('AccountAdsController::removeAccountAds::success. Account ad _id', req.adsAccount._id.toString());
     return res.status(200).json({
       messages: ['Xóa tài khoản ads thành công']
     })
@@ -1413,7 +1463,76 @@ const removeAccountAds = async (req, res, next) => {
     logger.error('AccountAdsController::removeAccountAds::error', e);
     return next(e);
   }
-}
+};
+
+const removeIpInAutoBlackListIp = (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    asdId: req.adsAccount.adsId,
+    ips: req.body.ips
+  };
+
+  logger.info('AccountAdsController::removeAccountAds::is called\n', info);
+  try{
+    const { error } = Joi.validate(req.body, removeIpInAutoBlackListValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { ips } = req.body;
+    const autoBlackListIp = req.adsAccount.setting.autoBlackListIp || [];
+    const ipArrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique);
+    const campaignIds = req.campaignIds || [];
+    const id = req.adsAccount._id;
+    const adsId = req.adsAccount.adsId;
+
+    const checkIpsInBlackList = AccountAdsService.checkIpIsNotOnTheBlackList(autoBlackListIp, ipArrAfterRemoveIdenticalElement);
+
+    if(checkIpsInBlackList.length !== 0)
+    {
+      logger.info('AccountAdsController::removeAccountAds::notFound\n', info);
+      return res.status(HttpStatus.NOT_FOUND).json({
+          messages: ['Ip không nằm trong blacklist.'],
+          data :{
+            ips: checkIpsInBlackList
+          }
+      });
+    }
+
+    Async.eachSeries(campaignIds, (campaignId, callback)=>{
+      AccountAdsService.removeIpsToAutoBlackListOfOneCampaign(id, adsId, campaignId, ipArrAfterRemoveIdenticalElement, callback);
+    },err => {
+      if(err)
+      {
+        logger.error('AccountAdsController::handleManipulationGoogleAds::error', err, '\n', info);
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ['Xóa ip không thành công.']
+        });
+      }
+
+      const ipNotExistsInListArr = _.difference(autoBlackListIp, ipArrAfterRemoveIdenticalElement);
+
+      req.adsAccount.setting.autoBlackListIp = ipNotExistsInListArr;
+      req.adsAccount.save((err)=>{
+        if(err)
+        {
+          logger.error('AccountAdsController::removeIpInAutoBlackListIp::error', err, '\n', info);
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: ['Xóa ip không thành công.']
+          });
+        }
+        logger.info('AccountAdsController::removeIpInAutoBlackListIp::success\n', info);
+        return res.status(HttpStatus.OK).json({
+          messages: ['Xóa ip thành công.']
+        });
+      });
+    });
+  }catch(e){
+    logger.error('AccountAdsController::removeIpInAutoBlackListIp::error', e);
+    return next(e);
+  }
+};
 
 module.exports = {
   addAccountAds,
@@ -1423,6 +1542,7 @@ module.exports = {
   autoBlockIp,
   autoBlockingRangeIp,
   autoBlocking3g4g,
+  blockByPrivateBrowser,
   addCampaignsForAAccountAds,
   getListOriginalCampaigns,
   connectionConfirmation,
@@ -1439,6 +1559,7 @@ module.exports = {
   getDailyClicking,
   getIpsInAutoBlackListOfAccount,
   getIpsInfoInClassD,
-  removeAccountAds
+  removeAccountAds,
+  removeIpInAutoBlackListIp
 };
 
