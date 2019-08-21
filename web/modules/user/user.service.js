@@ -121,7 +121,7 @@ const createUserByGoogle = async ({ email, name, googleId, image }) => {
     name,
     tokenEmailConfirm: null,
     registerBy: UserConstant.registerByTypes.google,
-    status: Status.PENDING_OR_WAIT_CONFIRM,
+    status: Status.ACTIVE,
     role: UserConstant.role.endUser,
     googleId,
     avatar: image
@@ -155,7 +155,7 @@ const findUserByPasswordReminderToken = async (passwordReminderToken) => {
 
 const updateUser = async ( { password, name, phone, email} ) =>  {
   const dataForUpdating = {};
-  const updateUser = await UserModel.findOne({ email: email });
+  const updateUser = await UserModel.findOne({ email });
   if (password) {
     const salt = bcrypt.genSaltSync(UserConstant.saltLength);
     dataForUpdating.passwordHash = bcrypt.hashSync(password, salt);
@@ -166,8 +166,8 @@ const updateUser = async ( { password, name, phone, email} ) =>  {
   // if (gender) dataForUpdating.gender = gender;
   if (name) dataForUpdating.name = name;
   if (phone) dataForUpdating.phone = phone;
-
-  return updateUser.update(dataForUpdating);
+  await updateUser.update(dataForUpdating);
+  return await UserModel.findOne({email});
 };
 
 const getAccountInfo = (user ,message) => {
@@ -178,7 +178,8 @@ const getAccountInfo = (user ,message) => {
     name: user.name,
     status: user.status,
     registerBy: user.registerBy,
-    googleId: user.googleId
+    googleId: user.googleId,
+    usePassword: !!user.passwordHash || !!user.passwordSalt
   };
   const token = generateToken({ _id: user._id });
   const result = {
