@@ -147,7 +147,7 @@ const register = async (request, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const { email, password, confirmedPassword, name} = request.body;
+    const { email, password, confirmedPassword, name } = request.body;
     const duplicatedEmail = await UserModel.find({ email: email });
     if (duplicatedEmail.length !== 0) {
       const result = {
@@ -198,17 +198,15 @@ const loginByGoogle = async (request, res, next) => {
     const { accessToken } = request.body;
     const googleConectionString = "https://www.googleapis.com/plus/v1/people/me?access_token=" + accessToken;
 
-    Request(googleConectionString, async(error, response, body) => { 
-      if(error)
-      {
+    Request(googleConectionString, async (error, response, body) => {
+      if (error) {
         logger.error('UserController::loginByGoogle::error', error);
         return next(error);
       }
 
       console.log('statusCode:', response && response.statusCode);
 
-      if(response.statusCode !== HttpStatus.OK)
-      {
+      if (response.statusCode !== HttpStatus.OK) {
         logger.error('UserController::loginByGoogle::error', response);
         return res.status(HttpStatus.BAD_REQUEST).json({
           messages: ["Đăng nhập không thành công."]
@@ -238,7 +236,8 @@ const loginByGoogle = async (request, res, next) => {
           };
           user = await UserService.createUserByGoogle(newUser);
         }
-      };
+      }
+      ;
       logger.info('UserController::loginByGoogle::success');
       const result = UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);
@@ -293,7 +292,8 @@ const login = async (request, res, next) => {
         status: user.status,
         phone: user.phone,
         avatar: user.avatar,
-        registerBy: user.registerBy
+        registerBy: user.registerBy,
+        usePassword: !!user.passwordHash || !!user.passwordSalt
       }
     ;
     const token = UserService.generateToken({ _id: user._id });
@@ -342,7 +342,7 @@ const resendConfirm = async (req, res, next) => {
     const result = {
       messages: [messages.ResponseMessages.User.RESEND_CONFIRM_EMAIL]
     };
-    logger.error('UserController::resendConfirm::success', JSON.stringify({email: req.body.email}));
+    logger.error('UserController::resendConfirm::success', JSON.stringify({ email: req.body.email }));
 
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
@@ -363,17 +363,26 @@ const update = async (req, res, next) => {
 
     // let { password, name, phone, birthday, gender, oldPassword, confirmedPassword } = req.body;
     let { password, name, phone, oldPassword, confirmedPassword } = req.body;
-    const updateData = { email: user.email};
+    const updateData = { email: user.email };
 
-    if (oldPassword && password && confirmedPassword) {
-      const isCorrectPassword = await UserService.isValidHashPassword(user.passwordHash, oldPassword);
+    if (password && confirmedPassword) {
+      let usingPassword = false;
+      if (user.registerBy === UserConstant.registerByTypes.google) {
+        usingPassword = !!user.passwordHash || !!user.passwordSalt;
+      } else {
+        usingPassword = true;
+      }
 
-      if (!isCorrectPassword) {
-        const result = {
-          messages: [messages.ResponseMessages.User.Login.WRONG_PASSWORD],
-          data: {}
-        };
-        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      if (usingPassword) {
+        const isCorrectPassword = await UserService.isValidHashPassword(user.passwordHash, oldPassword);
+
+        if (!isCorrectPassword) {
+          const result = {
+            messages: [messages.ResponseMessages.User.Login.WRONG_PASSWORD],
+            data: {}
+          };
+          return res.status(HttpStatus.BAD_REQUEST).json(result);
+        }
       }
 
       if (password !== confirmedPassword) {
@@ -389,14 +398,14 @@ const update = async (req, res, next) => {
     // if (req.file) updateData.avatar = req.file.path;
     // if (birthday) updateData.birthday = birthday;
     // if (gender) updateData.gender = gender;
-    if (name){
+    if (name) {
       updateData.name = name;
       user.name = name;
     }
-    if (phone){
+    if (phone) {
       updateData.phone = phone;
       user.phone = phone;
-    } 
+    }
 
     await UserService.updateUser(updateData);
 
@@ -456,8 +465,10 @@ const getLoggedInInfo = async (req, res, next) => {
       phone,
       birthday,
       gender,
-      avatar
+      avatar,
+      usePassword: !!req.user.passwordHash || !!req.user.passwordSalt
     };
+
     const result = {
       messages: [messages.ResponseMessages.SUCCESS],
       data: {

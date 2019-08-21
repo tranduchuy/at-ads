@@ -31,6 +31,9 @@ const accountAdsSchema = new Schema({
             computer: {type: Boolean, default: null},
             tablet: {type: Boolean, default: null},
             mobile: {type: Boolean, default: null}
+        },
+        blockByPrivateBrowser: {
+            type: Boolean, default: true
         }
     }
 }, { timestamps: true });

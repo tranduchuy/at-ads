@@ -170,7 +170,7 @@ const deleteDomain = async (req, res, next) => {
       };
 
       logger.info('WebsiteController::deleteDomain::isNotOwnDomain::userId:', requestUser._id, '::code:',  code);
-      return res.status(HttpStatus.UNAUTHORIZED).json(result);
+      return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
     await WebsiteModel.deleteOne({ code });

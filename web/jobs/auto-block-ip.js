@@ -207,6 +207,12 @@ module.exports = async (channel, msg) => {
                         return;
                     }
                 }
+            } else {
+                if(accountAds.setting.blockByPrivateBrowser === false){
+                    logger.info('jobs::autoBlockIp::success.', { id });
+                    channel.ack(msg);
+                    return;
+                }
             }
         }
 
