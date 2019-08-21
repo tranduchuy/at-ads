@@ -11,6 +11,7 @@ const mongoose = require('mongoose');
 
 const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
+const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.service');
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('../../utils/Request');
 
@@ -27,6 +28,8 @@ const { getReportForAccountValidationSchema } = require('./validations/get-repor
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
 const { getIpsInfoInClassDValidationSchema } = require('./validations/get-ips-info-in-ClassD.schema');
 const { removeIpInAutoBlackListValidationSchema } = require('./validations/remove-Ip-In-Auto-Black-List-Ip.schema');
+const { getIpHistoryValidationSchema } = require('./validations/get-ip-history.schema');
+
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
@@ -185,6 +188,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       const ipInSampleBlocked = req.adsAccount.setting.sampleBlockingIp;
       const customBlackList = req.adsAccount.setting.customBlackList;
       const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
+      const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
       const ipsArr = AccountAdsService.checkIpIsBlackListed(customBlackList, arrAfterRemoveIdenticalElement, ipInSampleBlocked, autoBlackListIp);
 
       if(ipsArr.length !== 0)
@@ -194,6 +198,19 @@ const handleManipulationGoogleAds = async(req, res, next) => {
           messages: ['Ip đã có trong blacklist.'],
           data: {
             ips: ipsArr
+          }
+        });
+      }
+
+      const checkIpInCustomWhiteList = checkIpsInWhiteList(arrAfterRemoveIdenticalElement, ipInwhiteList);
+      
+      if(!checkIpInCustomWhiteList.status)
+      {
+        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::IpExistsInCustomWhiteList\n', info);
+        return res.status(HttpStatus.CONFLICT).json({
+          messages: ['Ip đang nằm trong whiteList.'],
+          data: {
+            ips: checkIpInCustomWhiteList.ipsConflict
           }
         });
       }
@@ -900,16 +917,30 @@ const blockSampleIp = (req, res, next) => {
     const adsId = req.adsAccount.adsId;
     const accountId= req.adsAccount._id;
     let allIpInBlackList = req.adsAccount.setting.customBlackList;
+    const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
     allIpInBlackList = allIpInBlackList.concat(req.adsAccount.setting.autoBlackListIp);
     const checkIpInDB = allIpInBlackList.filter(ele => ele === ip);
 
     if(checkIpInDB.length !== 0)
     {
-      logger.info('AccountAdsController::blockSampleIp::removeSampleBlockingIp::Conflict\n', info);
+      logger.info('AccountAdsController::blockSampleIp::blockSampleIp::Conflict\n', info);
       return res.status(HttpStatus.CONFLICT).json({
         messages: ['ip đã có trong blacklist.'],
         data:{
           ips: checkIpInDB
+        }
+      });
+    }
+
+    const checkIpInCustomWhiteList = checkIpsInWhiteList([ip], ipInwhiteList);
+      
+    if(!checkIpInCustomWhiteList.status)
+    {
+      logger.info('AccountAdsController::blockSampleIp::' + ActionConstant.ADD + '::IpExistsInCustomWhiteList\n', info);
+      return res.status(HttpStatus.CONFLICT).json({
+        messages: ['Ip đang nằm trong whiteList.'],
+        data: {
+          ips: checkIpInCustomWhiteList.ipsConflict
         }
       });
     }
@@ -1534,6 +1565,67 @@ const removeIpInAutoBlackListIp = (req, res, next) => {
   }
 };
 
+const getIpHistory = async (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    asdId: req.adsAccount.adsId,
+    ip: req.query.ip
+  };
+
+  logger.info('AccountAdsController::getIpHistory::is called\n', info);
+  try{
+    const { error } = Joi.validate(req.query, getIpHistoryValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let { ip } = req.query;
+    let { page, limit } = req.query;
+    const { isConnected } = req.adsAccount;
+
+    if(!page || !isConnected)
+    {
+      page = Paging.PAGE;
+    }
+
+    if(!limit || !isConnected)
+    {
+      limit = Paging.LIMIT;
+    }
+
+    page = Number(page);
+    limit = Number(limit);
+
+    const ipsHistory = await AccountAdsService.getIpHistory(ip, limit, page);
+
+    let history = [];
+    let totalItems = 0;
+    let last = [];
+
+    if(ipsHistory.ipHistoryResult[0].entries.length !== 0)
+    {
+      history = ipsHistory.ipHistoryResult[0].entries;
+      totalItems = !isConnected?history.length:ipsHistory.ipHistoryResult[0].meta[0].totalItems;
+      last = ipsHistory.theLastIpHistory;
+    }
+
+    logger.info('AccountAdsController::getIpHistory::success\n', info);
+    return res.status(HttpStatus.OK).json({
+      messages: ['Lấy dữ liệu thành công.'],
+      data: {
+        history,
+        totalItems,
+        last
+      }
+    });
+
+  }catch(e){
+    logger.error('AccountAdsController::getIpHistory::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -1560,6 +1652,7 @@ module.exports = {
   getIpsInAutoBlackListOfAccount,
   getIpsInfoInClassD,
   removeAccountAds,
-  removeIpInAutoBlackListIp
+  removeIpInAutoBlackListIp,
+  getIpHistory
 };
 
