@@ -5,6 +5,7 @@ module.exports = {
     autoBlackListIp: [],
     autoBlackListIpRanges: false,
     customBlackList: [],
+    customWhiteList: [],
     mobileNetworks: {
       viettel: false,
       mobifone: false,
