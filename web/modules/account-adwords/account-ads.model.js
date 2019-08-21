@@ -33,7 +33,7 @@ const accountAdsSchema = new Schema({
             mobile: {type: Boolean, default: null}
         },
         blockByPrivateBrowser: {
-            type: Boolean, default: false
+            type: Boolean, default: true
         }
     }
 }, { timestamps: true });
