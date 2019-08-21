@@ -416,6 +416,54 @@ const autoBlockingRangeIp = (req, res, next) => {
   }
 };
 
+
+const blockByPrivateBrowser = (req, res, next) => {
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId,
+    blockByPrivate: req.body.blockByPrivate
+  };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::blockByPrivateBrowser::accountAdsNotConnected\n', info);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('AccountAdsController::blockByPrivateBrowser is called\n', info);
+  try{
+    const { error } = Joi.validate(req.body, BlockByPrivateBrowserValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {blockByPrivate} = req.body;
+
+    req.adsAccount.setting.blockByPrivateBrowser = blockByPrivate;
+
+    req.adsAccount.save((err)=>{
+      if(err)
+      {
+        logger.error('AccountAdsController::blockByPrivateBrowser::error', e, '\n', info);
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ["Thiết lập chặn ip là trình ẩn danh thất bại"]
+        });
+      }
+      logger.info('AccountAdsController::blockByPrivateBrowser::success\n', info);
+      return res.status(HttpStatus.OK).json({
+        messages: ["Thiết lập chặn ip là trình ẩn danh thành công"]
+      });
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::blockByPrivateBrowser::error', e, '\n', info);
+    return next(e);
+  }
+};
+
 const autoBlocking3g4g = (req, res, next) => {
   const info = {
     _id: req.adsAccount._id,
@@ -1423,6 +1471,7 @@ module.exports = {
   autoBlockIp,
   autoBlockingRangeIp,
   autoBlocking3g4g,
+  blockByPrivateBrowser,
   addCampaignsForAAccountAds,
   getListOriginalCampaigns,
   connectionConfirmation,
