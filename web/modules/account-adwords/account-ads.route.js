@@ -15,6 +15,7 @@ router.post('/:accountId/auto-blocking-range-ip', CheckTokenMiddleware, CheckAcc
 router.post('/:accountId/auto-blocking-3g4g', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlocking3g4g);
 router.put('/:accountId/block-by-private-browser', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.blockByPrivateBrowser);
 router.post('/:accountId/campaigns', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.addCampaignsForAAccountAds);
+router.put('/:accountId/white-list', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.updateWhiteList);
 router.get('/:accountId/campaigns', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getCampaignsInDB);
 router.get('/', CheckTokenMiddleware, AccountAdsController.getAccountsAds);
 router.post('/connection-confirmation', CheckTokenMiddleware, AccountAdsController.connectionConfirmation);
