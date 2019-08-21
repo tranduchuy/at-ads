@@ -535,6 +535,54 @@ const autoBlocking3g4g = (req, res, next) => {
   }
 };
 
+const updateWhiteList = async (req, res, next) => {
+  const info = {
+    _id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId,
+    ips: req.body.ips
+  };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('AccountAdsController::updateWhiteList::accountAdsNotConnected\n', info);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('AccountAdsController::updateWhiteList is called\n', info);
+  try{
+    const {ips} = req.body;
+    const adsAccount = req.adsAccount;
+
+    const whiteList = [];
+
+    for (const ip of ips){
+      const convertedIP = AccountAdsService.checkIP(ip);
+      if(!convertedIP){
+        const result = {
+          messages: [`IP ${ip} không hợp lệ`],
+          data: {}
+        };
+        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
+      whiteList.push(convertedIP);
+    }
+
+    adsAccount.setting.customWhiteList = whiteList;
+
+    await adsAccount.save();
+
+    return res.status(HttpStatus.OK).json({
+      messages: ["Thiết lập whitelist thành công"]
+    });
+  }
+  catch(e)
+  {
+    logger.error('AccountAdsController::updateWhiteList::error', e, '\n', info);
+    return next(e);
+  }
+};
+
 const addCampaignsForAAccountAds = async(req, res, next) => {
   const info = {
     _id: req.adsAccount._id,
@@ -1653,6 +1701,7 @@ module.exports = {
   getIpsInfoInClassD,
   removeAccountAds,
   removeIpInAutoBlackListIp,
-  getIpHistory
+  getIpHistory,
+  updateWhiteList
 };
 
