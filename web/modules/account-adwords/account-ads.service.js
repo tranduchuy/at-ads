@@ -903,6 +903,55 @@ const getIpAndCampaigNumberInCustomBlockingIp = (accountId) => {
   });
 };
 
+const removeIpsToAutoBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, callback) => {
+  logger.info('AccountAdsService::removeIpsToAutoBlackListOfOneCampaign:is called ', {accountId, adsId, campaignId, ipsArr});
+  Async.eachSeries(ipsArr, (ip, cb)=> {
+    const queryFindIpOfcampaign = {accountId, campaignId, "autoBlackListIp.ip": ip};
+    const select = {'autoBlackListIp.$': 1};
+
+    BlockingCriterionsModel
+    .findOne(queryFindIpOfcampaign, select)
+    .exec((errQuery, blockingCriterionRecord) => {
+        if(errQuery)
+        {
+          logger.error('AccountAdsService::removeIpsToAutoBlackListOfOneCampaign:error ', errQuery);
+          return cb(errQuery);
+        }
+        if(blockingCriterionRecord)
+        {
+          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, blockingCriterionRecord.autoBlackListIp[0].criterionId)
+            .then((result) => {
+              removeIpAndCriterionIdToTheAutoBlacklistOfACampaign(result, accountId, campaignId, adsId, ip, cb);
+            })
+            .catch(err => cb(err));
+        }
+        else { return cb(null); }
+    });
+  }, callback);
+};
+
+const removeIpAndCriterionIdToTheAutoBlacklistOfACampaign = (result, accountId, campaignId, adsId, ip, cb) => {
+  logger.info('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign:is called ', {result, accountId, campaignId, adsId, ip});
+  if(result)
+  {
+    const queryUpdate = {accountId, campaignId};
+    const updateingData = {$pull: {autoBlackListIp : {ip}}};
+
+    BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
+        if(e)
+        {
+          logger.error('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign:error ', e);
+          return cb(e);
+        }
+        
+        const logData = {adsId, campaignId, ip};
+        logger.info('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign: ', logData);
+        return cb();
+    });
+  }
+  else { return cb(null); }
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -925,5 +974,6 @@ module.exports = {
   getReportForAccount,
   getAllIpInAutoBlackListIp,
   getIpsInfoInClassD,
-  getIpAndCampaigNumberInCustomBlockingIp
+  getIpAndCampaigNumberInCustomBlockingIp,
+  removeIpsToAutoBlackListOfOneCampaign
 };

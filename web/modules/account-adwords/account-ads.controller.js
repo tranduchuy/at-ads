@@ -1438,8 +1438,6 @@ const removeIpInAutoBlackListIp = (req, res, next) => {
     const id = req.adsAccount._id;
     const adsId = req.adsAccount.adsId;
 
-    console.log(ips + ' ' + autoBlackListIp);
-
     const checkIpsInBlackList = AccountAdsService.checkIpIsNotOnTheBlackList(autoBlackListIp, ipArrAfterRemoveIdenticalElement);
 
     if(checkIpsInBlackList.length !== 0)
@@ -1454,34 +1452,28 @@ const removeIpInAutoBlackListIp = (req, res, next) => {
     }
 
     Async.eachSeries(campaignIds, (campaignId, callback)=>{
-      const queryData = {
-        ipFields: "customBlackList.ip",
-        selectIp: "customBlackList.$",
-        autoBlackListIpField: "customBlackList"
-      };
-
-      AccountAdsService.removeIpsToBlackListOfOneCampaign(id, adsId, campaignId, ipArrAfterRemoveIdenticalElement, queryData, callback);
+      AccountAdsService.removeIpsToAutoBlackListOfOneCampaign(id, adsId, campaignId, ipArrAfterRemoveIdenticalElement, callback);
     },err => {
       if(err)
       {
-        logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
+        logger.error('AccountAdsController::handleManipulationGoogleAds::error', err, '\n', info);
         return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
           messages: ['Xóa ip không thành công.']
         });
       }
 
-      const ipNotExistsInListArr = _.difference(blackList, arrAfterRemoveIdenticalElement);
+      const ipNotExistsInListArr = _.difference(autoBlackListIp, ipArrAfterRemoveIdenticalElement);
 
-      req.adsAccount.setting.customBlackList = ipNotExistsInListArr;
+      req.adsAccount.setting.autoBlackListIp = ipNotExistsInListArr;
       req.adsAccount.save((err)=>{
         if(err)
         {
-          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
+          logger.error('AccountAdsController::removeIpInAutoBlackListIp::error', err, '\n', info);
           return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             messages: ['Xóa ip không thành công.']
           });
         }
-        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success\n', info);
+        logger.info('AccountAdsController::removeIpInAutoBlackListIp::success\n', info);
         return res.status(HttpStatus.OK).json({
           messages: ['Xóa ip thành công.']
         });
