@@ -900,6 +900,44 @@ const getIpAndCampaigNumberInCustomBlockingIp = (accountId) => {
   });
 };
 
+const checkAndConvertIP = (ip) => {
+  //127.0.0.1
+  const regex1 = new RegExp(/^([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})$/);
+  //127.0.0.*
+  const regex2 = new RegExp(/^([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([*])$/);
+  //127.0.*.*
+  const regex3 = new RegExp(/^([0-9]{1,3})[.]([0-9]{1,3})[.]([*])[.]([*])$/);
+
+  if(regex1.test(ip)){
+    return ip;
+  }
+
+
+  const splitIp = ip.split('.');
+  if(regex2.test(ip)){
+    return splitIp.slice(0,3).join('.') + ".0/24";
+  }
+
+  if(regex3.test(ip)){
+    return splitIp.slice(0,2).join('.') + ".0.0/16";
+  }
+
+  return false;
+};
+
+const checkIP = (ip) => {
+  //127.0.0.1
+  const regex1 = new RegExp(/^([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})$/);
+  //127.0.0.*
+  const regex2 = new RegExp(/^([0-9]{1,3})[.]([0-9]{1,3})[.]([0-9]{1,3})[.]([*])$/);
+  //127.0.*.*
+  const regex3 = new RegExp(/^([0-9]{1,3})[.]([0-9]{1,3})[.]([*])[.]([*])$/);
+
+  return regex1.test(ip) || regex2.test(ip) || regex3.test(ip);
+};
+
+
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -922,5 +960,6 @@ module.exports = {
   getReportForAccount,
   getAllIpInAutoBlackListIp,
   getIpsInfoInClassD,
-  getIpAndCampaigNumberInCustomBlockingIp
+  getIpAndCampaigNumberInCustomBlockingIp,
+  checkIP
 };

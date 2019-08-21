@@ -13,8 +13,6 @@ const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('../../utils/Request');
-
-const {UpdateWhiteListIpsValidationSchema} = require('./validations/update-white-list-account-ads.schema');
 const {BlockByPrivateBrowserValidationSchema} =  require('./validations/block-by-private-browser.schema');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
@@ -467,7 +465,8 @@ const blockByPrivateBrowser = (req, res, next) => {
 };
 
 
-const updateWhiteList = (req, res, next) => {
+
+const updateWhiteList = async (req, res, next) => {
   const info = {
     _id: req.adsAccount._id,
     adsId: req.adsAccount.adsId,
@@ -483,28 +482,29 @@ const updateWhiteList = (req, res, next) => {
 
   logger.info('AccountAdsController::updateWhiteList is called\n', info);
   try{
-    const { error } = Joi.validate(req.body, UpdateWhiteListIpsValidationSchema);
+    const {ips} = req.body;
+    const adsAccount = req.adsAccount;
 
-    if (error) {
-      return requestUtil.joiValidationResponse(error, res);
+    const whiteList = [];
+
+    for (const ip of ips){
+      const convertedIP = AccountAdsService.checkIP(ip);
+      if(!convertedIP){
+        const result = {
+          messages: [`IP ${ip} không hợp lệ`],
+          data: {}
+        };
+        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      }
+      whiteList.push(convertedIP);
     }
 
-    const {ips} = req.body;
+    adsAccount.setting.customWhiteList = whiteList;
 
-    req.adsAccount.setting.ips = ips;
+    await adsAccount.save();
 
-    req.adsAccount.save((err)=>{
-      if(err)
-      {
-        logger.error('AccountAdsController::updateWhiteList::error', e, '\n', info);
-        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-          messages: ["Thiết lập whitelist thất bại"]
-        });
-      }
-      logger.info('AccountAdsController::updateWhiteList::success\n', info);
-      return res.status(HttpStatus.OK).json({
-        messages: ["Thiết lập whitelist thành công"]
-      });
+    return res.status(HttpStatus.OK).json({
+      messages: ["Thiết lập whitelist thành công"]
     });
   }
   catch(e)
