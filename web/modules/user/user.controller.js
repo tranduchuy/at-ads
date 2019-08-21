@@ -365,15 +365,24 @@ const update = async (req, res, next) => {
     let { password, name, phone, oldPassword, confirmedPassword } = req.body;
     const updateData = { email: user.email};
 
-    if (oldPassword && password && confirmedPassword) {
-      const isCorrectPassword = await UserService.isValidHashPassword(user.passwordHash, oldPassword);
+    if (password && confirmedPassword) {
+      let usingPassword = false;
+      if (user.registerBy === UserConstant.registerByTypes.google) {
+        usingPassword = !!user.passwordHash || !!user.passwordSalt;
+      } else {
+        usingPassword = true;
+      }
 
-      if (!isCorrectPassword) {
-        const result = {
-          messages: [messages.ResponseMessages.User.Login.WRONG_PASSWORD],
-          data: {}
-        };
-        return res.status(HttpStatus.BAD_REQUEST).json(result);
+      if (usingPassword) {
+        const isCorrectPassword = await UserService.isValidHashPassword(user.passwordHash, oldPassword);
+
+        if (!isCorrectPassword) {
+          const result = {
+            messages: [messages.ResponseMessages.User.Login.WRONG_PASSWORD],
+            data: {}
+          };
+          return res.status(HttpStatus.BAD_REQUEST).json(result);
+        }
       }
 
       if (password !== confirmedPassword) {
