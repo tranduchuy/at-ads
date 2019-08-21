@@ -936,8 +936,101 @@ const checkIP = (ip) => {
   return regex1.test(ip) || regex2.test(ip) || regex3.test(ip);
 };
 
+const getIpHistory = (ip, limit, page) => {
+  logger.info('AccountAdsService::getIpHistory::is called', {ip, limit, page});
+  return new Promise(async (res, rej) => {
+    try{
+      const matchStage = {
+        $match: {
+          ip
+        }
+      };
+      const sortStage = {
+        $sort: {
+          createdAt: -1
+        }  
+      };
+      const projectStage = {
+        $project: {
+          isPrivate: 1,
+          _id: 1,
+          uuid: 1,
+          accountKey: 1,
+          networkCompany: 1,
+          href: 1,
+          ip: 1,
+          location: 1,
+          browser: 1,
+          os: 1,
+          createdAt: 1,
+          session: 1,
+          isSpam: 1
+        }
+      };
 
+      const facetStage = {
+        $facet: 
+        {
+          entries: [
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+          ],
+          meta: [
+            {$group: {_id: null, totalItems: {$sum: 1}}},
+          ],
+        }
+      };
 
+      const query = [
+        matchStage, 
+        sortStage,
+        projectStage,
+        facetStage
+      ]
+
+      const queryInfo = JSON.stringify(query);
+
+      logger.info('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::query ', { queryInfo });
+      
+      const select = {
+        isPrivate: 1,
+        _id: 1,
+        uuid: 1,
+        accountKey: 1,
+        networkCompany: 1,
+        href: 1,
+        ip: 1,
+        location: 1,
+        browser: 1,
+        os: 1,
+        createdAt: 1,
+        session: 1,
+        isSpam: 1
+      };
+
+      const ipHistoryResult = await UserBehaviorLogsModel.aggregate(query);
+
+      if(ipHistoryResult[0].entries.length !== 0)
+      {
+        const theLastIpHistory = await UserBehaviorLogsModel
+        .find({ip})
+        .sort({createdAt: -1})
+        .select(select);
+
+        logger.info('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::success ', {ip, limit, page});
+        return theLastIpHistory.length === 0 ? res({ipHistoryResult, theLastIpHistory: []}) : res({ipHistoryResult, theLastIpHistory: [theLastIpHistory[0]]});
+      }
+
+      logger.info('AccountAdsService::getIpAndCampaigNumberInCustomBlockingIp::success ', {ip, limit, page});
+      return res({ipHistoryResult, theLastIpHistory: []});
+
+    }catch(e)
+    {
+      logger.error('AccountAdsService::getIpHistory::error ', e, {ip, limit, page});
+      return rej(e);
+    }
+  });
+}
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -961,5 +1054,7 @@ module.exports = {
   getAllIpInAutoBlackListIp,
   getIpsInfoInClassD,
   getIpAndCampaigNumberInCustomBlockingIp,
-  checkIP
+  checkIP,
+  removeIpsToAutoBlackListOfOneCampaign,
+  getIpHistory
 };

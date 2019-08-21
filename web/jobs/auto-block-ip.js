@@ -9,6 +9,7 @@ const logger = log4js.getLogger('Tasks');
 const moment = require('moment');
 const { LOGGING_TYPES } = require('../modules/user-behavior-log/user-behavior-log.constant');
 const NetworkCompanyName = require('../constants/networkCompanyName.contant');
+const { checkIpsInWhiteList } = require('../services/check-ip-in-white-list.service');
 
 const saveIpIntoAutoBlackListIp = async (key, id, ip) => {
     logger.info('jobs::saveIpIntoAutoBlackListIp::is called', { key, id, ip });
@@ -142,6 +143,16 @@ module.exports = async (channel, msg) => {
 
         if (!accountAds) {
             logger.info('jobs::autoBlockIp::accountAdsNotFound.', { id });
+            channel.ack(msg);
+            return;
+        }
+
+        const ipInWhiteList = accountAds.setting.customWhiteList;
+        const checkIpInCustomWhiteList = checkIpsInWhiteList([ip], ipInWhiteList);
+
+        if(!checkIpInCustomWhiteList.status)
+        {
+            logger.info('jobs::autoBlockIp::IpExistsInCustomWhiteList.', { id, ip });
             channel.ack(msg);
             return;
         }

@@ -398,14 +398,17 @@ const update = async (req, res, next) => {
       user.phone = phone;
     } 
 
-    await UserService.updateUser(updateData);
+    const updatedInfo = await UserService.updateUser(updateData);
+    console.log(JSON.stringify(updatedInfo));
 
     const result = {
       messages: [messages.ResponseMessages.SUCCESS],
       data: {
         info: {
           phone: user.phone,
-          name: user.name
+          name: user.name,
+          email: user.email,
+          usePassword: !!updatedInfo.passwordHash || !!updatedInfo.passwordSalt
         }
       }
     };
