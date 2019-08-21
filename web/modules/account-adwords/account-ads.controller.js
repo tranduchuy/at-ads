@@ -11,6 +11,7 @@ const mongoose = require('mongoose');
 
 const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
+const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.service');
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('../../utils/Request');
 
@@ -184,6 +185,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
       const ipInSampleBlocked = req.adsAccount.setting.sampleBlockingIp;
       const customBlackList = req.adsAccount.setting.customBlackList;
       const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
+      const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
       const ipsArr = AccountAdsService.checkIpIsBlackListed(customBlackList, arrAfterRemoveIdenticalElement, ipInSampleBlocked, autoBlackListIp);
 
       if(ipsArr.length !== 0)
@@ -193,6 +195,19 @@ const handleManipulationGoogleAds = async(req, res, next) => {
           messages: ['Ip đã có trong blacklist.'],
           data: {
             ips: ipsArr
+          }
+        });
+      }
+
+      const checkIpInCustomWhiteList = checkIpsInWhiteList(arrAfterRemoveIdenticalElement, ipInwhiteList);
+      
+      if(!checkIpInCustomWhiteList.status)
+      {
+        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::IpExistsInCustomWhiteList\n', info);
+        return res.status(HttpStatus.CONFLICT).json({
+          messages: ['Ip đang nằm trong whiteList.'],
+          data: {
+            ips: checkIpInCustomWhiteList.ipsConflict
           }
         });
       }
@@ -851,16 +866,30 @@ const blockSampleIp = (req, res, next) => {
     const adsId = req.adsAccount.adsId;
     const accountId= req.adsAccount._id;
     let allIpInBlackList = req.adsAccount.setting.customBlackList;
+    const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
     allIpInBlackList = allIpInBlackList.concat(req.adsAccount.setting.autoBlackListIp);
     const checkIpInDB = allIpInBlackList.filter(ele => ele === ip);
 
     if(checkIpInDB.length !== 0)
     {
-      logger.info('AccountAdsController::blockSampleIp::removeSampleBlockingIp::Conflict\n', info);
+      logger.info('AccountAdsController::blockSampleIp::blockSampleIp::Conflict\n', info);
       return res.status(HttpStatus.CONFLICT).json({
         messages: ['ip đã có trong blacklist.'],
         data:{
           ips: checkIpInDB
+        }
+      });
+    }
+
+    const checkIpInCustomWhiteList = checkIpsInWhiteList([ip], ipInwhiteList);
+      
+    if(!checkIpInCustomWhiteList.status)
+    {
+      logger.info('AccountAdsController::blockSampleIp::' + ActionConstant.ADD + '::IpExistsInCustomWhiteList\n', info);
+      return res.status(HttpStatus.CONFLICT).json({
+        messages: ['Ip đang nằm trong whiteList.'],
+        data: {
+          ips: checkIpInCustomWhiteList.ipsConflict
         }
       });
     }
