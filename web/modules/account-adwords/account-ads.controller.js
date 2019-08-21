@@ -14,6 +14,7 @@ const AccountAdsService = require("./account-ads.service");
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('../../utils/Request');
 
+const {BlockByPrivateBrowserValidationSchema} =  require('./validations/block-by-private-browser.schema');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
