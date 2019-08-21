@@ -25,6 +25,7 @@ const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set
 const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
 const { getIpsInfoInClassDValidationSchema } = require('./validations/get-ips-info-in-ClassD.schema');
+const { removeIpInAutoBlackListValidationSchema } = require('./validations/remove-Ip-In-Auto-Black-List-Ip.schema');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
 const _ = require('lodash');
@@ -1413,7 +1414,84 @@ const removeAccountAds = async (req, res, next) => {
     logger.error('AccountAdsController::removeAccountAds::error', e);
     return next(e);
   }
-}
+};
+
+const removeIpInAutoBlackListIp = (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    asdId: req.adsAccount.adsId,
+    ips: req.body.ips
+  };
+
+  logger.info('AccountAdsController::removeAccountAds::is called\n', info);
+  try{
+    const { error } = Joi.validate(req.body, removeIpInAutoBlackListValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { ips } = req.body;
+    const autoBlackListIp = req.adsAccount.setting.autoBlackListIp || [];
+    const ipArrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique);
+    const campaignIds = req.campaignIds || [];
+    const id = req.adsAccount._id;
+    const adsId = req.adsAccount.adsId;
+
+    console.log(ips + ' ' + autoBlackListIp);
+
+    const checkIpsInBlackList = AccountAdsService.checkIpIsNotOnTheBlackList(autoBlackListIp, ipArrAfterRemoveIdenticalElement);
+
+    if(checkIpsInBlackList.length !== 0)
+    {
+      logger.info('AccountAdsController::removeAccountAds::notFound\n', info);
+      return res.status(HttpStatus.NOT_FOUND).json({
+          messages: ['Ip không nằm trong blacklist.'],
+          data :{
+            ips: checkIpsInBlackList
+          }
+      });
+    }
+
+    Async.eachSeries(campaignIds, (campaignId, callback)=>{
+      const queryData = {
+        ipFields: "customBlackList.ip",
+        selectIp: "customBlackList.$",
+        autoBlackListIpField: "customBlackList"
+      };
+
+      AccountAdsService.removeIpsToBlackListOfOneCampaign(id, adsId, campaignId, ipArrAfterRemoveIdenticalElement, queryData, callback);
+    },err => {
+      if(err)
+      {
+        logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
+        return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          messages: ['Xóa ip không thành công.']
+        });
+      }
+
+      const ipNotExistsInListArr = _.difference(blackList, arrAfterRemoveIdenticalElement);
+
+      req.adsAccount.setting.customBlackList = ipNotExistsInListArr;
+      req.adsAccount.save((err)=>{
+        if(err)
+        {
+          logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+            messages: ['Xóa ip không thành công.']
+          });
+        }
+        logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success\n', info);
+        return res.status(HttpStatus.OK).json({
+          messages: ['Xóa ip thành công.']
+        });
+      });
+    });
+  }catch(e){
+    logger.error('AccountAdsController::removeIpInAutoBlackListIp::error', e);
+    return next(e);
+  }
+};
 
 module.exports = {
   addAccountAds,
@@ -1439,6 +1517,7 @@ module.exports = {
   getDailyClicking,
   getIpsInAutoBlackListOfAccount,
   getIpsInfoInClassD,
-  removeAccountAds
+  removeAccountAds,
+  removeIpInAutoBlackListIp
 };
 
