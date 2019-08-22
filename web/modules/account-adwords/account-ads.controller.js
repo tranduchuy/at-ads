@@ -52,19 +52,12 @@ const addAccountAds = async (req, res, next) => {
     const { adWordId } = req.body;
     const duplicateAdWordId = await AccountAdsModel.findOne({ adsId: adWordId });
 
-
     if (duplicateAdWordId) {
       if (duplicateAdWordId.user.toString() !== req.user._id.toString()) {
         const result = {
           messages: [messages.ResponseMessages.AccountAds.Register.ADWORDS_ID_BELONG_TO_ANOTHER_USER],
         };
         return res.status(HttpStatus.BAD_REQUEST).json(result);
-      }
-
-      if (duplicateAdWordId.isDeleted === false) {
-        return res.status(HttpStatus.BAD_REQUEST).json({
-          messages: ['Bạn đã kết nối tài khoản này: ' + duplicateAdWordId.adsId]
-        });
       }
 
       GoogleAdwordsService.sendManagerRequest(adWordId)
@@ -78,6 +71,7 @@ const addAccountAds = async (req, res, next) => {
           }
 
           duplicateAdWordId.isDeleted = false;
+          duplicateAdWordId.isConnected = false;
           await duplicateAdWordId.save();
           logger.info('AccountAdsController::addAccountAds::success', result);
           return res.status(HttpStatus.OK).json({
@@ -90,6 +84,12 @@ const addAccountAds = async (req, res, next) => {
         .catch(async error => {
           switch (GoogleAdwordsService.getErrorCode(error)) {
             case 'ALREADY_MANAGED_BY_THIS_MANAGER':
+              if (!duplicateAdWordId.isDeleted && duplicateAdWordId.isConnected) {
+                return res.status(HttpStatus.BAD_REQUEST).json({
+                  messages: ['Bạn đã kết nối tài khoản này: ' + duplicateAdWordId.adsId]
+                });
+              }
+
               duplicateAdWordId.isDeleted = false;
               duplicateAdWordId.isConnected = true;
               await duplicateAdWordId.save();
@@ -140,11 +140,35 @@ const addAccountAds = async (req, res, next) => {
             }
           });
         })
-        .catch(error => {
-          const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
-          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-            messages: [message]
-          });
+        .catch( async error => {
+          switch (GoogleAdwordsService.getErrorCode(error)) {
+            case 'ALREADY_MANAGED_BY_THIS_MANAGER':
+              const account = await AccountAdsService.createAccountAdsHaveIsConnectedStatus({ userId: req.user._id, adsId: adWordId }, true);
+
+              logger.info('AccountAdsController::addAccountAds::reconnect success', { userId: req.user._id, adsId: adWordId });
+              return res.status(HttpStatus.OK).json({
+                messages: ['Kết nối tài khoản thành công'],
+                data: {
+                  account
+                }
+              });
+            case 'ALREADY_INVITED_BY_THIS_MANAGER':
+                const newAccount = await AccountAdsService.createAccountAds({ userId: req.user._id, adsId: adWordId });
+
+                logger.info('AccountAdsController::addAccountAds::reinvite success', { userId: req.user._id, adsId: adWordId });
+                return res.status(HttpStatus.OK).json({
+                  messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+                  data: {
+                    account: newAccount
+                  }
+                });
+            default:
+              const message = GoogleAdwordsService.mapManageCustomerErrorMessage(error);
+              logger.info('AccountAdsController::addAccountAds::error', JSON.stringify(error));
+              return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+                messages: [message]
+              });
+          }
         });
     }
   } catch (e) {
