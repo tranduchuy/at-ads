@@ -78,7 +78,7 @@ const addAccountAds = async (req, res, next) => {
             messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
             data: {
               account: duplicateAdWordId,
-              isRefresh: true
+              isRefresh: false
             }
           });
         })
@@ -112,7 +112,7 @@ const addAccountAds = async (req, res, next) => {
                 messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
                 data: {
                   account: duplicateAdWordId,
-                  isRefresh: true
+                  isRefresh: false
                 }
               });
             default:
