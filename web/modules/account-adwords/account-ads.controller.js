@@ -743,7 +743,7 @@ const connectionConfirmation = async(req, res, next) => {
     const { adWordId } = req.body;
     let user = req.user._id;
 
-    const account = await AccountAdsModel.findOne({ adsId: adWordId, user});
+    const account = await AccountAdsModel.findOne({ adsId: adWordId, user, isDeleted: false});
 
     if(!account)
     {
@@ -755,12 +755,6 @@ const connectionConfirmation = async(req, res, next) => {
 
     GoogleAdwordsService.sendManagerRequest(adWordId)
     .then(result => {
-      if(error)
-      {
-        logger.error('AccountAdsController::connectionConfirmation::error', error, '\n', info);
-        return next(error);
-      }
-
       account.isConnected = false;
 
       account.save(err=> {
