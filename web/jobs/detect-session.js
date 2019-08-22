@@ -35,7 +35,7 @@ const checkSessionExpiration = (session, log) => {
     inDate = inDate.set('hour', 23);
     inDate = inDate.set('minute', 59);
     inDate = inDate.set('second', 59);
-    inDate = inDate.set('millisecond', 59);
+    inDate = inDate.set('millisecond', 999);
 
     return searchDate.isBefore(session.lastHitAt) && inDate.isAfter(session.lastHitAt);
 };
