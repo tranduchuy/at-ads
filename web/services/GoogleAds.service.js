@@ -423,6 +423,41 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
   });
 };
 
+const getIpBlockOfCampaign = (adwordId, campaignId) => {
+  const info = {adwordId, campaignId}
+  logger.info('GoogleAdsService::getIpBlockOfCampaign', info);
+  return new Promise((resolve, reject) => {
+    const user = new AdwordsUser({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+
+    const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+    const selector = {
+      fields: ['IpAddress'],
+      predicates: [{field: 'CampaignId', operator: 'IN', values: campaignId}],
+    };
+
+    CampaignCriterionService.get({ serviceSelector: selector }, (error, result) => {
+      if (error) {
+        logger.error('GoogleAdsService::getIpBlockOfCampaign::error', error);
+        return reject(error);
+      }
+
+      logger.info('GoogleAdsService::getIpBlockOfCampaign::success', result);
+      if (result.entries) {
+        return resolve(result.entries);
+      }
+
+      return resolve([]);
+    });
+  });
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
@@ -434,5 +469,6 @@ module.exports = {
   getErrorCode,
   getReportOnDevice,
   enabledOrPauseTheCampaignByDevice,
-  getCampaignsName
+  getCampaignsName,
+  getIpBlockOfCampaign
 };

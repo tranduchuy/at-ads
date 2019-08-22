@@ -13,6 +13,7 @@ const { Status } = require('../../constants/status');
 const GlobalConstant = require('../../constants/global.constant');
 const logger = log4js.getLogger(GlobalConstant.LoggerTargets.Service);
 const messages = require('../../constants/messages');
+const UserTokenService = require('../userToken/userToken.service');
 
 
 /**
@@ -170,7 +171,7 @@ const updateUser = async ( { password, name, phone, email} ) =>  {
   return await UserModel.findOne({email});
 };
 
-const getAccountInfo = (user ,message) => {
+const getAccountInfo = async (user ,message) => {
   const userInfoResponse = {
     _id: user.id,
     role: user.role,
@@ -181,12 +182,12 @@ const getAccountInfo = (user ,message) => {
     googleId: user.googleId,
     usePassword: !!user.passwordHash || !!user.passwordSalt
   };
-  const token = generateToken({ _id: user._id });
+  const userToken = await UserTokenService.createUserToken(user._id);
   const result = {
     messages: [message],
     data: {
       meta: {
-        token
+        token: userToken.token
       },
       user: userInfoResponse
     }
