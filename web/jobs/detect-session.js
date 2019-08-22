@@ -28,15 +28,16 @@ const createSession = async ({
 };
 
 
-const checkSessionExpiration = (session) => {
-    const searchDate = new Date();
-    searchDate.setMinutes(searchDate.getMinutes() - 30);
+const checkSessionExpiration = (session, log) => {
+    const searchDate = moment(log.createdAt).subtract(30, 'minutes');
 
-    const createdAt = new Date(session.createdAt);
+    let inDate = moment(session.createdAt);
+    inDate = inDate.set('hour', 23);
+    inDate = inDate.set('minute', 59);
+    inDate = inDate.set('second', 59);
+    inDate = inDate.set('millisecond', 59);
 
-    const inDate =  new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDay(), 23, 59, 59, 59);
-
-    return moment(searchDate).isAfter(session.lastHitAt) && moment(inDate).isBefore(session.lastHitAt);
+    return searchDate.isBefore(session.lastHitAt) && inDate.isAfter(session.lastHitAt);
 };
 
 
@@ -57,16 +58,35 @@ const detectSession = async (channel, data, msg) => {
             accountKey: log.accountKey
         });
 
-        if(session && checkSessionExpiration(session)){
+
+        // check session existed
+        if(session){
+          if(checkSessionExpiration(session, log)){
             session.lastHitAt = log.createdAt;
             log.session = session._id;
             await log.save();
             await session.save();
-        } else {
-            if(session && session.lastHitAt){
-                session.endedAt = session.lastHitAt;
-                await session.save();
+          } else {
+            // end old session
+            if(session.lastHitAt){
+              session.endedAt = session.lastHitAt;
+              await session.save();
             }
+            // create new session
+            session = await createSession({
+              ip: log.ip,
+              uuid: log.uuid,
+              accountKey: log.accountKey
+            });
+            if(session !== null){
+              session.lastHitAt = log.createdAt;
+              log.session = session._id;
+              await log.save();
+              await session.save();
+            }
+          }
+        } else {
+            // create new session
             session = await createSession({
                 ip: log.ip,
                 uuid: log.uuid,
