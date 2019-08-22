@@ -66,7 +66,7 @@ const addAccountAds = async (req, res, next) => {
             logger.error('AccountAdsController::addAccountAds::error', result);
 
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-              messages: ['Gửi request quản lý tài khoản adword không thành công']
+              messages: ['Gửi request quản lý tài khoản Google Ads không thành công']
             });
           }
 
@@ -75,9 +75,10 @@ const addAccountAds = async (req, res, next) => {
           await duplicateAdWordId.save();
           logger.info('AccountAdsController::addAccountAds::success', result);
           return res.status(HttpStatus.OK).json({
-            messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+            messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
             data: {
-              account: duplicateAdWordId
+              account: duplicateAdWordId,
+              isRefresh: true
             }
           });
         })
@@ -98,7 +99,8 @@ const addAccountAds = async (req, res, next) => {
               return res.status(HttpStatus.OK).json({
                 messages: ['Kết nối tài khoản thành công'],
                 data: {
-                  account: duplicateAdWordId
+                  account: duplicateAdWordId,
+                  isRefresh: true
                 }
               });
             case 'ALREADY_INVITED_BY_THIS_MANAGER':
@@ -107,9 +109,10 @@ const addAccountAds = async (req, res, next) => {
               await duplicateAdWordId.save();
               logger.info('AccountAdsController::addAccountAds::reinvite success', duplicateAdWordId);
               return res.status(HttpStatus.OK).json({
-                messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+                messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
                 data: {
-                  account: duplicateAdWordId
+                  account: duplicateAdWordId,
+                  isRefresh: true
                 }
               });
             default:
@@ -127,16 +130,17 @@ const addAccountAds = async (req, res, next) => {
             logger.error('AccountAdsController::addAccountAds::error', result);
 
             return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-              messages: ['Gửi request quản lý tài khoản adword không thành công']
+              messages: ['Gửi request quản lý tài khoản Google Ads không thành công']
             });
           }
 
           const account = await AccountAdsService.createAccountAds({ userId: req.user._id, adsId: adWordId });
           logger.info('AccountAdsController::addAccountAds::success', result);
           return res.status(HttpStatus.OK).json({
-            messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+            messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
             data: {
-              account
+              account,
+              isRefresh: false
             }
           });
         })
@@ -149,7 +153,8 @@ const addAccountAds = async (req, res, next) => {
               return res.status(HttpStatus.OK).json({
                 messages: ['Kết nối tài khoản thành công'],
                 data: {
-                  account
+                  account,
+                  isRefresh: true
                 }
               });
             case 'ALREADY_INVITED_BY_THIS_MANAGER':
@@ -157,9 +162,10 @@ const addAccountAds = async (req, res, next) => {
 
                 logger.info('AccountAdsController::addAccountAds::reinvite success', { userId: req.user._id, adsId: adWordId });
                 return res.status(HttpStatus.OK).json({
-                  messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+                  messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
                   data: {
-                    account: newAccount
+                    account: newAccount,
+                    isRefresh: false
                   }
                 });
             default:
@@ -743,7 +749,7 @@ const connectionConfirmation = async(req, res, next) => {
     const { adWordId } = req.body;
     let user = req.user._id;
 
-    const account = await AccountAdsModel.findOne({ adsId: adWordId, user});
+    const account = await AccountAdsModel.findOne({ adsId: adWordId, user, isDeleted: false});
 
     if(!account)
     {
@@ -755,12 +761,6 @@ const connectionConfirmation = async(req, res, next) => {
 
     GoogleAdwordsService.sendManagerRequest(adWordId)
     .then(result => {
-      if(error)
-      {
-        logger.error('AccountAdsController::connectionConfirmation::error', error, '\n', info);
-        return next(error);
-      }
-
       account.isConnected = false;
 
       account.save(err=> {
@@ -771,7 +771,7 @@ const connectionConfirmation = async(req, res, next) => {
         }
         logger.info('AccountAdsController::connectionConfirmation::success\n', info);
         return res.status(HttpStatus.OK).json({
-          messages: ['Đã gửi request đến tài khoản adwords của bạn, vui lòng truy cập và chấp nhập'],
+          messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
           data: {
             isConnected: false
           }
