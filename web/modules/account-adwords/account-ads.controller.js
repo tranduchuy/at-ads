@@ -77,7 +77,8 @@ const addAccountAds = async (req, res, next) => {
           return res.status(HttpStatus.OK).json({
             messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
             data: {
-              account: duplicateAdWordId
+              account: duplicateAdWordId,
+              isRefresh: true
             }
           });
         })
@@ -98,7 +99,8 @@ const addAccountAds = async (req, res, next) => {
               return res.status(HttpStatus.OK).json({
                 messages: ['Kết nối tài khoản thành công'],
                 data: {
-                  account: duplicateAdWordId
+                  account: duplicateAdWordId,
+                  isRefresh: true
                 }
               });
             case 'ALREADY_INVITED_BY_THIS_MANAGER':
@@ -109,7 +111,8 @@ const addAccountAds = async (req, res, next) => {
               return res.status(HttpStatus.OK).json({
                 messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
                 data: {
-                  account: duplicateAdWordId
+                  account: duplicateAdWordId,
+                  isRefresh: true
                 }
               });
             default:
@@ -136,7 +139,8 @@ const addAccountAds = async (req, res, next) => {
           return res.status(HttpStatus.OK).json({
             messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
             data: {
-              account
+              account,
+              isRefresh: false
             }
           });
         })
@@ -149,7 +153,8 @@ const addAccountAds = async (req, res, next) => {
               return res.status(HttpStatus.OK).json({
                 messages: ['Kết nối tài khoản thành công'],
                 data: {
-                  account
+                  account,
+                  isRefresh: true
                 }
               });
             case 'ALREADY_INVITED_BY_THIS_MANAGER':
@@ -159,7 +164,8 @@ const addAccountAds = async (req, res, next) => {
                 return res.status(HttpStatus.OK).json({
                   messages: ['Đã gửi request đến tài khoản Google Ads của bạn, vui lòng truy cập và chấp nhập'],
                   data: {
-                    account: newAccount
+                    account: newAccount,
+                    isRefresh: false
                   }
                 });
             default:
