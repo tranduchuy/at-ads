@@ -113,54 +113,6 @@ const logTrackingBehavior = async (req, res, next) => {
     return next(e);
   }
 };
-
-const statisticUser = async (req, res, next) => {
-  const info = {
-    id: req.adsAccount._id,
-    adsId: req.adsAccount.adsId
-  };
-
-  if(!req.adsAccount.isConnected){
-    logger.info('UserBehaviorLogController::statisticUser::accountAdsNotConnected\n', info);
-    return res.status(HttpStatus.BAD_REQUEST).json({
-      messages: ['Tài khoản chưa được kết nối']
-    });
-  }
-
-  logger.info('UserBehaviorLogController::statisticUser is called\n', info);
-  try {
-
-    const {limit, page, startDate, endDate} = req.query;
-    const stages= UserBehaviorLogService.buildStageStatisticUser({
-      accountKey: req.adsAccount.accountKey ? req.adsAccount.accountKey : null,
-      limit: parseInt((limit || 10).toString()),
-      page: parseInt((page || 1).toString()),
-      startDate,
-      endDate
-    });
-
-    console.log('UserBehaviorLogController::statisticUser stages: ', JSON.stringify(stages));
-    const result = await UserBehaviorLogModel.aggregate(stages);
-
-    const response = {
-      status: HttpStatus.OK,
-      messages: [messages.ResponseMessages.SUCCESS],
-      data: {
-        meta: {
-          totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
-        },
-        orders: result[0].entries
-      }
-    };
-
-    return res.status(HttpStatus.OK).json(response);
-
-  } catch (e) {
-    logger.error('UserController::logTrackingBehavior::error', e);
-    return next(e);
-  }
-};
-
 const getlogTrackingBehavior = async (req, res, next) => {
   try {
     return res.json({

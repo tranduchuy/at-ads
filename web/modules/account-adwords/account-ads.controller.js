@@ -1768,9 +1768,7 @@ const statisticUser = async (req, res, next) => {
       }
     };
 
-    return res.status(HttpStatus.OK).json({
-      response
-    });
+    return res.status(HttpStatus.OK).json(response);
 
   } catch (e) {
     logger.error('UserController::logTrackingBehavior::error', e);
