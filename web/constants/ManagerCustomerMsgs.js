@@ -10,5 +10,6 @@ module.exports = {
     TOO_HIGH: 'Quá lớn',
     TOO_LOW: 'Quá nhỏ',
     UNKNOWN: 'Không xác định được lỗi',
+    INVALID_ID: 'Không tìm thấy criterionId',
     '': 'Không xác định'
   };

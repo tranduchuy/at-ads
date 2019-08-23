@@ -16,7 +16,7 @@ const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
 
         if(!accountAds.setting.autoRemoveBlocking)
         {
-            logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::success.\n', info);
+            logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::Auto remove blocking is false.\n', info);
             return cb();
         }
 
@@ -120,7 +120,6 @@ const deleteIpInAutoBlackListOfCampaign = (campaignInfo, cb) => {
                 GoogleAdsService.removeIpBlackList(adsId, campaignId, ip, criterionId)
                 .then(resultOfGoogleAds => {
                     const accountInfo = {
-                        resultOfGoogleAds,
                         campaignId,
                         ip,
                         accountId
@@ -129,8 +128,20 @@ const deleteIpInAutoBlackListOfCampaign = (campaignInfo, cb) => {
                     removeIpAndCriterionIdToTheBlacklistOfACampaign(accountInfo, callback);
                 })
                 .catch(error => {
-                    logger.error('scheduleJobsService::deleteIpInAutoBlackListOfCampaign::error.', error, campaignInfo);
-                    return callback(error);
+                    switch (GoogleAdsService.getErrorCode(error)) {
+                        case 'INVALID_ID' :
+                          logger.info('scheduleJobsService::deleteIpInAutoBlackListOfCampaign::INVALID_ID', {campaignId});
+                          const accountInfo = { campaignId, ip, accountId };
+                          return removeIpAndCriterionIdToTheBlacklistOfACampaign(accountInfo, callback);;
+                        case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
+                          logger.info('scheduleJobsService::deleteIpInAutoBlackListOfCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+                          const account = { campaignId, ip, accountId };
+                          return removeIpAndCriterionIdToTheBlacklistOfACampaign(account, callback);;
+                        default:
+                          const message = GoogleAdsService.getErrorCode(error);
+                          logger.error('scheduleJobsService::deleteIpInAutoBlackListOfCampaign::error', message);
+                          return callback(message);
+                      }
                 });
             });
         }, err => {
@@ -162,17 +173,9 @@ const removeIpAndCriterionIdToTheBlacklistOfACampaign = (accountInfo, cb) => {
 
     logger.info('scheduleJobsService::removeIpAndCriterionIdToTheBlacklistOfACampaign::is called.\n', info);
     try{
-        const resultOfGoogleAds = accountInfo.resultOfGoogleAds;
         const ip = accountInfo.ip;
         const campaignId = accountInfo.campaignId;
         const accountId =accountInfo.accountId;
-
-        if(!resultOfGoogleAds)
-        {
-            logger.error('scheduleJobsService::removeIpAndCriterionIdToTheBlacklistOfACampaign::cantGetResultGoogleAds.', info);
-            return cb(null);
-        }
-
         const queryUpdate = {accountId, campaignId};
         const updateingData = {$pull: {autoBlackListIp : {ip}}};
 
