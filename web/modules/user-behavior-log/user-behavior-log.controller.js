@@ -14,6 +14,8 @@ const UserBehaviorLogService = require('./user-behavior-log.service');
 
 
 const AdAccountModel = require('../account-adwords/account-ads.model');
+
+const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
 const WebsiteService = require('../website/website.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 const Config = require('config');
@@ -111,7 +113,6 @@ const logTrackingBehavior = async (req, res, next) => {
     return next(e);
   }
 };
-
 const getlogTrackingBehavior = async (req, res, next) => {
   try {
     return res.json({

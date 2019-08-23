@@ -34,5 +34,6 @@ router.delete('/:accountId/blocked-ips', CheckTokenMiddleware, CheckAccountIdMid
 router.get('/:accountId/report/clicking-class-d-ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getIpsInfoInClassD);
 router.delete('/:accountId', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.removeAccountAds);
 router.get('/:accountId/ip-history', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getIpHistory);
+router.get('/:accountId/statistic-user', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.statisticUser);
 
 module.exports = router;
