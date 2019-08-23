@@ -2,6 +2,7 @@ const AccountAdsModel = require('./account-ads.model');
 const WebsiteModel = require('../website/website.model');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const mongoose = require('mongoose');
+
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
 const GoogleAdwordsService = require('../../services/GoogleAds.service');

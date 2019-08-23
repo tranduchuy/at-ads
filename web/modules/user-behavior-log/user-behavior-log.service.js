@@ -1,6 +1,6 @@
 const UserBehaviorLogModel = require('./user-behavior-log.model');
 const IPLookupService = require('../../services/ip-lookup.service');
-
+const moment = require('moment');
 const createUserBehaviorLog = async ({
                                        ip, utmMedium, utmSource, utmCampaign, type,
                                        referrer, userAgent, browser, engine, isPrivateBrowsing,
@@ -51,24 +51,24 @@ buildStageStatisticUser = (queryCondition) => {
   let stages = [];
   const matchStage = {};
 
-  stages.push({"$sort": {"createdAt": -1}});
-
   matchStage['accountKey'] = queryCondition.accountKey;
-
   if (queryCondition.startDate) {
     matchStage.createdAt = {
-      $gte: new Date(queryCondition.startDate)
+      $gte: moment(queryCondition.startDate, 'DD-MM-YYYY').startOf('date')._d
     };
   }
 
   if (queryCondition.endDate) {
     matchStage.createdAt = matchStage.createdAt || {};
-    matchStage.createdAt['$lt'] = new Date(queryCondition.endDate);
+    matchStage.createdAt['$lt'] = moment(queryCondition.endDate, 'DD-MM-YYYY').endOf('date')._d;
   }
 
   if (Object.keys(matchStage).length > 0) {
     stages.push({$match: matchStage});
   }
+
+
+  stages.push({"$sort": {"createdAt": 1}});
 
   stages.push({
     $group:
@@ -100,10 +100,11 @@ buildStageStatisticUser = (queryCondition) => {
       count: "$count",
       "isPrivateBrowsing": "$info.isPrivateBrowsing",
       "isSpam": "$info.isSpam",
-      "accountKey": "$info.hlvjJj_7G",
+      "accountKey": "$info.accountKey",
       "type": "$info.type",
       "networkCompany": "$info.networkCompany",
       "ip": "$info.ip",
+      "createdAt": "$info.createdAt",
       "localIp": "$info.localIp",
       "userAgent": "$info.userAgent",
       "location": "$info.location",

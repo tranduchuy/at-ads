@@ -1,3 +1,4 @@
+
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
@@ -25,6 +26,8 @@ const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blockin
 const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-blocking-range-ip.schema');
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const { sampleBlockingIpValidationSchema } = require('./validations/sample-blocking-ip.schema');
+const { CheckDate } = require('./validations/check-date.schema');
+
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
@@ -1733,8 +1736,14 @@ const statisticUser = async (req, res, next) => {
 
   logger.info('UserBehaviorLogController::statisticUser is called\n', info);
   try {
+    const { error } = Joi.validate(req.query, CheckDate);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
 
     const {limit, page, startDate, endDate} = req.query;
+
     const stages= UserBehaviorLogService.buildStageStatisticUser({
       accountKey: req.adsAccount.key ? req.adsAccount.key : null,
       limit: parseInt((limit || 10).toString()),
