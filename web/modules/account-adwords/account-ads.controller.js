@@ -15,6 +15,8 @@ const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.s
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('../../utils/Request');
 
+const UserBehaviorLogService = require('../user-behavior-log/user-behavior-log.service');
+
 const {BlockByPrivateBrowserValidationSchema} =  require('./validations/block-by-private-browser.schema');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
@@ -1674,6 +1676,59 @@ const getIpHistory = async (req, res, next) => {
   }
 };
 
+
+const statisticUser = async (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('UserBehaviorLogController::statisticUser::accountAdsNotConnected\n', info);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('UserBehaviorLogController::statisticUser is called\n', info);
+  try {
+
+    const {limit, page, startDate, endDate} = req.query;
+    const stages= UserBehaviorLogService.buildStageStatisticUser({
+      accountKey: req.adsAccount.key ? req.adsAccount.key : null,
+      limit: parseInt((limit || 10).toString()),
+      page: parseInt((page || 1).toString()),
+      startDate,
+      endDate
+    });
+
+    console.log('UserBehaviorLogController::statisticUser stages: ', JSON.stringify(stages));
+    const result = await UserBehaviorLogModel.aggregate(stages);
+
+    const response = {
+      status: HttpStatus.OK,
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        meta: {
+          limit: limit || 10,
+          page: page || 1,
+          totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
+        },
+        users: result[0].entries
+      }
+    };
+
+    return res.status(HttpStatus.OK).json({
+      response
+    });
+
+  } catch (e) {
+    logger.error('UserController::logTrackingBehavior::error', e);
+    return next(e);
+  }
+};
+
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -1702,6 +1757,7 @@ module.exports = {
   removeAccountAds,
   removeIpInAutoBlackListIp,
   getIpHistory,
-  updateWhiteList
+  updateWhiteList,
+  statisticUser
 };
 

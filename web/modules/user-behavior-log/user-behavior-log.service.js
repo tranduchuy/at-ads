@@ -47,6 +47,95 @@ const createUserBehaviorLog = async ({
   }
 };
 
+buildStageStatisticUser = (queryCondition) => {
+  let stages = [];
+  const matchStage = {};
+
+  stages.push({"$sort": {"createdAt": -1}});
+
+  matchStage['accountKey'] = queryCondition.accountKey;
+
+  if (queryCondition.startDate) {
+    matchStage.createdAt = {
+      $gte: new Date(queryCondition.startDate)
+    };
+  }
+
+  if (queryCondition.endDate) {
+    matchStage.createdAt = matchStage.createdAt || {};
+    matchStage.createdAt['$lt'] = new Date(queryCondition.endDate);
+  }
+
+  if (Object.keys(matchStage).length > 0) {
+    stages.push({$match: matchStage});
+  }
+
+  stages.push({
+    $group:
+      {
+        _id: "$uuid",
+        count: {"$sum": 1}
+      }
+  });
+
+  stages.push(
+    {
+      $lookup:
+        {
+          from: "UserBehaviorLogs",
+          localField: "_id",
+          foreignField: "uuid",
+          as: "info"
+        }
+    });
+  stages.push({
+    $project: {
+      count: "$count",
+      info: {$arrayElemAt: ["$info", 0]}
+    }
+  });
+
+  stages.push({
+    $project: {
+      count: "$count",
+      "isPrivateBrowsing": "$info.isPrivateBrowsing",
+      "isSpam": "$info.isSpam",
+      "accountKey": "$info.hlvjJj_7G",
+      "type": "$info.type",
+      "networkCompany": "$info.networkCompany",
+      "ip": "$info.ip",
+      "localIp": "$info.localIp",
+      "userAgent": "$info.userAgent",
+      "location": "$info.location",
+      "domain": "$info.domain",
+      "browserResolution": "$info.browserResolution",
+      "screenResolution": "$info.screenResolution",
+      "keyword": "$info.keyword",
+      "gclid": "$info.gclid",
+      "utmCampaign": "$info.utmCampaign",
+      "utmMedium": "$info.utmMedium",
+      "utmSource": "$info.utmSource",
+      "session": "$info.session"
+    }
+  });
+
+  stages = stages.concat([
+    {
+      $facet: {
+        entries: [
+          {$skip: (queryCondition.page - 1) * queryCondition.limit},
+          {$limit: queryCondition.limit}
+        ],
+        meta: [
+          {$group: {_id: null, totalItems: {$sum: 1}}},
+        ],
+      }
+    }
+  ]);
+  return stages;
+};
+
 module.exports = {
-  createUserBehaviorLog
+  createUserBehaviorLog,
+  buildStageStatisticUser
 };
