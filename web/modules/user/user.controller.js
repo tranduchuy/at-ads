@@ -21,6 +21,7 @@ const UserModel = require('./user.model');
 const messages = require("../../constants/messages");
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('request');
+const userActionHistoryService = require('../user-action-history/user-action-history.service');
 
 const forgetPassword = async (request, res, next) => {
   logger.info('UserController::forgetPassword is called');
@@ -102,6 +103,15 @@ const resetPassword = async (request, res, next) => {
         entries: []
       }
     };
+
+    const actionHistory = {
+      userId: user._id,
+      content: "Cập nhật mật khẩu mới",
+      param: null
+    };
+
+    userActionHistoryService.createUserActionHistory(actionHistory);
+
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::resetPassword error', e);
