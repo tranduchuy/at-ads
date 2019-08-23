@@ -10,6 +10,7 @@ const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
 const mongoose = require('mongoose');
 
+const userActionHistoryService = require('../user-action-history/user-action-history.service');
 const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
 const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.service');
@@ -559,6 +560,15 @@ const autoBlocking3g4g = (req, res, next) => {
         });
       }
       logger.info('AccountAdsController::autoBlocking3g4g::success\n', info);
+
+      const actionHistory = {
+        userId: req.user._id,
+        content: "Thay đổi cấu hình chặn 3g,4g: " + mobiNetworks.join(', '),
+        param: null
+      };
+
+      userActionHistoryService.createUserActionHistory(actionHistory);
+
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập chặn ip theo 3G/4G thành công"]
       });
@@ -605,6 +615,14 @@ const updateWhiteList = async (req, res, next) => {
     }
 
     adsAccount.setting.customWhiteList = whiteList;
+
+    const actionHistory = {
+      userId: req.user._id,
+      content: "Cập nhật danh sách whitelist ip: " + whiteList.join(', '),
+      param: null
+    };
+
+    userActionHistoryService.createUserActionHistory(actionHistory);
 
     await adsAccount.save();
 
