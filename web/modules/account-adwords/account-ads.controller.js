@@ -276,6 +276,14 @@ const handleManipulationGoogleAds = async(req, res, next) => {
             });
           }
           logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::success\n', info);
+
+          const actionHistory = {
+            userId: req.user._id,
+            content: " Chặn danh sách blacklist ip: " + info.ips.join(', '),
+            param: null
+          };
+
+          userActionHistoryService.createUserActionHistory(actionHistory);
           return res.status(HttpStatus.OK).json({
             messages: ['Thêm ips vào blacklist thành công.']
           });
@@ -1075,6 +1083,14 @@ const blockSampleIp = (req, res, next) => {
               messages: ['Thêm ip không thành công.']
             });
           }
+
+          const actionHistory = {
+            userId: req.user._id,
+            content: "Chặn thử 1 ip: " + info.ip,
+            param: null
+          };
+
+          userActionHistoryService.createUserActionHistory(actionHistory);
 
           logger.info('AccountAdsController::blockSampleIp::addSampleBlockingIp::success', info);
           return res.status(HttpStatus.OK).json({
