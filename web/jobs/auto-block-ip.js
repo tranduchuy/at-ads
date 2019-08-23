@@ -97,12 +97,24 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg) 
         const adsId = accountAds.adsId;
         const accountId = accountAds._id;
 
+        console.log(campaignIds);
+
         Async.eachSeries(campaignIds, (campaignId, callback) => {
             GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
                 .then((result) => {
                     const accountInfo = { result, accountId, campaignId, adsId, ip };
                     RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
-                }).catch(err => callback(err));
+                }).catch(err => {
+                    switch (GoogleAdsService.getErrorCode(err)) {
+                        case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
+                            logger.info('AccountAdsController::autoBlockIp::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+                            return callback();
+                        default:
+                            const message = GoogleAdsService.getErrorCode(err);
+                            logger.error('AccountAdsController::autoBlockIp::error', message);
+                            return callback(err);
+                    }
+                });
         }, async error => {
             if (error) {
                 logger.error('jobs::autoBlockIp::error', error, { id });

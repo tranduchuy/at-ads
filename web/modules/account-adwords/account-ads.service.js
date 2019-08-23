@@ -59,12 +59,23 @@ const checkIpIsBlackListed = (blackList, ips, ipInSampleBlockIp, autoBlackListIp
 };
 
 const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, callback) => {
+  logger.info('AccountAdsController::addIpsToBlackListOfOneCampaign::is called', {accountId, adsId, campaignId, ipsArr});
   Async.eachSeries(ipsArr, (ip, cb)=> {
     GoogleAdwordsService.addIpBlackList(adsId, campaignId, ip)
       .then((result) => {
         addIpAndCriterionIdToTheBlacklistOfACampaign(result, accountId, campaignId, adsId, ip, cb);
       })
-      .catch(err => cb(err));
+      .catch(err => {
+        switch (GoogleAdwordsService.getErrorCode(err)) {
+          case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
+            logger.info('AccountAdsController::addIpsToBlackListOfOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+            return cb();
+          default:
+            const message = GoogleAdwordsService.getErrorCode(err);
+            logger.error('AccountAdsController::addIpsToBlackListOfOneCampaign::error', message);
+            return cb(message);
+        }
+      });
   }, callback);
 };
 
@@ -166,41 +177,54 @@ const removeIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr,
     .exec((errQuery, blockingCriterionRecord) => {
         if(errQuery)
         {
-          logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', errQuery);
+          logger.error('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', errQuery);
           return cb(errQuery);
         }
-        if(blockingCriterionRecord)
+
+        if(!blockingCriterionRecord)
         {
-          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, blockingCriterionRecord.customBlackList[0].criterionId)
-            .then((result) => {
-              removeIpAndCriterionIdToTheBlacklistOfACampaign(result, accountId, campaignId, adsId, ip, cb);
-            })
-            .catch(err => cb(err));
+          logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign::ip not in campaign');
+          return cb(null);
         }
-        else { return cb(null); }
+
+        GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, blockingCriterionRecord.customBlackList[0].criterionId)
+          .then((result) => {
+            removeIpAndCriterionIdToTheBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
+          })
+          .catch(err => {
+            switch (GoogleAdwordsService.getErrorCode(err)) {
+              case 'INVALID_ID' :
+                logger.info('AccountAdsController::RemoveIpsToBlackListOfOneCampaign::INVALID_ID', {campaignId});
+                return removeIpAndCriterionIdToTheBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
+              case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
+                logger.info('AccountAdsController::RemoveIpsToBlackListOfOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+                return removeIpAndCriterionIdToTheBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
+              default:
+                const message = GoogleAdwordsService.getErrorCode(err);
+                logger.error('AccountAdsController::RemoveIpsToBlackListOfOneCampaign::error', message);
+                return callback(message);
+            }
+          });
     });
   }, callback);
 };
 
-const removeIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaignId, adsId, ip, cb) => {
-  if(result)
-  {
-    const queryUpdate = {accountId, campaignId};
-    const updateingData = {$pull: {customBlackList : {ip}}};
+const removeIpAndCriterionIdToTheBlacklistOfACampaign = (accountId, campaignId, adsId, ip, cb) => {
+  
+  const queryUpdate = {accountId, campaignId};
+  const updateingData = {$pull: {customBlackList : {ip}}};
 
-    BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
-        if(e)
-        {
-          logger.error('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', e);
-          return cb(e);
-        }
-        
-        const logData = {adsId, campaignId, ip};
-        logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign: ', logData);
-        return cb();
-    });
-  }
-  else { return cb(null); }
+  BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
+      if(e)
+      {
+        logger.error('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', e);
+        return cb(e);
+      }
+      
+      const logData = {adsId, campaignId, ip};
+      logger.info('AccountAdsService::RemoveIpsToBlackListOfOneCampaign: ', logData);
+      cb();
+  });
 };
 
 const checkIpIsNotOnTheBlackList = (blackList, ips) => {
@@ -330,19 +354,36 @@ const removeSampleBlockingIp = (adsId, accountId, campaignIds) => {
         .exec((errQuery, blockingCriterionRecord) => {
           if(errQuery)
           {
-            logger.info('AccountAdsService::removeSampleBlockingIp:error ', errQuery);
+            logger.error('AccountAdsService::removeSampleBlockingIp:error ', errQuery);
             return callback(errQuery);
           }
-          if(!blockingCriterionRecord)
+
+          if(!blockingCriterionRecord || ! blockingCriterionRecord.sampleBlockingIp)
           {
+            logger.info('AccountAdsService::removeSampleBlockingIp:ip not in campaign', {campaignId});
             return callback(null);
           }
 
           GoogleAdwordsService.removeIpBlackList(adsId, campaignId, blockingCriterionRecord.sampleBlockingIp.ip, blockingCriterionRecord.sampleBlockingIp.criterionId)
           .then(result => {
-            const accountInfo = {result, accountId, campaignId, adsId};
+            const accountInfo = {accountId, campaignId, adsId};
             removeIpAndCriterionsIdForSampleBlockingIp(accountInfo, callback);
-          }).catch(error => callback(error));
+          }).catch(error => {
+            switch (GoogleAdwordsService.getErrorCode(error)) {
+              case 'INVALID_ID' :
+                logger.info('AccountAdsController::removeSampleBlockingIp::INVALID_ID', {campaignId});
+                const accountInfo = {accountId, campaignId, adsId};
+                return removeIpAndCriterionsIdForSampleBlockingIp(accountInfo, callback);
+              case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
+                logger.info('AccountAdsController::removeSampleBlockingIp::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+                const account = {accountId, campaignId, adsId};
+                return removeIpAndCriterionsIdForSampleBlockingIp(account, callback);
+              default:
+                const message = GoogleAdwordsService.getErrorCode(error);
+                logger.error('AccountAdsController::removeSampleBlockingIp::error', message);
+                return callback(message);
+            }
+          });
       });
     },(err, result) => {
       if (err) {
@@ -357,16 +398,11 @@ const removeSampleBlockingIp = (adsId, accountId, campaignIds) => {
 
 /**
  * 
- * @param {{result: object, accountId: string, campaignId: string, adsId: string}} accountInfo 
+ * @param {{accountId: string, campaignId: string, adsId: string}} accountInfo 
  * @param {*} callback 
  */
 
 const removeIpAndCriterionsIdForSampleBlockingIp = (accountInfo, callback) => {
-  if(!accountInfo.result)
-  {
-    return callback(null);
-  }
-
   const accountId = accountInfo.accountId;
   const campaignId = accountInfo.campaignId;
   const adsId = accountInfo.adsId;
@@ -381,10 +417,9 @@ const removeIpAndCriterionsIdForSampleBlockingIp = (accountInfo, callback) => {
         logger.error('AccountAdsService::removeIpAndCriterionsIdInSampleBlockingIp:error ', e);
         return callback(e);
       }
-      
       const logData = {adsId, campaignId};
       logger.info('AccountAdsService::removeIpAndCriterionsIdInSampleBlockingIp: ', logData);
-      return callback();
+      callback();
   });
 };
 
@@ -398,7 +433,18 @@ const addSampleBlockingIp = (adsId, accountId, campaignIds, ip) => {
 
           addIpAndCriterionIdForSampleBlockingIp(accountInfo, callback);
         })
-        .catch(err => callback(err));
+        .catch(err => 
+          {
+            switch (GoogleAdwordsService.getErrorCode(err)) {
+              case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
+                logger.info('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+                return callback();
+              default:
+                const message = GoogleAdwordsService.getErrorCode(err);
+                logger.error('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::error', message);
+                return callback(message);
+            }
+          });
     }, (e, result) => {
       if (e) {
         logger.error('AccountAdsController::addSampleBlockingIp::error', e);
@@ -960,39 +1006,51 @@ const removeIpsToAutoBlackListOfOneCampaign = (accountId, adsId, campaignId, ips
           logger.error('AccountAdsService::removeIpsToAutoBlackListOfOneCampaign:error ', errQuery);
           return cb(errQuery);
         }
-        if(blockingCriterionRecord)
+
+        if(!blockingCriterionRecord)
         {
-          GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, blockingCriterionRecord.autoBlackListIp[0].criterionId)
-            .then((result) => {
-              removeIpAndCriterionIdToTheAutoBlacklistOfACampaign(result, accountId, campaignId, adsId, ip, cb);
-            })
-            .catch(err => cb(err));
+          logger.info('AccountAdsService::removeIpsToAutoBlackListOfOneCampaign:ip not in campaign', {campaignId});
+          return cb(null);
         }
-        else { return cb(null); }
+
+        GoogleAdwordsService.removeIpBlackList(adsId, campaignId, ip, blockingCriterionRecord.autoBlackListIp[0].criterionId)
+          .then((result) => {
+            removeIpAndCriterionIdToTheAutoBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
+          })
+          .catch(err => {
+            switch (GoogleAdwordsService.getErrorCode(err)) {
+              case 'INVALID_ID' :
+                logger.info('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::INVALID_ID', {campaignId});
+                return removeIpAndCriterionIdToTheAutoBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
+              case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
+                logger.info('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+                return removeIpAndCriterionIdToTheAutoBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
+              default:
+                const message = GoogleAdwordsService.getErrorCode(err);
+                logger.error('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::error', message);
+                return callback(message);
+            }
+          });
     });
   }, callback);
 };
 
-const removeIpAndCriterionIdToTheAutoBlacklistOfACampaign = (result, accountId, campaignId, adsId, ip, cb) => {
-  logger.info('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign:is called ', {result, accountId, campaignId, adsId, ip});
-  if(result)
-  {
-    const queryUpdate = {accountId, campaignId};
-    const updateingData = {$pull: {autoBlackListIp : {ip}}};
+const removeIpAndCriterionIdToTheAutoBlacklistOfACampaign = (accountId, campaignId, adsId, ip, cb) => {
+  logger.info('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign:is called ', {accountId, campaignId, adsId, ip});
+  const queryUpdate = {accountId, campaignId};
+  const updateingData = {$pull: {autoBlackListIp : {ip}}};
 
-    BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
-        if(e)
-        {
-          logger.error('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign:error ', e);
-          return cb(e);
-        }
-        
-        const logData = {adsId, campaignId, ip};
-        logger.info('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign: ', logData);
-        return cb();
-    });
-  }
-  else { return cb(null); }
+  BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
+      if(e)
+      {
+        logger.error('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign:error ', e);
+        return cb(e);
+      }
+      
+      const logData = {adsId, campaignId, ip};
+      logger.info('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign: ', logData);
+      cb();
+  });
 };
 
 const getIpHistory = (ip, limit, page) => {

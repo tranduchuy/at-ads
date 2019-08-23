@@ -11,7 +11,7 @@ module.exports =  () => {
     schedule.scheduleJob(timeDeleteIpInBlackList, async() => {
         logger.info('scheduleJobs::removeIpInAutoBlackList is called');
         try{
-            const allAccountAds = await AccountAdsModel.find();
+            const allAccountAds = await AccountAdsModel.find({isDeleted: false, isConnected: true});
 
             if(allAccountAds.length === 0)
             {
