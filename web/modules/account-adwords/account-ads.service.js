@@ -480,14 +480,82 @@ const saveSetUpCampaignsByOneDevice = async(accountAds, device, isEnabled) => {
   return await accountAds.save();
 };
 
-const getReportForAccount = (accountKey, from, to, isConnected) => {
-  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from, to, isConnected});
+const getReportForAccount = (accountKey, from, to, page, limit) => {
+  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from, to});
   return new Promise(async (res, rej) => {
     try{
       const matchStage =  {
           $match: {
               accountKey,
-              type: 1,
+              type: LOGGING_TYPES.CLICK,
+              createdAt: {
+                  $gte: new Date(from),
+                  $lt: new Date(to)
+              }
+          }  
+      };
+
+      const sort =  {
+          $sort: {
+              "createdAt": -1
+          }  
+      };
+
+      const projectStage = { 
+          $project: {
+            uuid: 1,
+            createdAt: 1,
+            isSpam: 1,
+            ip: 1,
+            keyword: 1,
+            location: 1
+          }
+      };
+
+      const facetStage = {
+        $facet: 
+        {
+          entries: [
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+          ],
+          meta: [
+            {$group: {_id: null, totalItems: {$sum: 1}}},
+          ],
+        }
+      };
+
+      let query = [];
+
+      query = [
+        matchStage,
+        sort,
+        projectStage,
+        facetStage  
+      ];
+
+      const queryInfo = JSON.stringify(query);
+      logger.info('AccountAdsService::getReportForAccount::query', {queryInfo});
+
+      const result = await UserBehaviorLogsModel.aggregate(query);
+      
+      logger.info('AccountAdsService::getReportForAccount::success ', {accountKey, from, to});
+      return res(result);
+    }catch(e){
+      logger.error('AccountAdsService::getReportForAccount::error ', e, {accountKey, from, to});
+      return rej(e);
+    }
+  });
+};
+
+const getReportStatistic = (accountKey, from, to) => {
+  logger.info('AccountAdsService::getReportStatistic::is called ', {accountKey, from, to});
+  return new Promise(async (res, rej) => {
+    try{
+      const matchStage =  {
+          $match: {
+              accountKey,
+              type: LOGGING_TYPES.CLICK,
               createdAt: {
                   $gte: new Date(from),
                   $lt: new Date(to)
@@ -503,69 +571,44 @@ const getReportForAccount = (accountKey, from, to, isConnected) => {
 
       const groupStage = { 
           $group: { 
-              _id: { 
-                  $dateToString: { format: "%d-%m-%Y", date: "$createdAt"} 
-              }, 
-              spamClick: { 
-                  $sum: {
-                      $cond : [{$eq: ["$isSpam", true]}, 1, 0]
-                  },
-              },
-              realClick: { 
+            _id: { 
+                $dateToString: { format: "%d-%m-%Y", date: "$createdAt"} 
+            }, 
+            spamClick: { 
                 $sum: {
-                    $cond : [{$ne: ["$isSpam", true]}, 1, 0]
+                    $cond : [{$eq: ["$isSpam", true]}, 1, 0]
                 },
             },
-            logs: {
-              $push: {
-                  uuid: "$uuid",
-                  createdAt: "$createdAt",
-                  isSpam: "$isSpam",
-                  ip: "$ip",
-                  keyword: "$keyword",
-                  location: "$location"
-              }
-          }
+            realClick: { 
+              $sum: {
+                  $cond : [{$ne: ["$isSpam", true]}, 1, 0]
+              },
+          },
         }
-      };
-
-      const limitStage = {
-        $limit: Paging.LIMIT
       };
 
       let query = [];
 
-      if(isConnected)
-      {
-        query = [
-          matchStage,
-          sort,
-          groupStage  
-        ];
-      }
-      else
-      {
-        query = [
-          matchStage,
-          sort,
-          limitStage,
-          groupStage  
-        ];
-      }
+      query = [
+        matchStage,
+        sort,
+        groupStage  
+      ];
 
       const queryInfo = JSON.stringify(query);
-      logger.info('AccountAdsService::getReportForAccount::query', {queryInfo});
+      logger.info('AccountAdsService::getReportStatistic::query', {queryInfo});
 
       const result = await UserBehaviorLogsModel.aggregate(query);
       
-      logger.info('AccountAdsService::getReportForAccount::success ', {accountKey, from, to, isConnected});
+      logger.info('AccountAdsService::getReportStatistic::success ', {accountKey, from, to});
       return res(result);
     }catch(e){
-      logger.error('AccountAdsService::getReportForAccount::error ', e, {accountKey, from, to, isConnected});
+      logger.error('AccountAdsService::getReportStatistic::error ', e, {accountKey, from, to});
       return rej(e);
     }
   });
 };
+
 
 const getDailyClicking =  (accountKey, maxClick, page, limit) => {
   logger.info('AccountAdsService::getDailyClicking::is called ', {accountKey, maxClick, page, limit});
@@ -976,6 +1019,7 @@ const getIpHistory = (ip, limit, page) => {
           href: 1,
           ip: 1,
           location: 1,
+          device: 1,
           browser: 1,
           os: 1,
           createdAt: 1,
@@ -1017,6 +1061,7 @@ const getIpHistory = (ip, limit, page) => {
         href: 1,
         ip: 1,
         location: 1,
+        device: 1,
         browser: 1,
         os: 1,
         createdAt: 1,
@@ -1098,5 +1143,6 @@ module.exports = {
   getIpAndCampaigNumberInCustomBlockingIp,
   removeIpsToAutoBlackListOfOneCampaign,
   getIpHistory,
-  checkAndConvertIP
+  checkAndConvertIP,
+  getReportStatistic
 };

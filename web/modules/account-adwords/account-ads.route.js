@@ -26,6 +26,7 @@ router.get('/:accountId/block-sample-ip', CheckTokenMiddleware, CheckAccountIdMi
 router.post('/:accountId/unblock-sample-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.unblockSampleIp);
 router.get('/:accountId/verify-acctached-code-domains', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.verifyAcctachedCodeDomains);
 router.get('/:accountId/report', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getReportForAccount);
+router.get('/:accountId/report-statistic', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getReportStatistic);
 router.get('/:accountId/report/daily-clicking', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getDailyClicking);
 router.get('/:accountId/setting', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.getSettingOfAccountAds);
 router.get('/:accountId/blocked-ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getIpsInAutoBlackListOfAccount);

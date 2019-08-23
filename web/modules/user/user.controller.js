@@ -4,6 +4,7 @@ const Mailer = require('../../utils/mailer');
 const randomString = require('randomstring');
 const Joi = require('@hapi/joi');
 const { RegisterValidationSchema } = require('./validations/register.schema');
+const UserTokenService = require('../userToken/userToken.service');
 
 const UserConstant = require('./user.constant');
 const { Status } = require('../../constants/status');
@@ -239,7 +240,7 @@ const loginByGoogle = async (request, res, next) => {
       }
       ;
       logger.info('UserController::loginByGoogle::success');
-      const result = UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
+      const result = await UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);
     });
   } catch (e) {
@@ -294,15 +295,14 @@ const login = async (request, res, next) => {
         avatar: user.avatar,
         registerBy: user.registerBy,
         usePassword: !!user.passwordHash || !!user.passwordSalt
-      }
-    ;
-    const token = UserService.generateToken({ _id: user._id });
+      };
 
+    const userToken = await UserTokenService.createUserToken(user._id);
     const result = {
       messages: [messages.ResponseMessages.User.Login.LOGIN_SUCCESS],
       data: {
         meta: {
-          token
+          token: userToken.token
         },
         user: userInfoResponse
       }

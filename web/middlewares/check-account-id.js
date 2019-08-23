@@ -20,7 +20,7 @@ module.exports = async(req, res, next) => {
             logger.info('Middlewares::check-account-id::success'); 
             return next();
         }
-        return res.status(HttpStatus.NOT_FOUND).json({messages: ['Không tìm thấy tài khoản adwords']})
+        return res.status(HttpStatus.NOT_FOUND).json({messages: ['Không tìm thấy tài khoản Google Ads']})
     }
     catch(e)
     {

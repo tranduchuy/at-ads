@@ -1,6 +1,5 @@
 const UserModel = require('../modules/user/user.model');
-const config = require('config');
-const jwt = require('jsonwebtoken');
+const UserTokenModel = require('../modules/userToken/userToken.model');
 const GlobalConstant = require('../constants/global.constant');
 const HttpStatus = require('http-status-codes');
 const log4js = require('log4js');
@@ -13,19 +12,25 @@ const returnInvalidToken = function (req, res) {
   });
 };
 
-module.exports = async function (req, res, next) {
+module.exports = async (req, res, next) => {
   try{
     const token = req.headers[GlobalConstant.ApiTokenName] || req.query[GlobalConstant.ApiTokenName];
 
     if (token === null || token === undefined || token === '') {
       returnInvalidToken(req, res, next);
       return;
+    } 
+
+    let userToken = await UserTokenModel.findOne({token})
+
+    if(!userToken)
+    {
+      returnInvalidToken(req, res, next);
+      return;
     }
 
-    let userInfo = jwt.verify(token, config.get('jwt').secret);
-
     const user = await UserModel.findOne({
-      _id: userInfo._id
+      _id: userToken.userId
     });
 
     if (!user) {
