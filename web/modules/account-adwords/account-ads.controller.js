@@ -29,6 +29,7 @@ const { getDailyClickingValidationSchema } = require('./validations/get-daily-cl
 const { getIpsInfoInClassDValidationSchema } = require('./validations/get-ips-info-in-ClassD.schema');
 const { removeIpInAutoBlackListValidationSchema } = require('./validations/remove-Ip-In-Auto-Black-List-Ip.schema');
 const { getIpHistoryValidationSchema } = require('./validations/get-ip-history.schema');
+const { getReportStatisticValidationSchema } = require('./validations/get-report-Statistic.schema');
 
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
@@ -1300,6 +1301,21 @@ const getReportForAccount = async (req, res, next) => {
     }
 
     let {from, to} = req.query;
+    let { page, limit } = req.query;
+    const { isConnected } = req.adsAccount;
+
+    if(!page || !isConnected)
+    {
+      page = Paging.PAGE;
+    }
+
+    if(!limit || !isConnected)
+    {
+      limit = Paging.LIMIT;
+    }
+
+    page = Number(page);
+    limit = Number(limit);
 
     from = moment(from, 'DD-MM-YYYY');
     to = moment(to, 'DD-MM-YYYY');
@@ -1314,21 +1330,23 @@ const getReportForAccount = async (req, res, next) => {
 
     const endDateTime = moment(to).endOf('day');
     const accountKey = req.adsAccount.key;
-    const { isConnected } = req.adsAccount;
 
-    let result = await AccountAdsService.getReportForAccount(accountKey, from, endDateTime, isConnected)
-    const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
-    const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
+    let result = await AccountAdsService.getReportForAccount(accountKey, from, endDateTime, page, limit);
+    let logs = [];
+    let totalItems = 0;
+    
+    if(result[0].entries.length !== 0)
+    {
+      logs = result[0].entries;
+      totalItems = !isConnected?logs.length:result[0].meta[0].totalItems
+    }
 
     logger.info('AccountAdsController::getReportForAccount::success\n', info);
     return res.status(HttpStatus.OK).json({
       messages: ["Lấy report thành công"],
       data: {
-        pieChart: {
-          spamClick: totalSpamClick,
-          realClick: totalRealClick
-        },
-        lineChart: result
+        logs,
+        totalItems
       }
     });
   }catch(e){
@@ -1698,6 +1716,57 @@ const getIpHistory = async (req, res, next) => {
   }
 };
 
+const getReportStatistic = async (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId:  req.adsAccount.adsId
+  }
+  logger.info('AccountAdsController::getReportStatistic::is called\n', info);
+  try{
+
+    const { error } = Joi.validate(req.query, getReportStatistic);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let {from, to} = req.query;
+
+    from = moment(from, 'DD-MM-YYYY');
+    to = moment(to, 'DD-MM-YYYY');
+
+    if(to.isBefore(from))
+    {
+      logger.info('AccountAdsController::getReportStatistic::babRequest\n', info);
+      return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.'] 
+      });
+    }
+
+    const endDateTime = moment(to).endOf('day');
+    const accountKey = req.adsAccount.key;
+
+    let result = await AccountAdsService.getReportStatistic(accountKey, from, endDateTime)
+    const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
+    const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
+
+    logger.info('AccountAdsController::getReportStatistic::success\n', info);
+    return res.status(HttpStatus.OK).json({
+      messages: ["Lấy report thành công"],
+      data: {
+        pieChart: {
+          spamClick: totalSpamClick,
+          realClick: totalRealClick
+        },
+        lineChart: result
+      }
+    });
+  }catch(e){
+    logger.error('AccountAdsController::getReportStatistic::error', e, '\n', info);
+    next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -1726,6 +1795,7 @@ module.exports = {
   removeAccountAds,
   removeIpInAutoBlackListIp,
   getIpHistory,
-  updateWhiteList
+  updateWhiteList,
+  getReportStatistic
 };
 
