@@ -13,6 +13,7 @@ const mongoose = require('mongoose');
 const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
 const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.service');
+const { checkWhiteListIpsExistsInBlackList } = require('../../services/check-ip-in-white-list.service');
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('../../utils/Request');
 
@@ -604,7 +605,31 @@ const updateWhiteList = async (req, res, next) => {
       whiteList.push(convertedIP);
     }
 
-    adsAccount.setting.customWhiteList = whiteList;
+    const ipsArrAfterRemoveIdenticalElement = whiteList.filter(AccountAdsService.onlyUnique);
+    const customBlackList = req.adsAccount.setting.customBlackList;
+    const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
+    const sampleBlockingIp = [];
+
+    if(req.adsAccount.setting.sampleBlockingIp !== '' || req.adsAccount.setting.sampleBlockingIp)
+    {
+      sampleBlockingIp.push(req.adsAccount.setting.sampleBlockingIp);
+    }
+
+    const blackList = customBlackList.concat(autoBlackListIp, sampleBlockingIp);
+    const checkIpConflict = checkWhiteListIpsExistsInBlackList(blackList, ipsArrAfterRemoveIdenticalElement);
+
+    if(!checkIpConflict.status)
+    {
+      logger.info('AccountAdsController::updateWhiteList::ipExistsInBlackList\n', info);
+      return res.status(HttpStatus.CONFLICT).json({
+        messages: ["ip đang nằm trong BlackList"],
+        data: {
+          ips: checkIpConflict.ipsConflict.filter(AccountAdsService.onlyUnique)
+        }
+      });
+    }
+
+    adsAccount.setting.customWhiteList = ipsArrAfterRemoveIdenticalElement;
 
     await adsAccount.save();
 
@@ -1785,7 +1810,7 @@ const getReportStatistic = async (req, res, next) => {
   logger.info('AccountAdsController::getReportStatistic::is called\n', info);
   try{
 
-    const { error } = Joi.validate(req.query, getReportStatistic);
+    const { error } = Joi.validate(req.query, getReportStatisticValidationSchema);
 
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
