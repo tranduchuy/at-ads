@@ -1,3 +1,4 @@
+
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
@@ -15,6 +16,8 @@ const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.s
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('../../utils/Request');
 
+const UserBehaviorLogService = require('../user-behavior-log/user-behavior-log.service');
+
 const {BlockByPrivateBrowserValidationSchema} =  require('./validations/block-by-private-browser.schema');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
@@ -23,6 +26,8 @@ const { AutoBlocking3g4gValidationSchema } = require('./validations/auto-blockin
 const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-blocking-range-ip.schema');
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const { sampleBlockingIpValidationSchema } = require('./validations/sample-blocking-ip.schema');
+const { CheckDate } = require('./validations/check-date.schema');
+
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
@@ -1716,6 +1721,62 @@ const getIpHistory = async (req, res, next) => {
   }
 };
 
+const statisticUser = async (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('UserBehaviorLogController::statisticUser::accountAdsNotConnected\n', info);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('UserBehaviorLogController::statisticUser is called\n', info);
+  try {
+    const { error } = Joi.validate(req.query, CheckDate);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {limit, page, startDate, endDate} = req.query;
+
+    const stages= UserBehaviorLogService.buildStageStatisticUser({
+      accountKey: req.adsAccount.key ? req.adsAccount.key : null,
+      limit: parseInt((limit || 10).toString()),
+      page: parseInt((page || 1).toString()),
+      startDate,
+      endDate
+    });
+
+    console.log('UserBehaviorLogController::statisticUser stages: ', JSON.stringify(stages));
+    const result = await UserBehaviorLogModel.aggregate(stages);
+
+    const response = {
+      status: HttpStatus.OK,
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        meta: {
+          limit: limit || 10,
+          page: page || 1,
+          totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
+        },
+        users: result[0].entries
+      }
+    };
+
+    return res.status(HttpStatus.OK).json(response);
+
+  } catch (e) {
+    logger.error('UserController::logTrackingBehavior::error', e);
+    return next(e);
+  }
+};
+
+
 const getReportStatistic = async (req, res, next) => {
   const info = {
     id: req.adsAccount._id,
@@ -1796,6 +1857,7 @@ module.exports = {
   removeIpInAutoBlackListIp,
   getIpHistory,
   updateWhiteList,
+  statisticUser,
   getReportStatistic
 };
 
