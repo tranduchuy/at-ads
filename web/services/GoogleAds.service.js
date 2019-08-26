@@ -423,8 +423,8 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
   });
 };
 
-const getIpBlockOfCampaign = (adwordId, campaignId) => {
-  const info = {adwordId, campaignId}
+const getIpBlockOfCampaign = (adwordId, campaignIds) => {
+  const info = {adwordId, campaignIds}
   logger.info('GoogleAdsService::getIpBlockOfCampaign', info);
   return new Promise((resolve, reject) => {
     const user = new AdwordsUser({
@@ -439,7 +439,7 @@ const getIpBlockOfCampaign = (adwordId, campaignId) => {
     const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
     const selector = {
       fields: ['IpAddress'],
-      predicates: [{field: 'CampaignId', operator: 'IN', values: campaignId}],
+      predicates: [{field: 'CampaignId', operator: 'IN', values: campaignIds}],
     };
 
     CampaignCriterionService.get({ serviceSelector: selector }, (error, result) => {
