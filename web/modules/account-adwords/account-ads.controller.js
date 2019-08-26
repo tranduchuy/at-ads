@@ -10,6 +10,7 @@ const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
 const mongoose = require('mongoose');
 
+const CriterionIdOfDevice = require('../../constants/criterionIdOfDevice.constant')
 const userActionHistoryService = require('../user-action-history/user-action-history.service');
 const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
@@ -420,6 +421,18 @@ const autoBlockIp = (req, res, next) => {
           messages: ["Thiết lập block ip tự động không thành công"]
         });
       }
+
+      // log action history
+      const actionMessage = autoRemove ? "Tự động" : "Không tự động";
+
+      const actionHistory = {
+        userId: req.user._id,
+        content: `Cập nhật cấu hình chặn tự động ip: ${maxClick > 0 ? "maxclick = " + maxClick + ". " : ""} ${actionMessage} xóa ip hằng ngày.`,
+        param: {autoRemove, maxClick}
+      };
+
+      userActionHistoryService.createUserActionHistory(actionHistory);
+
       logger.info('AccountAdsController::autoBlockingIp::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập block ip tự động thành công"]
@@ -469,6 +482,21 @@ const autoBlockingRangeIp = (req, res, next) => {
           messages: ["Thiết lập chặn ip theo nhóm không thành công"]
         });
       }
+
+      // log action history
+      const classCMessage = classC ? "Kích hoạt" : "Loại bỏ";
+
+
+      const classDMessage = classD ? "Kích hoạt" : "Loại bỏ";
+
+      const actionHistory = {
+        userId: req.user._id,
+        content: `${classCMessage} chặn theo dãy ip: 127.0.0.* (255 IP) / ${classDMessage} chặn theo dãy ip: IP 127.0.*.* (65.026 IP) `,
+        param: {classC, classD}
+      };
+
+      userActionHistoryService.createUserActionHistory(actionHistory);
+      logger.info('AccountAdsController::blockByPrivateBrowser::success\n', info);
       logger.info('AccountAdsController::autoBlockingRangeIp::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập chặn ip theo nhóm thành công"]
@@ -517,6 +545,17 @@ const blockByPrivateBrowser = (req, res, next) => {
           messages: ["Thiết lập chặn ip là trình ẩn danh thất bại"]
         });
       }
+
+      // log action history
+      const actionMessage = blockByPrivate ? "Kích hoạt" : "Loại bỏ";
+
+      const actionHistory = {
+        userId: req.user._id,
+        content: "Cập nhật chặn theo ẩn danh: " + actionMessage,
+        param: {blockByPrivate}
+      };
+
+      userActionHistoryService.createUserActionHistory(actionHistory);
       logger.info('AccountAdsController::blockByPrivateBrowser::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập chặn ip là trình ẩn danh thành công"]
@@ -992,8 +1031,28 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
           messages: ['Thiết lập không thành công.']
         });
       }
-      
+
       await AccountAdsService.saveSetUpCampaignsByOneDevice(req.adsAccount, device, isEnabled);
+
+
+      const actionMessage = isEnabled ? "Chạy" : "Dừng chạy";
+      let deviceMessage = '';
+
+      for (let [key, value] of Object.entries(CriterionIdOfDevice)) {
+        console.log(`${key}: ${value}`);
+        if(device === value){
+          deviceMessage = key;
+        }
+      }
+
+      // log action history
+      const actionHistory = {
+        userId: req.user._id,
+        content: `${actionMessage} chiến dịch theo thiết bị: ${deviceMessage}`,
+        param: {device, isEnabled}
+      };
+
+      userActionHistoryService.createUserActionHistory(actionHistory);
 
       logger.info('AccountAdsController::setUpCampaignsByOneDevice::success\n', info);
       return res.status(HttpStatus.OK).json({
