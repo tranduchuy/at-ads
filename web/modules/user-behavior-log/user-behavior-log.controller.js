@@ -69,6 +69,8 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const hrefQuery = queryString.parse(hrefURL.query);
 
+    const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer);
+
     const ua = parser(userAgent);
     const data = {
       uuid,
@@ -90,6 +92,7 @@ const logTrackingBehavior = async (req, res, next) => {
       utmMedium: hrefQuery.utm_medium || null,
       utmSource: hrefQuery.utm_source || null,
       keyword: hrefQuery.keyword || null,
+      trafficSource: trafficSource,
       ...ua
     };
 
