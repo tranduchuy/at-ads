@@ -610,7 +610,7 @@ const updateWhiteList = async (req, res, next) => {
     const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
     const sampleBlockingIp = [];
 
-    if(req.adsAccount.setting.sampleBlockingIp !== '' || req.adsAccount.setting.sampleBlockingIp)
+    if(req.adsAccount.setting.sampleBlockingIp)
     {
       sampleBlockingIp.push(req.adsAccount.setting.sampleBlockingIp);
     }
