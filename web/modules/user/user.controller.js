@@ -21,6 +21,7 @@ const UserModel = require('./user.model');
 const messages = require("../../constants/messages");
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('request');
+const userActionHistoryService = require('../user-action-history/user-action-history.service');
 
 const forgetPassword = async (request, res, next) => {
   logger.info('UserController::forgetPassword is called');
@@ -102,6 +103,15 @@ const resetPassword = async (request, res, next) => {
         entries: []
       }
     };
+
+    const actionHistory = {
+      userId: user._id,
+      content: "Cập nhật mật khẩu mới",
+      param: null
+    };
+
+    await userActionHistoryService.createUserActionHistory(actionHistory);
+
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::resetPassword error', e);
@@ -365,6 +375,8 @@ const update = async (req, res, next) => {
     let { password, name, phone, oldPassword, confirmedPassword } = req.body;
     const updateData = { email: user.email };
 
+
+    let actionHistory = null;
     if (password && confirmedPassword) {
       let usingPassword = false;
       if (user.registerBy === UserConstant.registerByTypes.google) {
@@ -393,16 +405,47 @@ const update = async (req, res, next) => {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
       }
       updateData.password = password;
+
+      // log action history
+      actionHistory = {
+        userId: user._id,
+        content: "Cập nhật mật khẩu mới",
+        param: null
+      };
+
     }
+
+
+    let updateNameActionHistory = null;
 
     // if (req.file) updateData.avatar = req.file.path;
     // if (birthday) updateData.birthday = birthday;
     // if (gender) updateData.gender = gender;
     if (name) {
+      // log action history
+      if(name !== user.name){
+        updateNameActionHistory = {
+          userId: user._id,
+          content: `Cập nhật tên ${user.name} thành ${name}`,
+          param: {name}
+        };
+      }
+
       updateData.name = name;
       user.name = name;
     }
+
+    let updatePhoneActionHistory = null;
+
     if (phone) {
+      // log action history
+      if(phone !== user.phone){
+        updatePhoneActionHistory = {
+          userId: user._id,
+          content: `Cập nhật số điện thoại ${user.phone} thành ${phone}`,
+          param: {phone}
+        };
+      }
       updateData.phone = phone;
       user.phone = phone;
     }
@@ -421,6 +464,18 @@ const update = async (req, res, next) => {
         }
       }
     };
+
+    if(updatePhoneActionHistory !== null){
+      await userActionHistoryService.createUserActionHistory(updatePhoneActionHistory);
+    }
+
+    if(updateNameActionHistory !== null){
+      await userActionHistoryService.createUserActionHistory(updateNameActionHistory);
+    }
+
+    if(actionHistory !== null){
+      await userActionHistoryService.createUserActionHistory(actionHistory);
+    }
 
     res.status(HttpStatus.OK).json(result);
   } catch (e) {

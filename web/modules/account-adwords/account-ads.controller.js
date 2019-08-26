@@ -10,6 +10,8 @@ const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
 const mongoose = require('mongoose');
 
+const CriterionIdOfDevice = require('../../constants/criterionIdOfDevice.constant')
+const userActionHistoryService = require('../user-action-history/user-action-history.service');
 const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
 const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.service');
@@ -267,7 +269,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
 
         req.adsAccount.setting.customBlackList = newBlackList;
 
-        req.adsAccount.save(err=>{
+        req.adsAccount.save(async err=>{
           if(err)
           {
             logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err, '\n', info);
@@ -276,6 +278,16 @@ const handleManipulationGoogleAds = async(req, res, next) => {
             });
           }
           logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::success\n', info);
+
+
+          // log action history
+          const actionHistory = {
+            userId: req.user._id,
+            content: " Chặn danh sách blacklist ip: " + info.ips.join(', '),
+            param: {ips: info.ips}
+          };
+
+          await userActionHistoryService.createUserActionHistory(actionHistory);
           return res.status(HttpStatus.OK).json({
             messages: ['Thêm ips vào blacklist thành công.']
           });
@@ -402,7 +414,7 @@ const autoBlockIp = (req, res, next) => {
       req.adsAccount.setting.autoRemoveBlocking = autoRemove;
     }
 
-    req.adsAccount.save((err)=>{
+    req.adsAccount.save( async (err)=>{
       if(err)
       {
         logger.error('AccountAdsController::autoBlockingIp::error', e, '\n', info);
@@ -410,6 +422,18 @@ const autoBlockIp = (req, res, next) => {
           messages: ["Thiết lập block ip tự động không thành công"]
         });
       }
+
+      // log action history
+      const actionMessage = autoRemove ? "Tự động" : "Không tự động";
+
+      const actionHistory = {
+        userId: req.user._id,
+        content: `Cập nhật cấu hình chặn tự động ip: ${maxClick > 0 ? "maxclick = " + maxClick + ". " : ""} ${actionMessage} xóa ip hằng ngày.`,
+        param: {autoRemove, maxClick}
+      };
+
+      await userActionHistoryService.createUserActionHistory(actionHistory);
+
       logger.info('AccountAdsController::autoBlockingIp::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập block ip tự động thành công"]
@@ -451,7 +475,7 @@ const autoBlockingRangeIp = (req, res, next) => {
 
     req.adsAccount.setting.autoBlackListIpRanges = rangeIp;
 
-    req.adsAccount.save((err)=>{
+    req.adsAccount.save(async (err)=>{
       if(err)
       {
         logger.error('AccountAdsController::autoBlockingRangeIp::error', e, '\n', info);
@@ -459,6 +483,20 @@ const autoBlockingRangeIp = (req, res, next) => {
           messages: ["Thiết lập chặn ip theo nhóm không thành công"]
         });
       }
+
+      // log action history
+      const classCMessage = classC ? "Kích hoạt" : "Loại bỏ";
+
+
+      const classDMessage = classD ? "Kích hoạt" : "Loại bỏ";
+
+      const actionHistory = {
+        userId: req.user._id,
+        content: `${classCMessage} chặn theo dãy ip: 127.0.0.* (255 IP) / ${classDMessage} chặn theo dãy ip: IP 127.0.*.* (65.026 IP) `,
+        param: {classC, classD}
+      };
+
+      await userActionHistoryService.createUserActionHistory(actionHistory);
       logger.info('AccountAdsController::autoBlockingRangeIp::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập chặn ip theo nhóm thành công"]
@@ -499,7 +537,7 @@ const blockByPrivateBrowser = (req, res, next) => {
 
     req.adsAccount.setting.blockByPrivateBrowser = blockByPrivate;
 
-    req.adsAccount.save((err)=>{
+    req.adsAccount.save(async (err)=>{
       if(err)
       {
         logger.error('AccountAdsController::blockByPrivateBrowser::error', e, '\n', info);
@@ -507,6 +545,17 @@ const blockByPrivateBrowser = (req, res, next) => {
           messages: ["Thiết lập chặn ip là trình ẩn danh thất bại"]
         });
       }
+
+      // log action history
+      const actionMessage = blockByPrivate ? "Kích hoạt" : "Loại bỏ";
+
+      const actionHistory = {
+        userId: req.user._id,
+        content: "Cập nhật chặn theo ẩn danh: " + actionMessage,
+        param: {blockByPrivate}
+      };
+
+      await userActionHistoryService.createUserActionHistory(actionHistory);
       logger.info('AccountAdsController::blockByPrivateBrowser::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập chặn ip là trình ẩn danh thành công"]
@@ -551,7 +600,7 @@ const autoBlocking3g4g = (req, res, next) => {
 
     req.adsAccount.setting.mobileNetworks = mobiNetworks;
 
-    req.adsAccount.save((err)=>{
+    req.adsAccount.save(async (err)=>{
       if(err)
       {
         logger.error('AccountAdsController::autoBlocking3g4g::error', e, '\n', info);
@@ -560,6 +609,26 @@ const autoBlocking3g4g = (req, res, next) => {
         });
       }
       logger.info('AccountAdsController::autoBlocking3g4g::success\n', info);
+
+
+      // log action history
+      const mobiNetworksNames = [];
+
+      for (let [key, value] of Object.entries(mobiNetworks)) {
+        console.log(`${key}: ${value}`);
+        if(value){
+          mobiNetworksNames.push(key);
+        }
+      }
+
+      const actionHistory = {
+        userId: req.user._id,
+        content: "Thay đổi cấu hình chặn 3g,4g: " + mobiNetworksNames.join(', '),
+        param: mobiNetworks
+      };
+
+      await userActionHistoryService.createUserActionHistory(actionHistory);
+
       return res.status(HttpStatus.OK).json({
         messages: ["Thiết lập chặn ip theo 3G/4G thành công"]
       });
@@ -630,6 +699,15 @@ const updateWhiteList = async (req, res, next) => {
     }
 
     adsAccount.setting.customWhiteList = ipsArrAfterRemoveIdenticalElement;
+
+    // log action history
+    const actionHistory = {
+      userId: req.user._id,
+      content: "Cập nhật danh sách whitelist ip: " + whiteList.join(', '),
+      param: whiteList
+    };
+
+    await userActionHistoryService.createUserActionHistory(actionHistory);
 
     await adsAccount.save();
 
@@ -977,8 +1055,28 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
           messages: ['Thiết lập không thành công.']
         });
       }
-      
+
       await AccountAdsService.saveSetUpCampaignsByOneDevice(req.adsAccount, device, isEnabled);
+
+
+      const actionMessage = isEnabled ? "Chạy" : "Dừng chạy";
+      let deviceMessage = '';
+
+      for (let [key, value] of Object.entries(CriterionIdOfDevice)) {
+        console.log(`${key}: ${value}`);
+        if(device === value){
+          deviceMessage = key;
+        }
+      }
+
+      // log action history
+      const actionHistory = {
+        userId: req.user._id,
+        content: `${actionMessage} chiến dịch theo thiết bị: ${deviceMessage}`,
+        param: {device, isEnabled}
+      };
+
+      await userActionHistoryService.createUserActionHistory(actionHistory);
 
       logger.info('AccountAdsController::setUpCampaignsByOneDevice::success\n', info);
       return res.status(HttpStatus.OK).json({
@@ -1072,9 +1170,9 @@ const blockSampleIp = (req, res, next) => {
           });
       }
       AccountAdsService.addSampleBlockingIp(adsId, accountId, campaignIds, ip)
-      .then(result => {
+      .then( result => {
         req.adsAccount.setting.sampleBlockingIp = ip;
-        req.adsAccount.save(error=> {
+        req.adsAccount.save(async error=> {
           if(error)
           {
             logger.error('AccountAdsController::blockSampleIp::error', error, '\n', info);
@@ -1082,6 +1180,15 @@ const blockSampleIp = (req, res, next) => {
               messages: ['Thêm ip không thành công.']
             });
           }
+
+          // log action history
+          const actionHistory = {
+            userId: req.user._id,
+            content: "Chặn thử 1 ip: " + info.ip,
+            param: {ip}
+          };
+
+          await userActionHistoryService.createUserActionHistory(actionHistory);
 
           logger.info('AccountAdsController::blockSampleIp::addSampleBlockingIp::success', info);
           return res.status(HttpStatus.OK).json({
