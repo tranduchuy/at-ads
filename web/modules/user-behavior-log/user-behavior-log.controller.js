@@ -71,8 +71,6 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
 
-    console.log(trafficSource);
-
     const ua = parser(userAgent);
     const data = {
       uuid,
