@@ -403,16 +403,45 @@ const update = async (req, res, next) => {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
       }
       updateData.password = password;
+
+      // log action history
+      const actionHistory = {
+        userId: user._id,
+        content: "Cập nhật mật khẩu mới",
+        param: null
+      };
+
+      userActionHistoryService.createUserActionHistory(actionHistory);
     }
 
     // if (req.file) updateData.avatar = req.file.path;
     // if (birthday) updateData.birthday = birthday;
     // if (gender) updateData.gender = gender;
     if (name) {
+      // log action history
+      if(name !== user.name){
+        const updateNameActionHistory = {
+          userId: user._id,
+          content: `Cập nhật tên ${user.name} thành ${name}`,
+          param: {name}
+        };
+        userActionHistoryService.createUserActionHistory(updateNameActionHistory);
+      }
+
       updateData.name = name;
       user.name = name;
     }
     if (phone) {
+      // log action history
+      if(phone !== user.phone){
+        const updatePhoneActionHistory = {
+          userId: user._id,
+          content: `Cập nhật số điện thoại ${user.phone} thành ${phone}`,
+          param: {phone}
+        };
+
+        userActionHistoryService.createUserActionHistory(updatePhoneActionHistory);
+      }
       updateData.phone = phone;
       user.phone = phone;
     }

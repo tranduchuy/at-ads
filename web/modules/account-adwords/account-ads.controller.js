@@ -277,10 +277,12 @@ const handleManipulationGoogleAds = async(req, res, next) => {
           }
           logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::success\n', info);
 
+
+          // log action history
           const actionHistory = {
             userId: req.user._id,
             content: " Chặn danh sách blacklist ip: " + info.ips.join(', '),
-            param: null
+            param: {ips: info.ips}
           };
 
           userActionHistoryService.createUserActionHistory(actionHistory);
@@ -569,10 +571,21 @@ const autoBlocking3g4g = (req, res, next) => {
       }
       logger.info('AccountAdsController::autoBlocking3g4g::success\n', info);
 
+
+      // log action history
+      const mobiNetworksNames = [];
+
+      for (let [key, value] of Object.entries(mobiNetworks)) {
+        console.log(`${key}: ${value}`);
+        if(value){
+          mobiNetworksNames.push(key);
+        }
+      }
+
       const actionHistory = {
         userId: req.user._id,
-        content: "Thay đổi cấu hình chặn 3g,4g: " + mobiNetworks.join(', '),
-        param: null
+        content: "Thay đổi cấu hình chặn 3g,4g: " + mobiNetworksNames.join(', '),
+        param: mobiNetworks
       };
 
       userActionHistoryService.createUserActionHistory(actionHistory);
@@ -624,10 +637,11 @@ const updateWhiteList = async (req, res, next) => {
 
     adsAccount.setting.customWhiteList = whiteList;
 
+    // log action history
     const actionHistory = {
       userId: req.user._id,
       content: "Cập nhật danh sách whitelist ip: " + whiteList.join(', '),
-      param: null
+      param: whiteList
     };
 
     userActionHistoryService.createUserActionHistory(actionHistory);
@@ -1084,10 +1098,11 @@ const blockSampleIp = (req, res, next) => {
             });
           }
 
+          // log action history
           const actionHistory = {
             userId: req.user._id,
             content: "Chặn thử 1 ip: " + info.ip,
-            param: null
+            param: {ip}
           };
 
           userActionHistoryService.createUserActionHistory(actionHistory);
