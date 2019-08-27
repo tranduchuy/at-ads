@@ -1904,7 +1904,7 @@ const statisticUser = async (req, res, next) => {
     return res.status(HttpStatus.OK).json(response);
 
   } catch (e) {
-    logger.error('UserController::logTrackingBehavior::error', e);
+    logger.error('UserController::statisticUser::error', e);
     return next(e);
   }
 };
@@ -1916,13 +1916,13 @@ const detailUser = async (req, res, next) => {
   };
 
   if(!req.adsAccount.isConnected){
-    logger.info('UserBehaviorLogController::statisticUser::accountAdsNotConnected\n', info);
+    logger.info('UserBehaviorLogController::detailUser::accountAdsNotConnected\n', info);
     return res.status(HttpStatus.BAD_REQUEST).json({
       messages: ['Tài khoản chưa được kết nối']
     });
   }
 
-  logger.info('UserBehaviorLogController::statisticUser is called\n', info);
+  logger.info('UserBehaviorLogController::detailUser is called\n', info);
   try {
     const { error } = Joi.validate(req.query, CheckDate);
 
@@ -1944,7 +1944,7 @@ const detailUser = async (req, res, next) => {
       endDate
     });
 
-    console.log('UserBehaviorLogController::statisticUser stages: ', JSON.stringify(stages));
+    console.log('UserBehaviorLogController::detailUser stages: ', JSON.stringify(stages));
     const result = await UserBehaviorLogModel.aggregate(stages);
 
     const response = {
@@ -1963,7 +1963,7 @@ const detailUser = async (req, res, next) => {
     return res.status(HttpStatus.OK).json(response);
 
   } catch (e) {
-    logger.error('UserController::logTrackingBehavior::error', e);
+    logger.error('UserController::detailUser::error', e);
     return next(e);
   }
 };
