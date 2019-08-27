@@ -75,7 +75,7 @@ buildStageStatisticUser = (queryCondition) => {
   }
 
 
-  stages.push({"$sort": {"createdAt": 1}});
+  stages.push({"$sort": {"createdAt": -1}});
 
   stages.push({
     $group:
@@ -126,6 +126,47 @@ buildStageStatisticUser = (queryCondition) => {
       "session": "$info.session"
     }
   });
+
+  stages.push({"$sort": {"createdAt": -1}});
+
+  stages = stages.concat([
+    {
+      $facet: {
+        entries: [
+          {$skip: (queryCondition.page - 1) * queryCondition.limit},
+          {$limit: queryCondition.limit}
+        ],
+        meta: [
+          {$group: {_id: null, totalItems: {$sum: 1}}},
+        ],
+      }
+    }
+  ]);
+  return stages;
+};
+
+buildStageDetailUser = (queryCondition) => {
+  let stages = [];
+  const matchStage = {};
+
+  matchStage['uuid'] = queryCondition.uuid;
+  if (queryCondition.startDate) {
+    matchStage.createdAt = {
+      $gte: moment(queryCondition.startDate, 'DD-MM-YYYY').startOf('date')._d
+    };
+  }
+
+  if (queryCondition.endDate) {
+    matchStage.createdAt = matchStage.createdAt || {};
+    matchStage.createdAt['$lt'] = moment(queryCondition.endDate, 'DD-MM-YYYY').endOf('date')._d;
+  }
+
+  if (Object.keys(matchStage).length > 0) {
+    stages.push({$match: matchStage});
+  }
+
+
+  stages.push({"$sort": {"createdAt": -1}});
 
   stages = stages.concat([
     {
@@ -201,5 +242,6 @@ mappingTrafficSource = (referrer, href) => {
 module.exports = {
   createUserBehaviorLog,
   buildStageStatisticUser,
-  mappingTrafficSource
+  mappingTrafficSource,
+  buildStageDetailUser
 };

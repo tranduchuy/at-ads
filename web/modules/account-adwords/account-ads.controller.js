@@ -1876,7 +1876,8 @@ const statisticUser = async (req, res, next) => {
 
     const {limit, page, startDate, endDate} = req.query;
 
-    const stages= UserBehaviorLogService.buildStageStatisticUser({
+
+    const stages = UserBehaviorLogService.buildStageStatisticUser({
       accountKey: req.adsAccount.key ? req.adsAccount.key : null,
       limit: parseInt((limit || 10).toString()),
       page: parseInt((page || 1).toString()),
@@ -1897,6 +1898,65 @@ const statisticUser = async (req, res, next) => {
           totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
         },
         users: result[0].entries
+      }
+    };
+
+    return res.status(HttpStatus.OK).json(response);
+
+  } catch (e) {
+    logger.error('UserController::logTrackingBehavior::error', e);
+    return next(e);
+  }
+};
+
+const detailUser = async (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('UserBehaviorLogController::statisticUser::accountAdsNotConnected\n', info);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('UserBehaviorLogController::statisticUser is called\n', info);
+  try {
+    const { error } = Joi.validate(req.query, CheckDate);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {limit, page, startDate, endDate} = req.query;
+
+    const {id} = req.params;
+
+    console.log(id);
+
+    const stages= UserBehaviorLogService.buildStageDetailUser({
+      uuid: id,
+      limit: parseInt((limit || 10).toString()),
+      page: parseInt((page || 1).toString()),
+      startDate,
+      endDate
+    });
+
+    console.log('UserBehaviorLogController::statisticUser stages: ', JSON.stringify(stages));
+    const result = await UserBehaviorLogModel.aggregate(stages);
+
+    const response = {
+      status: HttpStatus.OK,
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        meta: {
+          limit: limit || 10,
+          page: page || 1,
+          totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
+        },
+        logs: result[0].entries
       }
     };
 
@@ -1990,6 +2050,7 @@ module.exports = {
   getIpHistory,
   updateWhiteList,
   statisticUser,
-  getReportStatistic
+  getReportStatistic,
+  detailUser
 };
 

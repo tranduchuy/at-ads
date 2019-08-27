@@ -35,5 +35,6 @@ router.get('/:accountId/report/clicking-class-d-ips', CheckTokenMiddleware, Chec
 router.delete('/:accountId', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.removeAccountAds);
 router.get('/:accountId/ip-history', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getIpHistory);
 router.get('/:accountId/statistic-user', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.statisticUser);
+router.get('/:accountId/detail-user/:id', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.detailUser);
 
 module.exports = router;
