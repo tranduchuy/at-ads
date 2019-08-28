@@ -3,6 +3,21 @@ const LOGGING_TYPES = {
   TRACK: 2,
 };
 
+const TRAFFIC_SOURCE_TYPES = {
+  'google/cpc': 1,
+  'google/organic': 2,
+  'google/display': 3,
+  'facebook/cpc': 4,
+  'facebook/referral': 5,
+  'bing/cpc': 6,
+  'bing/organic': 7,
+  'coccoc/cpc': 8,
+  'coccoc/organic': 9,
+  'direct/none': 10,
+  'other/referral': 11,
+};
+
+
 
 const GOOGLE_URLs = [
   "google.com",
@@ -209,5 +224,6 @@ const GOOGLE_URLs = [
 
 module.exports = {
   LOGGING_TYPES,
-  GOOGLE_URLs
+  GOOGLE_URLs,
+  TRAFFIC_SOURCE_TYPES
 };
