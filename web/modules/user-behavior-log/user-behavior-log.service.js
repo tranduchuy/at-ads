@@ -81,20 +81,11 @@ buildStageStatisticUser = (queryCondition) => {
     $group:
       {
         _id: "$uuid",
-        count: {"$sum": 1}
+        count: {"$sum": 1},
+        logInfo: {$push: "$$ROOT"}
       }
   });
-
-  stages.push(
-    {
-      $lookup:
-        {
-          from: "UserBehaviorLogs",
-          localField: "_id",
-          foreignField: "uuid",
-          as: "info"
-        }
-    });
+  
   stages.push({
     $project: {
       count: "$count",
