@@ -615,7 +615,6 @@ const autoBlocking3g4g = (req, res, next) => {
       const mobiNetworksNames = [];
 
       for (let [key, value] of Object.entries(mobiNetworks)) {
-        console.log(`${key}: ${value}`);
         if(value){
           mobiNetworksNames.push(key);
         }
@@ -1063,7 +1062,6 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
       let deviceMessage = '';
 
       for (let [key, value] of Object.entries(CriterionIdOfDevice)) {
-        console.log(`${key}: ${value}`);
         if(device === value){
           deviceMessage = key;
         }
@@ -1876,7 +1874,8 @@ const statisticUser = async (req, res, next) => {
 
     const {limit, page, startDate, endDate} = req.query;
 
-    const stages= UserBehaviorLogService.buildStageStatisticUser({
+
+    const stages = UserBehaviorLogService.buildStageStatisticUser({
       accountKey: req.adsAccount.key ? req.adsAccount.key : null,
       limit: parseInt((limit || 10).toString()),
       page: parseInt((page || 1).toString()),
@@ -1884,7 +1883,6 @@ const statisticUser = async (req, res, next) => {
       endDate
     });
 
-    console.log('UserBehaviorLogController::statisticUser stages: ', JSON.stringify(stages));
     const result = await UserBehaviorLogModel.aggregate(stages);
 
     const response = {
@@ -1903,7 +1901,63 @@ const statisticUser = async (req, res, next) => {
     return res.status(HttpStatus.OK).json(response);
 
   } catch (e) {
-    logger.error('UserController::logTrackingBehavior::error', e);
+    logger.error('UserController::statisticUser::error', e);
+    return next(e);
+  }
+};
+
+const detailUser = async (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('UserBehaviorLogController::detailUser::accountAdsNotConnected\n', info);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('UserBehaviorLogController::detailUser is called\n', info);
+  try {
+    const { error } = Joi.validate(req.query, CheckDate);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {limit, page, startDate, endDate} = req.query;
+
+    const {id} = req.params;
+
+    const stages= UserBehaviorLogService.buildStageDetailUser({
+      uuid: id,
+      limit: parseInt((limit || 10).toString()),
+      page: parseInt((page || 1).toString()),
+      startDate,
+      endDate
+    });
+
+    const result = await UserBehaviorLogModel.aggregate(stages);
+
+    const response = {
+      status: HttpStatus.OK,
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        meta: {
+          limit: limit || 10,
+          page: page || 1,
+          totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
+        },
+        logs: result[0].entries
+      }
+    };
+
+    return res.status(HttpStatus.OK).json(response);
+
+  } catch (e) {
+    logger.error('UserController::detailUser::error', e);
     return next(e);
   }
 };
@@ -2017,6 +2071,7 @@ module.exports = {
   updateWhiteList,
   statisticUser,
   getReportStatistic,
+  detailUser,
   getListGoogleAdsOfUser
 };
 
