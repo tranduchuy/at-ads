@@ -1,6 +1,8 @@
 const UserBehaviorLogModel = require('./user-behavior-log.model');
 const IPLookupService = require('../../services/ip-lookup.service');
 const moment = require('moment');
+const log4js = require('log4js');
+const logger = log4js.getLogger('Services');
 const FireBaseTokensModel = require('../fire-base-tokens/fire-base-tokens.model');
 const config = require('config');
 const FireBaseConfig = config.get('fireBase');
@@ -149,12 +151,16 @@ buildStageStatisticUser = (queryCondition) => {
 };
 
 const sendMessageForFireBase = async (sendData) => {
+  logger.info('UserBihaviorLogService::sendMessageForFireBase::Is called');
   try{
       const FireBaseTokensTokens = await FireBaseTokensModel.find({topic: TOPIC.home});
 
     if(FireBaseTokensTokens.length > 0)
     {
       const tokens = FireBaseTokensTokens.map(token => token.token);
+
+      logger.info('UserBihaviorLogService::sendMessageForFireBase::tokensList', tokens);
+
       const data = JSON.stringify(sendData);
       const message = {
         data: {
@@ -176,19 +182,18 @@ const sendMessageForFireBase = async (sendData) => {
                 }
               }
             });
-            console.log('List of tokens that caused failures: ' + failedTokens);
-            console.log("lenght" + ' ' + failedTokens.length);
+            logger.info('UserBihaviorLogService::sendMessageForFireBase::List of tokens that caused failures', failedTokens);
           }
 
           if(failedTokens.length > 0)
           {
             await FireBaseTokensModel.deleteMany({token: {$in: failedTokens}});
           }
-          console.log('success');
+          logger.info('UserBihaviorLogService::sendMessageForFireBase::success');
         });
     }
   }catch(e){
-    console.log(e);
+    logger.error('UserBihaviorLogService::sendMessageForFireBase::error', e);
   }
 };
 
@@ -223,9 +228,77 @@ const getInfoSend = (data, account, isPrivateBrowsing) => {
   return sendData;
 };
 
+const getDataForIntroPage = () => {
+  logger.info('UserBihaviorLogService::getDataForIntroPage::Is called');
+  return new Promise(async(res, rej) => {
+    try{
+
+      const sortStage = {
+        $sort: {
+          createdAt: -1
+        }
+      };
+      const projectStage = {
+        $project: { 
+          isSpam: 1,
+          networkCompany: 1,
+          location: 1,
+          createdAt: 1,
+          device: 1,
+          os: 1,
+          browser: 1,
+          splitIp: { $split: ["$ip", "."]}}
+      };
+      const projectStage1 = {
+        $project: {
+          isSpam: 1,
+          networkCompany: 1,
+          location: 1,
+          createdAt: 1,
+          device: 1,
+          os: 1,
+          browser: 1,
+          classC: {$arrayElemAt: ["$splitIp",2]},
+          classD: {$arrayElemAt: ["$splitIp",3]}}
+      }
+      const projectStage2 = {
+        $project: { 
+          isSpam: 1,
+          networkCompany: 1,
+          location: 1,
+          createdAt: 1,
+          device: 1,
+          os: 1,
+          browser: 1,
+          ip: { $concat: [ "*.", "$classC", ".", "$classD"]}}
+      }
+      const limitStage = {
+        $limit : 30  
+      };
+
+      const query = [
+        sortStage,
+        projectStage,
+        projectStage1,
+        projectStage2,
+        limitStage
+      ];
+
+      logger.info('UserBihaviorLogService::getDataForIntroPage::query', JSON.stringify(query));
+      const data = await UserBehaviorLogModel.aggregate(query);
+      return res(data);
+    }catch(e)
+    {
+      logger.error('UserBihaviorLogService::getDataForIntroPage::Error', e);
+      return rej(e)
+    }
+  });
+}
+
 module.exports = {
   createUserBehaviorLog,
   buildStageStatisticUser,
   sendMessageForFireBase,
-  getInfoSend
+  getInfoSend,
+  getDataForIntroPage
 };
