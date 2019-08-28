@@ -615,7 +615,6 @@ const autoBlocking3g4g = (req, res, next) => {
       const mobiNetworksNames = [];
 
       for (let [key, value] of Object.entries(mobiNetworks)) {
-        console.log(`${key}: ${value}`);
         if(value){
           mobiNetworksNames.push(key);
         }
@@ -1063,7 +1062,6 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
       let deviceMessage = '';
 
       for (let [key, value] of Object.entries(CriterionIdOfDevice)) {
-        console.log(`${key}: ${value}`);
         if(device === value){
           deviceMessage = key;
         }
@@ -1885,7 +1883,6 @@ const statisticUser = async (req, res, next) => {
       endDate
     });
 
-    console.log('UserBehaviorLogController::statisticUser stages: ', JSON.stringify(stages));
     const result = await UserBehaviorLogModel.aggregate(stages);
 
     const response = {
@@ -1934,8 +1931,6 @@ const detailUser = async (req, res, next) => {
 
     const {id} = req.params;
 
-    console.log(id);
-
     const stages= UserBehaviorLogService.buildStageDetailUser({
       uuid: id,
       limit: parseInt((limit || 10).toString()),
@@ -1944,7 +1939,6 @@ const detailUser = async (req, res, next) => {
       endDate
     });
 
-    console.log('UserBehaviorLogController::detailUser stages: ', JSON.stringify(stages));
     const result = await UserBehaviorLogModel.aggregate(stages);
 
     const response = {

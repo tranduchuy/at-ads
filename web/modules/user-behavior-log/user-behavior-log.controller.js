@@ -102,7 +102,7 @@ const logTrackingBehavior = async (req, res, next) => {
     {
       RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
     }
-    console.log('detect session');
+
     // detect session
     RabbitMQService.detectSession(log._id);
 

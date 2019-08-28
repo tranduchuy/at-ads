@@ -185,7 +185,6 @@ buildStageDetailUser = (queryCondition) => {
 };
 
 mappingTrafficSource = (referrer, href) => {
-  console.log(referrer);
   if (referrer) {
     const referrerURL = new Url(referrer);
     const hostname = referrerURL.hostname;
@@ -210,8 +209,6 @@ mappingTrafficSource = (referrer, href) => {
         return TRAFFIC_SOURCE_TYPES["other/referral"];
       }
     } else if (hostname.replace('www.', '') === 'bing.com') {
-      console.log("s");
-      console.log(hrefQuery.msclkid);
       if (hrefQuery.msclkid) {
         if ((hrefQuery.utm_source || hrefQuery.utm_medium)) {
           return TRAFFIC_SOURCE_TYPES["bing/cpc"];
