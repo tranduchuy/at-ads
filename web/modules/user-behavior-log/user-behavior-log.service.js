@@ -242,6 +242,7 @@ mappingTrafficSource = (referrer, href) => {
 
 const sendMessageForFireBase = async (sendData) => {
   logger.info('UserBihaviorLogService::sendMessageForFireBase::Is called');
+  logger.info('UserBihaviorLogService::sendMessageForFireBase::Data', sendData);
   try{
       const FireBaseTokensTokens = await FireBaseTokensModel.find({topic: TOPIC.home});
 
