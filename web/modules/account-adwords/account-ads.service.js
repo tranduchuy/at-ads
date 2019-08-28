@@ -1177,6 +1177,144 @@ const checkAndConvertIP = (ip) => {
   return false;
 };
 
+const standardizedIps = (ips) => {
+  let ipsArr = [];
+
+  ips.forEach(ipInfo => {
+    const splitIp = ipInfo.ip.split('.');
+    const splitIpClassD = splitIp[3].split('/');
+
+    if(splitIpClassD)
+    {
+      if(splitIpClassD[1] === '24' || splitIpClassD[1] === '16' || splitIpClassD[1] === '32')
+      {
+        if(splitIpClassD[1] == '32')
+        {
+          ipInfo.ip = splitIp.slice(0,3).join('.') + "." + splitIpClassD[0];
+        }
+        ipsArr.push(ipInfo);
+      }
+    }
+  }); 
+
+  return ipsArr;
+};
+
+const backUpIpOnGoogleAds = (adsId, campaignIds, accountAds) => {
+  logger.info('AccountAdsService::backUpIpOnGoogleAds::is called', {adsId, campaignIds, accountAds});
+  return new Promise(async (res, rej) => {
+    try{
+      const ipsOnGoogle =await GoogleAdwordsService.getIpBlockOfCampaigns(adsId, campaignIds);
+      const filterIpWithTypeIpBlock = ipsOnGoogle.filter(ip => ip.criterion.type === 'IP_BLOCK').map(ip =>{
+        return {
+          campaignId: ip.campaignId,
+          criterionId: ip.criterion.id,
+          ip: ip.criterion.ipAddress}
+        });
+      
+      const standardizedIpsInCampaigns = standardizedIps(filterIpWithTypeIpBlock);
+      const allIpsInCampaigns = standardizedIpsInCampaigns.map(ipInfo => ipInfo.ip).filter(onlyUnique);
+
+      Async.eachSeries(campaignIds, (campaignId, callback) => {
+        const ipsInCampaign = standardizedIpsInCampaigns.filter(ipInfo => ipInfo.campaignId === campaignId).map(ipInfo => ipInfo.ip);
+        const ipsNotInCampaign = _.difference(allIpsInCampaigns, ipsInCampaign);
+        const ipsInCampaignAtDB = standardizedIpsInCampaigns.filter(ipInfo => ipInfo.campaignId === campaignId)
+        .map(ipInfo => {
+          return {ip: ipInfo.ip, criterionId: ipInfo.criterionId}
+        });
+        
+        const queryUpdate = {
+          accountId: accountAds._id,
+          campaignId
+        };
+
+        const dataUpdate = {
+          $set: {
+            customBlackList: ipsInCampaignAtDB
+          }
+        };
+
+        BlockingCriterionsModel
+        .updateOne(queryUpdate, dataUpdate)
+        .exec(err => {
+          if(err)
+          {
+            logger.error('AccountAdsService::backUpIpOnGoogleAds::error', err, '\n' ,{adsId, campaignIds, accountAds});
+            return rej(err);
+          }
+        });
+
+        if(ipsNotInCampaign.length !== 0)
+        {
+           return addIpsToBlackListOfOneCampaign(accountAds._id, adsId, campaignId, ipsNotInCampaign, callback);
+        }
+
+        callback(null);
+      }, err => {
+        if(err)
+        {
+          logger.error('AccountAdsService::backUpIpOnGoogleAds::error', err, '\n' ,{adsId, campaignIds, accountAds});
+          return rej(err);
+        }
+        accountAds.setting.customBlackList =  allIpsInCampaigns;
+        accountAds.save(error => {
+          if(error)
+          {
+            logger.error('AccountAdsService::backUpIpOnGoogleAds::error', error, '\n' ,{adsId, campaignIds, accountAds});
+            return rej(error);
+          }
+          return res('block ip thành công.');
+        });
+      });
+    }catch(e){
+      logger.error('AccountAdsService::backUpIpOnGoogleAds::error', e, '\n', {adsId, campaignIds, accountAds});
+      return rej(e);
+    }
+  });
+};
+/**
+ * Kiểm tra danh sách google ad ids lấy từ google của user có hợp lệ để kết nối hay không
+ * @param {ObjectId} userId
+ * @param {string[]} googleAds
+ * @return {Promise<[Object]>}
+ */
+const verifyGoogleAdIdToConnect = async (userId, googleAds) => {
+  const tempResults = googleAds.map(ga => {
+    return {
+      googleAdId: ga.customerId,
+      name: ga.descriptiveName,
+      availableToConnect: false,
+      reason: ''
+    }
+  });
+
+  const accountAds = await AccountAdsModel.find({
+    adsId: {
+      $in: googleAds.map(ga => ga.customerId)
+    }
+  });
+
+  const accountAdsObj = {};
+  accountAds.forEach(a => {
+    accountAdsObj[a.adsId] = a;
+  });
+
+  return tempResults.map(r => {
+    if (accountAdsObj[r.googleAdId] === undefined) {
+      r.availableToConnect = true;
+      return r;
+    }
+
+    if (accountAdsObj[r.googleAdId].userId === userId) {
+      r.reason = 'Bạn đã kết nối tài khoản này';
+      return r;
+    }
+
+    r.reason = 'Tài khoản google ad đã thuộc về người dùng khác';
+    return r;
+  });
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1203,5 +1341,7 @@ module.exports = {
   removeIpsToAutoBlackListOfOneCampaign,
   getIpHistory,
   checkAndConvertIP,
-  getReportStatistic
+  getReportStatistic,
+  backUpIpOnGoogleAds,
+  verifyGoogleAdIdToConnect
 };

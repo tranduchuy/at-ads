@@ -6,6 +6,17 @@ const queryString = require('query-string');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 const TRAFFIC_SOURCE_TYPES = UserBehaviorLogConstant.TRAFFIC_SOURCE_TYPES;
 const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
+const FireBaseTokensModel = require('../fire-base-tokens/fire-base-tokens.model');
+const config = require('config');
+const FireBaseConfig = config.get('fireBase');
+const { TOPIC } = require('../fire-base-tokens/fire-base-tokens.constant');
+const { ERROR } = require('../fire-base-tokens/fire-base-tokens.constant');
+const admin = require('firebase-admin');
+admin.initializeApp({
+    credential: admin.credential.cert(FireBaseConfig.CREDENTIAL),
+    databaseURL: FireBaseConfig.DATABASEURL
+});
+const messaging = admin.messaging();
 
 const createUserBehaviorLog = async ({
                                        ip, utmMedium, utmSource, utmCampaign, type,
@@ -225,11 +236,88 @@ mappingTrafficSource = (referrer, href) => {
   } else {
     return TRAFFIC_SOURCE_TYPES["direct/none"];
   }
+}
+
+const sendMessageForFireBase = async (sendData) => {
+  try{
+      const FireBaseTokensTokens = await FireBaseTokensModel.find({topic: TOPIC.home});
+
+    if(FireBaseTokensTokens.length > 0)
+    {
+      const tokens = FireBaseTokensTokens.map(token => token.token);
+      const data = JSON.stringify(sendData);
+      const message = {
+        data: {
+          log:data,
+          topic: TOPIC.home
+        },
+        tokens,
+      }
+      let failedTokens = [];
+
+      admin.messaging().sendMulticast(message)
+        .then(async (response) => {
+          if (response.failureCount > 0) {
+            response.responses.forEach((resp, idx) => {
+              if (!resp.success) {
+                if(resp.error.errorInfo.code === ERROR.tokenDeleted)
+                {
+                  failedTokens.push(tokens[idx]);
+                }
+              }
+            });
+            console.log('List of tokens that caused failures: ' + failedTokens);
+            console.log("lenght" + ' ' + failedTokens.length);
+          }
+
+          if(failedTokens.length > 0)
+          {
+            await FireBaseTokensModel.deleteMany({token: {$in: failedTokens}});
+          }
+          console.log('success');
+        });
+    }
+  }catch(e){
+    console.log(e);
+  }
+};
+
+const getInfoSend = (data, account, isPrivateBrowsing) => {
+  if(data.ip)
+  {
+    const splitIp = data.ip.split('.');
+    data.ip = '*.' + splitIp.slice(1,3).join('.');
+  }
+
+  let isSpam = false;
+
+  if(account)
+  {
+    if(account.setting.blockByPrivateBrowser && isPrivateBrowsing)
+    {
+      isSpam = true
+    }
+  }
+
+  const sendData = {
+    createdAt: new Date(),
+    ip: data.ip,
+    isSpam,
+    device: { name: data.device.vendor || null },
+    os: {name: data.os.name || null, version: data.os.version || null},
+    browser: data.browser || null,
+    network: data.networkCompany || null,
+    location: data.location
+  };
+
+  return sendData;
 };
 
 module.exports = {
   createUserBehaviorLog,
   buildStageStatisticUser,
   mappingTrafficSource,
-  buildStageDetailUser
+  buildStageDetailUser,
+  sendMessageForFireBase,
+  getInfoSend
 };

@@ -5,6 +5,7 @@ const CheckTokenMiddleware = require('../../middlewares/check-token');
 const CheckAccountIdMiddleWare = require('../../middlewares/check-account-id');
 const CheckEmptyCampaignMiddleWare = require('../../middlewares/check-empty-campaign');
 
+router.get('/google-ads', CheckTokenMiddleware, AccountAdsController.getListGoogleAdsOfUser);
 router.post('/', CheckTokenMiddleware, AccountAdsController.addAccountAds);
 router.get('/:accountId', CheckTokenMiddleware, AccountAdsController.getDetailAccountAdword);
 router.get('/:accountId/original-campaigns', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getListOriginalCampaigns);

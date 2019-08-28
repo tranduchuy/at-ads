@@ -114,7 +114,13 @@ const updateGoogleId = async (user, googleId) => {
   return await user.save();
 };
 
-const createUserByGoogle = async ({ email, name, googleId, image }) => {
+/**
+ * Create new user login by Google
+ * @param {{email: string, name: string, googleId: string, image: string, accessToken: string, refreshToken: string}} userData
+ * @return {Promise<*>}
+ */
+const createUserByGoogle = async (userData) => {
+  const {email, name, googleId, image, accessToken, refreshToken} = userData;
   const newUser = new UserModel({
     email,
     passwordHash: null,
@@ -125,8 +131,11 @@ const createUserByGoogle = async ({ email, name, googleId, image }) => {
     status: Status.ACTIVE,
     role: UserConstant.role.endUser,
     googleId,
-    avatar: image
+    avatar: image,
+    googleAccessToken: accessToken,
+    googleRefreshToken: refreshToken
   });
+
   return await newUser.save();
 };
 
@@ -180,10 +189,12 @@ const getAccountInfo = async (user ,message) => {
     status: user.status,
     registerBy: user.registerBy,
     googleId: user.googleId,
-    usePassword: !!user.passwordHash || !!user.passwordSalt
+    usePassword: !!user.passwordHash || !!user.passwordSalt,
+    avatar: user.avatar || ''
   };
   const userToken = await UserTokenService.createUserToken(user._id);
-  const result = {
+
+  return {
     messages: [message],
     data: {
       meta: {
@@ -192,8 +203,6 @@ const getAccountInfo = async (user ,message) => {
       user: userInfoResponse
     }
   };
-
-  return result;
 };
 
 module.exports = {
