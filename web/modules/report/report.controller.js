@@ -24,11 +24,6 @@ const getIPClicks = async (req, res, next) => {
 
   logger.info('ReportController::getIPClicks is called\n', info);
   try {
-    /*const { error } = Joi.validate(req.params, getIpClicksValidationSchema);
-
-    if (error) {
-      return requestUtil.joiValidationResponse(error, res);
-    }*/
 
     const {ip} = req.params;
 
@@ -36,7 +31,6 @@ const getIPClicks = async (req, res, next) => {
       ip: ip,
       accountKey: req.adsAccount.key
     });
-    console.log(JSON.stringify(stages));
 
     const result = await UserBehaviorLogModel.aggregate(stages);
 
@@ -84,7 +78,6 @@ const getDetailIPClick = async (req, res, next) => {
       startTime: startTime || null,
       endTime: endTime || null
     });
-    console.log(JSON.stringify(stages));
 
     const result = await UserBehaviorLogModel.aggregate(stages);
 
