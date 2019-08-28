@@ -1270,7 +1270,49 @@ const backUpIpOnGoogleAds = (adsId, campaignIds, accountAds) => {
       logger.error('AccountAdsService::backUpIpOnGoogleAds::error', e, '\n', {adsId, campaignIds, accountAds});
       return rej(e);
     }
-  })
+  });
+};
+/**
+ * Kiểm tra danh sách google ad ids lấy từ google của user có hợp lệ để kết nối hay không
+ * @param {ObjectId} userId
+ * @param {string[]} googleAds
+ * @return {Promise<[Object]>}
+ */
+const verifyGoogleAdIdToConnect = async (userId, googleAds) => {
+  const tempResults = googleAds.map(ga => {
+    return {
+      googleAdId: ga.customerId,
+      name: ga.descriptiveName,
+      availableToConnect: false,
+      reason: ''
+    }
+  });
+
+  const accountAds = await AccountAdsModel.find({
+    adsId: {
+      $in: googleAds.map(ga => ga.customerId)
+    }
+  });
+
+  const accountAdsObj = {};
+  accountAds.forEach(a => {
+    accountAdsObj[a.adsId] = a;
+  });
+
+  return tempResults.map(r => {
+    if (accountAdsObj[r.googleAdId] === undefined) {
+      r.availableToConnect = true;
+      return r;
+    }
+
+    if (accountAdsObj[r.googleAdId].userId === userId) {
+      r.reason = 'Bạn đã kết nối tài khoản này';
+      return r;
+    }
+
+    r.reason = 'Tài khoản google ad đã thuộc về người dùng khác';
+    return r;
+  });
 };
 
 module.exports = {
@@ -1300,5 +1342,6 @@ module.exports = {
   getIpHistory,
   checkAndConvertIP,
   getReportStatistic,
-  backUpIpOnGoogleAds
+  backUpIpOnGoogleAds,
+  verifyGoogleAdIdToConnect
 };

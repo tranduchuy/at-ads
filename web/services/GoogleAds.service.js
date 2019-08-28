@@ -6,6 +6,7 @@ const AdwordsConstants = require('node-adwords').AdwordsConstants;
 const ManagerCustomerMsgs = require('../constants/ManagerCustomerMsgs');
 const AdwordsReport = require('node-adwords').AdwordsReport;
 const DeviceConstants = require('../constants/device.constant');
+const config = require('config');
 
 /**
  * Send request to manage an adword id
@@ -90,7 +91,6 @@ const getListCampaigns = function (adwordId) {
   });
 };
 
-
 /**
  * Get list campaign of an adword id
  * @param {string} adwordId
@@ -111,8 +111,8 @@ const getCampaignsName = function (adwordId, campaignIds) {
 
     let campaignService = user.getService('CampaignService', adwordConfig.version);
     const selector = {
-      fields: ['Id','Name'],
-      predicates: [{field: 'Id', operator: 'IN', values: campaignIds}],
+      fields: ['Id', 'Name'],
+      predicates: [{ field: 'Id', operator: 'IN', values: campaignIds }],
     };
 
     campaignService.get({ serviceSelector: selector }, (error, result) => {
@@ -279,7 +279,7 @@ const getPendingInvitations = () => {
     });
 
     const ManagedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
-    ManagedCustomerService.getPendingInvitations({selector: {}}, (error, result) => {
+    ManagedCustomerService.getPendingInvitations({ selector: {} }, (error, result) => {
       if (error) {
         return reject(error);
       }
@@ -307,7 +307,7 @@ const getErrorCode = (error) => {
 
 const mapManageCustomerErrorMessage = (error) => {
   const reason = getErrorCode(error);
-  logger.info('GoogleAdsService::mapManageCustomerErrorMessage::info', {reason});
+  logger.info('GoogleAdsService::mapManageCustomerErrorMessage::info', { reason });
 
   return ManagerCustomerMsgs[reason];
 };
@@ -320,7 +320,7 @@ const mapManageCustomerErrorMessage = (error) => {
 const getAccountHierachy = function (adwordId) {
   return new Promise((resolve, reject) => {
     logger.info('GoogleAdsService::getAccountHierachy', adwordId);
-    
+
     const user = new AdwordsUser({
       developerToken: adwordConfig.developerToken,
       userAgent: adwordConfig.userAgent,
@@ -329,25 +329,25 @@ const getAccountHierachy = function (adwordId) {
       refresh_token: adwordConfig.refresh_token,
       clientCustomerId: adwordId,
     });
-    
+
     let managedCustomerService = user.getService('managedCustomerService', adwordConfig.version);
     const selector = {
       fields: ['CustomerId', 'Name'],
-      ordering: [{field: 'CustomerId', sortOrder: 'ASCENDING'}],
+      ordering: [{ field: 'CustomerId', sortOrder: 'ASCENDING' }],
       paging: { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
     };
-  
+
     managedCustomerService.get({ serviceSelector: selector }, (error, result) => {
       if (error) {
         logger.error('GoogleAdsService::getAccountHierachy::error', error);
         return reject(error);
       }
-      
+
       logger.info('GoogleAdsService::getAccountHierachy::success', result);
       if (result.entries) {
         return resolve(result.entries);
       }
-      
+
       return resolve([]);
     });
   });
@@ -365,17 +365,17 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
       clientCustomerId: adwordId,
     });
     report.getReport(adwordConfig.version, {
-        reportName: 'Custom Adgroup Performance Report',
-        reportType: 'CAMPAIGN_PERFORMANCE_REPORT',
-        fields,
-        filters: [
-            {field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED']},
-            {field: 'CampaignId', operator: 'IN', values: campaignIds}
-        ],
-        dateRangeType: 'CUSTOM_DATE',
-        startDate,
-        endDate,
-        format: 'CSV'
+      reportName: 'Custom Adgroup Performance Report',
+      reportType: 'CAMPAIGN_PERFORMANCE_REPORT',
+      fields,
+      filters: [
+        { field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED'] },
+        { field: 'CampaignId', operator: 'IN', values: campaignIds }
+      ],
+      dateRangeType: 'CUSTOM_DATE',
+      startDate,
+      endDate,
+      format: 'CSV'
     }, (error, report) => {
       if (error) {
         logger.error('GoogleAdsService::getReportOnDevice::error', error);
@@ -388,7 +388,7 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
 };
 
 const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier) => {
-  const info = {adwordId, campaignId, criterionId, bidModifier}
+  const info = { adwordId, campaignId, criterionId, bidModifier }
   logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
   return new Promise((resolve, reject) => {
     const user = new AdwordsUser({
@@ -439,7 +439,7 @@ const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
     const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
     const selector = {
       fields: ['IpAddress'],
-      predicates: [{field: 'CampaignId', operator: 'IN', values: campaignIds}],
+      predicates: [{ field: 'CampaignId', operator: 'IN', values: campaignIds }],
     };
 
     CampaignCriterionService.get({ serviceSelector: selector }, (error, result) => {
@@ -458,9 +458,35 @@ const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
   });
 };
 
+const getListGoogleAdsAccount = (accessToken, refreshToken) => {
+  return new Promise((resolve, reject) => {
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken
+    };
+
+    const user = new AdwordsUser(authConfig);
+    let customerService = user.getService('CustomerService', 'v201809');
+
+    customerService.getCustomers({}, (error, result) => {
+      if (error) {
+        return reject(error);
+      } else {
+        return resolve(result);
+      }
+    });
+  })
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
+  getListGoogleAdsAccount,
   addIpBlackList,
   removeIpBlackList,
   getPendingInvitations,
