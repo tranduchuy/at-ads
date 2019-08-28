@@ -17,6 +17,14 @@ const userSchema = new Schema({
   passwordReminderToken: String,
   passwordReminderExpire: Date,
   googleId: String,
+  googleRefreshToken: {
+    type: String,
+    default: ''
+  },
+  googleAccessToken: {
+    type: String,
+    default: ''
+  },
   avatar: String,
   phone: {type: String, default:null}
 }, {timestamps: true});

@@ -3,8 +3,6 @@ const router = express.Router({});
 const UserController = require('./user.controller');
 const CheckTokenMiddleware = require('../../middlewares/check-token');
 const multer = require('multer');
-const upload = multer({dest:'uploads/'});
-
 
 router.post('/check', UserController.check);
 router.post('/login', UserController.login);
