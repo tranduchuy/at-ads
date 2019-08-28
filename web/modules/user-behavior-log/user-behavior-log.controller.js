@@ -133,7 +133,25 @@ const getlogTrackingBehavior = async (req, res, next) => {
   }
 };
 
+const getLogForIntroPage = async (req, res, next) => {
+  logger.error('UserController::getLogForIntroPage::is called');
+  try{
+    const data = await UserBehaviorLogService.getDataForIntroPage();
+    return res.status(HttpStatus.OK).json({
+      messages: ['Lấy dữ liệu thành công'],
+      data: {
+        logs: data
+      }
+    });
+  }catch(e)
+  {
+    logger.error('UserController::getLogForIntroPage::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   logTrackingBehavior,
-  getlogTrackingBehavior
+  getlogTrackingBehavior,
+  getLogForIntroPage
 };
