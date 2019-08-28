@@ -12,7 +12,7 @@ const { LoginValidationSchema } = require('./validations/login.schema');
 const { ResendConfirm } = require('./validations/resend-confirm-email.schema');
 const { ResetPasswordValidationSchema } = require('./validations/reset-password.schema');
 const { ForgetPasswordValidationSchema } = require('./validations/forget-password.schema');
-const { LoginGoogleValidationSchema } = require('./validations/login-google.schema');
+const LoginGoogleValidationSchema = require('./validations/login-google.schema');
 const { CheckValidationSchema } = require("./validations/check.schema");
 const { UpdateValidationSchema } = require("./validations/update.schema");
 const HttpStatus = require("http-status-codes");
@@ -21,6 +21,7 @@ const UserModel = require('./user.model');
 const messages = require("../../constants/messages");
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('request');
+const userActionHistoryService = require('../user-action-history/user-action-history.service');
 
 const forgetPassword = async (request, res, next) => {
   logger.info('UserController::forgetPassword is called');
@@ -102,6 +103,15 @@ const resetPassword = async (request, res, next) => {
         entries: []
       }
     };
+
+    const actionHistory = {
+      userId: user._id,
+      content: "Cập nhật mật khẩu mới",
+      param: null
+    };
+
+    await userActionHistoryService.createUserActionHistory(actionHistory);
+
     return res.status(HttpStatus.OK).json(result);
   } catch (e) {
     logger.error('UserController::resetPassword error', e);
@@ -196,16 +206,14 @@ const loginByGoogle = async (request, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    const { accessToken } = request.body;
-    const googleConectionString = "https://www.googleapis.com/plus/v1/people/me?access_token=" + accessToken;
+    const { accessToken, refreshToken } = request.body;
+    const googleConnectionString = "https://www.googleapis.com/plus/v1/people/me?access_token=" + accessToken;
 
-    Request(googleConectionString, async (error, response, body) => {
+    Request(googleConnectionString, async (error, response, body) => {
       if (error) {
         logger.error('UserController::loginByGoogle::error', error);
         return next(error);
       }
-
-      console.log('statusCode:', response && response.statusCode);
 
       if (response.statusCode !== HttpStatus.OK) {
         logger.error('UserController::loginByGoogle::error', response);
@@ -224,8 +232,12 @@ const loginByGoogle = async (request, res, next) => {
       if (!user) {
         user = await UserService.findByEmail(email);
         if (user) {
-          user = await UserService.updateGoogleId(user, googleId);
+          if (!user.googleAccessToken || !user.googleRefreshToken) {
+            user.googleAccessToken = accessToken;
+            user.googleRefreshToken = refreshToken;
+          }
 
+          user.googleId = googleId;
           user.avatar = user.avatar || image;
           await user.save();
         } else {
@@ -233,13 +245,21 @@ const loginByGoogle = async (request, res, next) => {
             name,
             email,
             googleId,
-            image
+            image,
+            accessToken,
+            refreshToken
           };
           user = await UserService.createUserByGoogle(newUser);
         }
       }
-      ;
       logger.info('UserController::loginByGoogle::success');
+
+      if (!user.googleAccessToken || !user.googleRefreshToken) {
+        user.googleAccessToken = accessToken;
+        user.googleRefreshToken = refreshToken;
+        await user.save();
+      }
+
       const result = await UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);
     });
@@ -285,17 +305,17 @@ const login = async (request, res, next) => {
     }
 
     const userInfoResponse = {
-        _id: user._id,
-        role: user.role,
-        email: user.email,
-        name: user.name,
-        type: user.type,
-        status: user.status,
-        phone: user.phone,
-        avatar: user.avatar,
-        registerBy: user.registerBy,
-        usePassword: !!user.passwordHash || !!user.passwordSalt
-      };
+      _id: user._id,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+      type: user.type,
+      status: user.status,
+      phone: user.phone,
+      avatar: user.avatar,
+      registerBy: user.registerBy,
+      usePassword: !!user.passwordHash || !!user.passwordSalt
+    };
 
     const userToken = await UserTokenService.createUserToken(user._id);
     const result = {
@@ -365,6 +385,8 @@ const update = async (req, res, next) => {
     let { password, name, phone, oldPassword, confirmedPassword } = req.body;
     const updateData = { email: user.email };
 
+
+    let actionHistory = null;
     if (password && confirmedPassword) {
       let usingPassword = false;
       if (user.registerBy === UserConstant.registerByTypes.google) {
@@ -393,16 +415,47 @@ const update = async (req, res, next) => {
         return res.status(HttpStatus.BAD_REQUEST).json(result);
       }
       updateData.password = password;
+
+      // log action history
+      actionHistory = {
+        userId: user._id,
+        content: "Cập nhật mật khẩu mới",
+        param: null
+      };
+
     }
+
+
+    let updateNameActionHistory = null;
 
     // if (req.file) updateData.avatar = req.file.path;
     // if (birthday) updateData.birthday = birthday;
     // if (gender) updateData.gender = gender;
     if (name) {
+      // log action history
+      if (name !== user.name) {
+        updateNameActionHistory = {
+          userId: user._id,
+          content: `Cập nhật tên ${user.name} thành ${name}`,
+          param: { name }
+        };
+      }
+
       updateData.name = name;
       user.name = name;
     }
+
+    let updatePhoneActionHistory = null;
+
     if (phone) {
+      // log action history
+      if (phone !== user.phone) {
+        updatePhoneActionHistory = {
+          userId: user._id,
+          content: `Cập nhật số điện thoại ${user.phone} thành ${phone}`,
+          param: { phone }
+        };
+      }
       updateData.phone = phone;
       user.phone = phone;
     }
@@ -421,6 +474,18 @@ const update = async (req, res, next) => {
         }
       }
     };
+
+    if (updatePhoneActionHistory !== null) {
+      await userActionHistoryService.createUserActionHistory(updatePhoneActionHistory);
+    }
+
+    if (updateNameActionHistory !== null) {
+      await userActionHistoryService.createUserActionHistory(updateNameActionHistory);
+    }
+
+    if (actionHistory !== null) {
+      await userActionHistoryService.createUserActionHistory(actionHistory);
+    }
 
     res.status(HttpStatus.OK).json(result);
   } catch (e) {
