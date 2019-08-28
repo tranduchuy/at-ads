@@ -232,11 +232,8 @@ const loginByGoogle = async (request, res, next) => {
       if (!user) {
         user = await UserService.findByEmail(email);
         if (user) {
-          if (!user.googleAccessToken || !user.googleRefreshToken) {
-            user.googleAccessToken = accessToken;
-            user.googleRefreshToken = refreshToken;
-          }
-
+          user.googleAccessToken = accessToken;
+          user.googleRefreshToken = refreshToken;
           user.googleId = googleId;
           user.avatar = user.avatar || image;
           await user.save();
@@ -254,12 +251,9 @@ const loginByGoogle = async (request, res, next) => {
       }
       logger.info('UserController::loginByGoogle::success');
 
-      if (!user.googleAccessToken || !user.googleRefreshToken) {
-        user.googleAccessToken = accessToken;
-        user.googleRefreshToken = refreshToken;
-        await user.save();
-      }
-
+      user.googleAccessToken = accessToken;
+      user.googleRefreshToken = refreshToken;
+      await user.save();
       const result = await UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);
     });

@@ -1960,6 +1960,32 @@ const getReportStatistic = async (req, res, next) => {
   }
 };
 
+const getListGoogleAdsOfUser = async (req, res, next) => {
+  logger.info('AccountAdsController::getListGoogleAdsOfUser is called. Get list google ads of google id', req.user.googleId);
+  try {
+    if (!req.user.googleId) {
+      return next(new Error('Chỉ dành cho tài khoản đăng nhập bằng google'));
+    }
+
+    GoogleAdwordsService.getListGoogleAdsAccount(req.user.googleAccessToken, req.user.googleRefreshToken)
+      .then(async results => {
+
+        return res.json({
+          status: HttpStatus.OK,
+          data: {
+            googleAds: await AccountAdsService.verifyGoogleAdIdToConnect(req.user._id, results)
+          }
+        });
+      })
+      .catch(err => {
+        return next(err);
+      });
+  } catch (e) {
+    logger.error('AccountAdsController::getListGoogleAdsOfUser::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   addAccountAds,
   handleManipulationGoogleAds,
@@ -1990,6 +2016,7 @@ module.exports = {
   getIpHistory,
   updateWhiteList,
   statisticUser,
-  getReportStatistic
+  getReportStatistic,
+  getListGoogleAdsOfUser
 };
 
