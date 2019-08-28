@@ -423,8 +423,8 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
   });
 };
 
-const getIpBlockOfCampaign = (adwordId, campaignIds) => {
-  const info = { adwordId, campaignIds }
+const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
+  const info = {adwordId, campaignIds}
   logger.info('GoogleAdsService::getIpBlockOfCampaign', info);
   return new Promise((resolve, reject) => {
     const user = new AdwordsUser({
@@ -496,5 +496,5 @@ module.exports = {
   getReportOnDevice,
   enabledOrPauseTheCampaignByDevice,
   getCampaignsName,
-  getIpBlockOfCampaign
+  getIpBlockOfCampaigns
 };

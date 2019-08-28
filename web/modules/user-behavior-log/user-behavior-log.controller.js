@@ -12,7 +12,6 @@ const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
 
-
 const AdAccountModel = require('../account-adwords/account-ads.model');
 
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
@@ -28,7 +27,6 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const hrefURL = new Url(href);
     const domains = await WebsiteService.getValidDomains();
-
     const hrefOrigin = hrefURL.origin;
 
     if(domains.indexOf(hrefOrigin) === -1){
@@ -95,13 +93,16 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const log = await UserBehaviorLogService.createUserBehaviorLog(data);
 
-    if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
-    {
-      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
-    }
     console.log('detect session');
     // detect session
     RabbitMQService.detectSession(log._id);
+
+    if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
+    {
+      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+      const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
+      await UserBehaviorLogService.sendMessageForFireBase(sendData);
+    }
 
     return res.json({
       status: HttpStatus.OK,
