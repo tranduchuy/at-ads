@@ -2,7 +2,8 @@ const UserBehaviorLogModel = require('./user-behavior-log.model');
 const IPLookupService = require('../../services/ip-lookup.service');
 const moment = require('moment');
 const FireBaseTokensModel = require('../fire-base-tokens/fire-base-tokens.model');
-const FireBaseConfig = require('../../config/fire-base.config');
+const config = require('config');
+const FireBaseConfig = config.get('fireBase');
 const { TOPIC } = require('../fire-base-tokens/fire-base-tokens.constant');
 const { ERROR } = require('../fire-base-tokens/fire-base-tokens.constant');
 const admin = require('firebase-admin');
@@ -154,7 +155,7 @@ const sendMessageForFireBase = async (sendData) => {
     if(FireBaseTokensTokens.length > 0)
     {
       const tokens = FireBaseTokensTokens.map(token => token.token);
-      const data = JSON.stringify( {sendData});
+      const data = JSON.stringify(sendData);
       const message = {
         data: {
           log:data,
