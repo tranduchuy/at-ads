@@ -26,17 +26,16 @@ const logTrackingBehavior = async (req, res, next) => {
     let { key, uuid} = req.cookies;
 
     const hrefURL = new Url(href);
-    // const domains = await WebsiteService.getValidDomains();
+    const domains = await WebsiteService.getValidDomains();
+    const hrefOrigin = hrefURL.origin;
 
-    // const hrefOrigin = hrefURL.origin;
-
-    // if(domains.indexOf(hrefOrigin) === -1){
-    //   return res.json({
-    //     status: HttpStatus.UNAUTHORIZED,
-    //     data: {},
-    //     messages: [messages.ResponseMessages.UNAUTHORIZED]
-    //   });
-    // }
+    if(domains.indexOf(hrefOrigin) === -1){
+      return res.json({
+        status: HttpStatus.UNAUTHORIZED,
+        data: {},
+        messages: [messages.ResponseMessages.UNAUTHORIZED]
+      });
+    }
 
     const accountOfKey = await AdAccountModel.findOne({
       key: key
@@ -100,7 +99,7 @@ const logTrackingBehavior = async (req, res, next) => {
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {
-      // RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
       const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
       await UserBehaviorLogService.sendMessageForFireBase(sendData);
     }
