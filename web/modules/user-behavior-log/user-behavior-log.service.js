@@ -292,7 +292,7 @@ const getInfoSend = (data, account, isPrivateBrowsing) => {
   if(data.ip)
   {
     const splitIp = data.ip.split('.');
-    data.ip = '*.' + splitIp.slice(1,3).join('.');
+    data.ip = '*.' + splitIp.slice(2,4).join('.');
   }
 
   let isSpam = false;
