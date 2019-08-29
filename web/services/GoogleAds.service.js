@@ -55,18 +55,22 @@ const sendManagerRequest = function (accountAdsId) {
  * @param {string} adwordId
  * @return {Promise<[{id: string, name: string}]>}
  */
-const getListCampaigns = function (adwordId) {
+const getListCampaigns = function (adwordId, refreshToken, accessToken) {
   return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::getListCampaigns', adwordId);
+    logger.info('GoogleAdsService::getListCampaigns', {adwordId, refreshToken, accessToken});
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken,
+      clientCustomerId: adwordId
+    };
+
+    const user = new AdwordsUser(authConfig);
 
     let campaignService = user.getService('CampaignService', adwordConfig.version);
     const selector = {
@@ -96,18 +100,22 @@ const getListCampaigns = function (adwordId) {
  * @param {string} adwordId
  * @return {Promise<[{id: string, name: string}]>}
  */
-const getCampaignsName = function (adwordId, campaignIds) {
+const getCampaignsName = function (adwordId, campaignIds, refreshToken, accessToken) {
   return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::getCampaignsName', adwordId);
+    logger.info('GoogleAdsService::getCampaignsName', {adwordId, campaignIds, refreshToken, accessToken});
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken,
+      clientCustomerId: adwordId
+    };
+
+    const user = new AdwordsUser(authConfig);
 
     let campaignService = user.getService('CampaignService', adwordConfig.version);
     const selector = {
@@ -137,18 +145,22 @@ const getCampaignsName = function (adwordId, campaignIds) {
  * @param {string} ipAddress
  * @return {Promise<any>}
  */
-const addIpBlackList = function (adwordId, campaignId, ipAddress) {
+const addIpBlackList = function (adwordId, campaignId, ipAddress, refreshToken, accessToken) {
   return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignId, ipAddress);
+    logger.info('GoogleAdsService::addIpBlackList', {adwordId, campaignId, ipAddress, refreshToken, accessToken});
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken,
+      clientCustomerId: adwordId
+    };
+
+    const user = new AdwordsUser(authConfig);
 
     const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
     const operation = {
@@ -184,18 +196,23 @@ const addIpBlackList = function (adwordId, campaignId, ipAddress) {
  * @param {string} idCriterion
  * @return {Promise<any>}
  */
-const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion) {
+const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion, refreshToken, accessToken) {
   return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::removeIpBlackList', adwordId, campaignId, ipAddress);
+    logger.info('GoogleAdsService::removeIpBlackList', { adwordId, campaignId, ipAddress, refreshToken, accessToken });
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken,
+      clientCustomerId: adwordId
+    };
+
+    const user = new AdwordsUser(authConfig);
+
     const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
     const operation = {
       operator: 'REMOVE',
@@ -268,15 +285,20 @@ const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion
     }]
  * @return {Promise<[InvitationPending]>}
  */
-const getPendingInvitations = () => {
+const getPendingInvitations = (refreshToken, accessToken) => {
+  logger.info('GoogleAdsService::getPendingInvitations', { refreshToken, accessToken });
   return new Promise((resolve, reject) => {
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken
+    };
+
+    const user = new AdwordsUser(authConfig);
 
     const ManagedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
     ManagedCustomerService.getPendingInvitations({ selector: {} }, (error, result) => {
@@ -317,18 +339,21 @@ const mapManageCustomerErrorMessage = (error) => {
  * @param {string} adwordId
  * @return {Promise<[{id: string, name: string}]>}
  */
-const getAccountHierachy = function (adwordId) {
+const getAccountHierachy = function (adwordId, refreshToken, accessToken) {
   return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::getAccountHierachy', adwordId);
+    logger.info('GoogleAdsService::getAccountHierachy', { adwordId, refreshToken, accessToken });
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken
+    };
+
+    const user = new AdwordsUser(authConfig);
 
     let managedCustomerService = user.getService('managedCustomerService', adwordConfig.version);
     const selector = {
@@ -353,17 +378,22 @@ const getAccountHierachy = function (adwordId) {
   });
 };
 
-const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) => {
-  logger.info('GoogleAdsService::getReportOfOneCampaign', adwordId);
+const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate, refreshToken, accessToken) => {
+  logger.info('GoogleAdsService::getReportOfOneCampaign', { adwordId, campaignIds, fields, startDate, endDate, refreshToken, accessToken });
   return new Promise((resolve, reject) => {
-    const report = new AdwordsReport({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken,
+      clientCustomerId: adwordId
+    };
+
+    const report = new AdwordsReport(authConfig);
+
     report.getReport(adwordConfig.version, {
       reportName: 'Custom Adgroup Performance Report',
       reportType: 'CAMPAIGN_PERFORMANCE_REPORT',
@@ -387,18 +417,22 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
   });
 };
 
-const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier) => {
-  const info = { adwordId, campaignId, criterionId, bidModifier }
+const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier, refreshToken, accessToken) => {
+  const info = { adwordId, campaignId, criterionId, bidModifier, refreshToken, accessToken }
   logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
   return new Promise((resolve, reject) => {
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken,
+      clientCustomerId: adwordId
+    };
+
+    const user = new AdwordsUser(authConfig);
     const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
     const operation = {
       operator: 'SET',
@@ -423,18 +457,22 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
   });
 };
 
-const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
-  const info = {adwordId, campaignIds}
+const getIpBlockOfCampaigns = (adwordId, campaignIds, refreshToken, accessToken) => {
+  const info = {adwordId, campaignIds, refreshToken, accessToken}
   logger.info('GoogleAdsService::getIpBlockOfCampaign', info);
   return new Promise((resolve, reject) => {
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+    const googleAdAccount2 = config.get('google-ads2');
+    const authConfig = {
+      developerToken: googleAdAccount2.developerToken,
+      userAgent: googleAdAccount2.userAgent,
+      client_id: googleAdAccount2.clientId,
+      client_secret: googleAdAccount2.clientSecret,
+      refresh_token: refreshToken,
+      access_token: accessToken,
+      clientCustomerId: adwordId
+    };
+
+    const user = new AdwordsUser(authConfig);
 
     const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
     const selector = {
