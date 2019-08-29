@@ -107,9 +107,6 @@ const logTrackingBehavior = async (req, res, next) => {
       await UserBehaviorLogService.sendMessageForFireBase(sendData);
     }
 
-    // detect session
-    RabbitMQService.detectSession(log._id);
-
     return res.json({
       status: HttpStatus.OK,
       data: {},
