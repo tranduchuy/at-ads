@@ -2040,6 +2040,10 @@ const getListGoogleAdsOfUser = async (req, res, next) => {
         });
       })
       .catch(err => {
+        if(GoogleAdwordsService.getErrorCode(err) === 'CUSTOMER_NOT_FOUND')
+        {
+          return next(new Error('Bạn không có tài khoản hợp lệ.'));
+        }
         return next(err);
       });
   } catch (e) {
