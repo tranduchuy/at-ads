@@ -21,7 +21,7 @@ const Request = require('../../utils/Request');
 
 const UserBehaviorLogService = require('../user-behavior-log/user-behavior-log.service');
 
-const {BlockByPrivateBrowserValidationSchema} =  require('./validations/block-by-private-browser.schema');
+const { BlockByPrivateBrowserValidationSchema } =  require('./validations/block-by-private-browser.schema');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
@@ -30,7 +30,7 @@ const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-bloc
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const { sampleBlockingIpValidationSchema } = require('./validations/sample-blocking-ip.schema');
 const { CheckDate } = require('./validations/check-date.schema');
-
+const { getListGoogleAdsOfUserValidationSchema } = require('./validations/get-list-google-ads-of-user.schema');
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
@@ -2017,11 +2017,19 @@ const getReportStatistic = async (req, res, next) => {
 const getListGoogleAdsOfUser = async (req, res, next) => {
   logger.info('AccountAdsController::getListGoogleAdsOfUser is called. Get list google ads of google id', req.user.googleId);
   try {
+    const { error } = Joi.validate(req.query, getListGoogleAdsOfUserValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { accessToken, refreshToken } = req.query;
+
     if (!req.user.googleId) {
       return next(new Error('Chỉ dành cho tài khoản đăng nhập bằng google'));
     }
 
-    GoogleAdwordsService.getListGoogleAdsAccount(req.user.googleAccessToken, req.user.googleRefreshToken)
+    GoogleAdwordsService.getListGoogleAdsAccount(accessToken, refreshToken)
       .then(async results => {
 
         return res.json({
