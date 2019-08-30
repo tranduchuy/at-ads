@@ -3,9 +3,8 @@ const Schema = mongoose.Schema;
 const userActionHistorySchema = new Schema({
   userId: String,
   content: String,
-  param: Object,
-  createdAt: {type: Date, default: Date.now()}
-});
+  param: Object
+}, { timestamps: true });
 
 const UserActionHistorySchema = mongoose.model('UserActionHistory', userActionHistorySchema, 'UserActionHistories');
 module.exports = UserActionHistorySchema;
