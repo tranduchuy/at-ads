@@ -21,7 +21,7 @@ const Request = require('../../utils/Request');
 
 const UserBehaviorLogService = require('../user-behavior-log/user-behavior-log.service');
 
-const {BlockByPrivateBrowserValidationSchema} =  require('./validations/block-by-private-browser.schema');
+const { BlockByPrivateBrowserValidationSchema } =  require('./validations/block-by-private-browser.schema');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
 const { blockIpsValidationSchema} = require('./validations/blockIps-account-ads.schema');
 const { AutoBlockingIpValidationSchema } = require('./validations/auto-blocking-ip.schema');
@@ -30,7 +30,7 @@ const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-bloc
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const { sampleBlockingIpValidationSchema } = require('./validations/sample-blocking-ip.schema');
 const { CheckDate } = require('./validations/check-date.schema');
-
+const { getListGoogleAdsOfUserValidationSchema } = require('./validations/get-list-google-ads-of-user.schema');
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
@@ -615,7 +615,6 @@ const autoBlocking3g4g = (req, res, next) => {
       const mobiNetworksNames = [];
 
       for (let [key, value] of Object.entries(mobiNetworks)) {
-        console.log(`${key}: ${value}`);
         if(value){
           mobiNetworksNames.push(key);
         }
@@ -1063,7 +1062,6 @@ const setUpCampaignsByOneDevice = async(req, res, next) => {
       let deviceMessage = '';
 
       for (let [key, value] of Object.entries(CriterionIdOfDevice)) {
-        console.log(`${key}: ${value}`);
         if(device === value){
           deviceMessage = key;
         }
@@ -1876,7 +1874,8 @@ const statisticUser = async (req, res, next) => {
 
     const {limit, page, startDate, endDate} = req.query;
 
-    const stages= UserBehaviorLogService.buildStageStatisticUser({
+
+    const stages = UserBehaviorLogService.buildStageStatisticUser({
       accountKey: req.adsAccount.key ? req.adsAccount.key : null,
       limit: parseInt((limit || 10).toString()),
       page: parseInt((page || 1).toString()),
@@ -1884,7 +1883,6 @@ const statisticUser = async (req, res, next) => {
       endDate
     });
 
-    console.log('UserBehaviorLogController::statisticUser stages: ', JSON.stringify(stages));
     const result = await UserBehaviorLogModel.aggregate(stages);
 
     const response = {
@@ -1903,7 +1901,63 @@ const statisticUser = async (req, res, next) => {
     return res.status(HttpStatus.OK).json(response);
 
   } catch (e) {
-    logger.error('UserController::logTrackingBehavior::error', e);
+    logger.error('UserController::statisticUser::error', e);
+    return next(e);
+  }
+};
+
+const detailUser = async (req, res, next) => {
+  const info = {
+    id: req.adsAccount._id,
+    adsId: req.adsAccount.adsId
+  };
+
+  if(!req.adsAccount.isConnected){
+    logger.info('UserBehaviorLogController::detailUser::accountAdsNotConnected\n', info);
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ['Tài khoản chưa được kết nối']
+    });
+  }
+
+  logger.info('UserBehaviorLogController::detailUser is called\n', info);
+  try {
+    const { error } = Joi.validate(req.query, CheckDate);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const {limit, page, startDate, endDate} = req.query;
+
+    const {id} = req.params;
+
+    const stages= UserBehaviorLogService.buildStageDetailUser({
+      uuid: id,
+      limit: parseInt((limit || 10).toString()),
+      page: parseInt((page || 1).toString()),
+      startDate,
+      endDate
+    });
+
+    const result = await UserBehaviorLogModel.aggregate(stages);
+
+    const response = {
+      status: HttpStatus.OK,
+      messages: [messages.ResponseMessages.SUCCESS],
+      data: {
+        meta: {
+          limit: limit || 10,
+          page: page || 1,
+          totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
+        },
+        logs: result[0].entries
+      }
+    };
+
+    return res.status(HttpStatus.OK).json(response);
+
+  } catch (e) {
+    logger.error('UserController::detailUser::error', e);
     return next(e);
   }
 };
@@ -1963,11 +2017,19 @@ const getReportStatistic = async (req, res, next) => {
 const getListGoogleAdsOfUser = async (req, res, next) => {
   logger.info('AccountAdsController::getListGoogleAdsOfUser is called. Get list google ads of google id', req.user.googleId);
   try {
+    const { error } = Joi.validate(req.query, getListGoogleAdsOfUserValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { accessToken, refreshToken } = req.query;
+
     if (!req.user.googleId) {
       return next(new Error('Chỉ dành cho tài khoản đăng nhập bằng google'));
     }
 
-    GoogleAdwordsService.getListGoogleAdsAccount(req.user.googleAccessToken, req.user.googleRefreshToken)
+    GoogleAdwordsService.getListGoogleAdsAccount(accessToken, refreshToken)
       .then(async results => {
 
         return res.json({
@@ -2017,6 +2079,7 @@ module.exports = {
   updateWhiteList,
   statisticUser,
   getReportStatistic,
+  detailUser,
   getListGoogleAdsOfUser
 };
 

@@ -12,7 +12,6 @@ const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
 
-
 const AdAccountModel = require('../account-adwords/account-ads.model');
 
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
@@ -28,7 +27,6 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const hrefURL = new Url(href);
     const domains = await WebsiteService.getValidDomains();
-
     const hrefOrigin = hrefURL.origin;
 
     if(domains.indexOf(hrefOrigin) === -1){
@@ -69,6 +67,8 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const hrefQuery = queryString.parse(hrefURL.query);
 
+    const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
+
     const ua = parser(userAgent);
     const data = {
       uuid,
@@ -90,18 +90,22 @@ const logTrackingBehavior = async (req, res, next) => {
       utmMedium: hrefQuery.utm_medium || null,
       utmSource: hrefQuery.utm_source || null,
       keyword: hrefQuery.keyword || null,
+      trafficSource,
       ...ua
     };
 
     const log = await UserBehaviorLogService.createUserBehaviorLog(data);
 
-    if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
-    {
-      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
-    }
     console.log('detect session');
     // detect session
     RabbitMQService.detectSession(log._id);
+
+    if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
+    {
+      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+      const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
+      await UserBehaviorLogService.sendMessageForFireBase(sendData);
+    }
 
     return res.json({
       status: HttpStatus.OK,
@@ -126,7 +130,25 @@ const getlogTrackingBehavior = async (req, res, next) => {
   }
 };
 
+const getLogForIntroPage = async (req, res, next) => {
+  logger.error('UserController::getLogForIntroPage::is called');
+  try{
+    const data = await UserBehaviorLogService.getDataForIntroPage();
+    return res.status(HttpStatus.OK).json({
+      messages: ['Lấy dữ liệu thành công'],
+      data: {
+        logs: data
+      }
+    });
+  }catch(e)
+  {
+    logger.error('UserController::getLogForIntroPage::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   logTrackingBehavior,
-  getlogTrackingBehavior
+  getlogTrackingBehavior,
+  getLogForIntroPage
 };
