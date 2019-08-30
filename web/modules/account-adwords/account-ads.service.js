@@ -1196,7 +1196,8 @@ const verifyGoogleAdIdToConnect = async (userId, googleAds) => {
   const accountAds = await AccountAdsModel.find({
     adsId: {
       $in: googleAds.map(ga => ga.customerId)
-    }
+    },
+    isDeleted: false
   });
 
   const accountAdsObj = {};
@@ -1210,7 +1211,7 @@ const verifyGoogleAdIdToConnect = async (userId, googleAds) => {
       return r;
     }
 
-    if (accountAdsObj[r.googleAdId].userId === userId) {
+    if (accountAdsObj[r.googleAdId].user.toString() === userId.toString()) {
       r.reason = 'Bạn đã kết nối tài khoản này';
       return r;
     }
