@@ -8,7 +8,7 @@ const getDetailLogById = async (logId) => {
 };
 
 const getSessionByLogId = async ({uuid, ip, accountKey}) => {
-    return await SessionsModel.findOne({uuid, ip, accountKey});
+    return await SessionsModel.find({uuid, ip, accountKey}).sort({createdAt: -1});
 };
 
 const createSession = async ({
@@ -27,7 +27,6 @@ const createSession = async ({
     }
 };
 
-
 const checkSessionExpiration = (session, log) => {
     const searchDate = moment(log.createdAt).subtract(30, 'minutes');
 
@@ -39,8 +38,6 @@ const checkSessionExpiration = (session, log) => {
 
     return searchDate.isBefore(session.lastHitAt) && inDate.isAfter(session.lastHitAt);
 };
-
-
 
 const detectSession = async (channel, data, msg) => {
     try {
@@ -58,19 +55,18 @@ const detectSession = async (channel, data, msg) => {
             accountKey: log.accountKey
         });
 
-
         // check session existed
-        if(session){
-          if(checkSessionExpiration(session, log)){
-            session.lastHitAt = log.createdAt;
-            log.session = session._id;
+        if(session.length > 0){
+          if(checkSessionExpiration(session[0], log)){
+            session[0].lastHitAt = log.createdAt;
+            log.session = session[0]._id;
             await log.save();
-            await session.save();
+            await session[0].save();
           } else {
             // end old session
-            if(session.lastHitAt){
-              session.endedAt = session.lastHitAt;
-              await session.save();
+            if(session[0].lastHitAt){
+              session[0].endedAt = session[0].lastHitAt;
+              await session[0].save();
             }
             // create new session
             session = await createSession({
@@ -104,8 +100,6 @@ const detectSession = async (channel, data, msg) => {
         channel.ack(msg);
         console.log('detectSession::detectSession', e);
     }
-
-
 };
 
 module.exports = async (channel, msg) => {

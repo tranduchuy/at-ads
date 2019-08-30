@@ -5,9 +5,8 @@ const sessionsSchema = new Schema({
     uuid: String,
     accountKey: String,
     lastHitAt: {type: Date},
-    createdAt: {type: Date, default: Date()},
     endedAt: {type: Date}
-});
+},  { timestamps: true });
 
 const SessionsModel = mongoose.model('Sessions', sessionsSchema, 'Sessions');
 module.exports = SessionsModel;
