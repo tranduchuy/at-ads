@@ -102,7 +102,7 @@ buildStageStatisticUser = (queryCondition) => {
   stages.push({
     $project: {
       count: "$count",
-      info: {$arrayElemAt: ["$info", 0]}
+      info: {$arrayElemAt: ["$logInfo", 0]}
     }
   });
 
