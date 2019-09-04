@@ -45,8 +45,8 @@ const getActionsHistory =  (userId, page, limit) => {
       const facetStage = {
           $facet: {
                entries: [
-                  { $skip: (1 - 1) * 20 },
-                  { $limit: 20 }
+                  { $skip: (page - 1) * limit },
+                  { $limit: limit }
               ],
               meta: [
                {$group: {_id: null, totalItems: {$sum: 1}}},
