@@ -1287,7 +1287,7 @@ const verifyGoogleAdIdToConnect = async (userId, googleAds) => {
   const tempResults = googleAds.map(ga => {
     return {
       googleAdId: ga.customerId,
-      name: ga.descriptiveName,
+      name: ga.name,
       availableToConnect: false,
       reason: ''
     }
@@ -1321,6 +1321,17 @@ const verifyGoogleAdIdToConnect = async (userId, googleAds) => {
   });
 };
 
+const getUnique = (arr, comp) => {
+  const unique = arr
+      .map(e => e[comp])
+       // store the keys of the unique objects
+      .map((e, i, final) => final.indexOf(e) === i && i)
+      // eliminate the dead keys & store unique objects
+      .filter(e => arr[e]).map(e => arr[e]);
+
+  return unique;
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1349,5 +1360,6 @@ module.exports = {
   checkAndConvertIP,
   getReportStatistic,
   backUpIpOnGoogleAds,
-  verifyGoogleAdIdToConnect
+  verifyGoogleAdIdToConnect,
+  getUnique
 };

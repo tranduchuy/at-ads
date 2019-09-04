@@ -321,12 +321,13 @@ const getAccountHierachy = function (adwordId) {
   return new Promise((resolve, reject) => {
     logger.info('GoogleAdsService::getAccountHierachy', adwordId);
 
+    const adwordConfig3 = config.get('google-ads3');
     const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
+      developerToken: adwordConfig3.developerToken,
+      userAgent: adwordConfig3.userAgent,
+      client_id: adwordConfig3.client_id,
+      client_secret: adwordConfig3.client_secret,
+      refresh_token: adwordConfig3.refresh_token,
       clientCustomerId: adwordId
     });
 

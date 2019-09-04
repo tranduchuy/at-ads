@@ -2014,7 +2014,7 @@ const getReportStatistic = async (req, res, next) => {
   }
 };
 
-const getListGoogleAdsOfUser = async (req, res, next) => {
+const getListGoogleAdsOfUser = (req, res, next) => {
   logger.info('AccountAdsController::getListGoogleAdsOfUser is called. Get list google ads of google id', req.user.googleId);
   try {
     const { error } = Joi.validate(req.query, getListGoogleAdsOfUserValidationSchema);
@@ -2030,13 +2030,41 @@ const getListGoogleAdsOfUser = async (req, res, next) => {
     }
 
     GoogleAdwordsService.getListGoogleAdsAccount(accessToken, refreshToken)
-      .then(async results => {
+      .then(results => {
+        
+        let adsInfo = results.map(ads => { return {customerId: ads.customerId, name: ads.descriptiveName}});
+        const adsIds = results.map(ads => ads.customerId);
+        console.log(adsIds);
 
-        return res.json({
-          status: HttpStatus.OK,
-          data: {
-            googleAds: await AccountAdsService.verifyGoogleAdIdToConnect(req.user._id, results)
+        Async.eachSeries(adsIds, (adsId, callback) => {
+          GoogleAdwordsService.getAccountHierachy(adsId)
+          .then(result => {
+            adsInfo = result.length > 0 ? adsInfo.concat(result) : adsInfo;
+            return callback()
+          }).catch(e => {
+            if(GoogleAdwordsService.getErrorCode(e) === 'USER_PERMISSION_DENIED')
+            {
+              logger.error('AccountAdsController::getListGoogleAdsOfUser::USER_PERMISSION_DENIED');
+              return callback(null);
+            }
+            return callback(e);
+          })
+        }, async err => {
+          if(err)
+          {
+            logger.error('AccountAdsController::getListGoogleAdsOfUser::error', err);
+            return next(err);
           }
+
+          adsInfo = AccountAdsService.getUnique(adsInfo, 'customerId');
+          const googleAds = adsInfo.length > 0 ? await AccountAdsService.verifyGoogleAdIdToConnect(req.user._id, adsInfo) : [];
+
+          return res.json({
+            status: HttpStatus.OK,
+            data: {
+              googleAds
+            }
+          });
         });
       })
       .catch(err => {
