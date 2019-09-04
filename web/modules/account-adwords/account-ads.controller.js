@@ -1269,7 +1269,7 @@ const unblockSampleIp = (req, res, next) => {
         // log action history
         const actionHistory = {
           userId: req.user._id,
-          content: " Xóa ip ra khỏi danh sách chặn thử: " + info.ip.join(', '),
+          content: " Xóa ip ra khỏi danh sách chặn thử: " + info.ip,
           param: {ip: info.ip}
         };
 
