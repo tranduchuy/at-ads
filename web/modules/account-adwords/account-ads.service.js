@@ -555,7 +555,8 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
             isSpam: 1,
             ip: 1,
             keyword: 1,
-            location: 1
+            location: 1,
+            isPrivateBrowsing: 1
           }
       };
 
@@ -689,7 +690,8 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
                 os: '$os',
                 networkCompany: '$networkCompany',
                 browser: '$browser',
-                createdAt: '$createdAt'
+                createdAt: '$createdAt',
+                isPrivateBrowsing: '$isPrivateBrowsing'
                 }
             }
           }
@@ -811,7 +813,8 @@ const getAllIpInAutoBlackListIp = (accountId) =>
             _id: 1,
             campaigns: 1,
             numberOfCampaigns: {$size: "$campaigns"},
-            network: "$log.networkCompany.name"
+            network: "$log.networkCompany.name",
+            isPrivateBrowsing: '$log.isPrivateBrowsing'
           }
         };
         
@@ -863,6 +866,7 @@ const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
           networkCompany: 1,
           location: 1,
           createdAt: 1,
+          isPrivateBrowsing: 1,
           click: {sum: 1},
           ip1: { $split: ["$ip", "."]}}
       };
@@ -872,6 +876,7 @@ const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
           networkCompany: 1,
           location: 1,
           createdAt: 1,
+          isPrivateBrowsing: 1,
           ip2: {$arrayElemAt: ["$ip1",0]},
           ip3: {$arrayElemAt: ["$ip1",1]},
           ip4: {$arrayElemAt: ["$ip1",2]}}
@@ -882,6 +887,7 @@ const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
           networkCompany: 1,
           location: 1,
           createdAt: 1,
+          isPrivateBrowsing: 1,
           ipClassC: { $concat: [ "$ip2", ".", "$ip3", ".", "$ip4", ".*"]}}
       };
 
@@ -891,7 +897,8 @@ const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
         networks:{$push: "$networkCompany"},
         locations: {$push: '$location'},
         totalClick: {$sum: 1},
-        logTimes: {$push: "$createdAt"}}
+        logTimes: {$push: "$createdAt"}},
+        isPrivateBrowsing: {$push :'$isPrivateBrowsing'}
       };
 
       const projectStage3 =  { $project: {
@@ -900,6 +907,7 @@ const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
         networks: 1,
         locations: 1,
         totalClick: 1,
+        sPrivateBrowsing: 1,
         logTime: { $arrayElemAt: ["$logTimes", -1] }}
       };
 
@@ -1083,7 +1091,8 @@ const getIpHistory = (ip, limit, page) => {
           os: 1,
           createdAt: 1,
           session: 1,
-          isSpam: 1
+          isSpam: 1,
+          isPrivateBrowsing: 1
         }
       };
 
@@ -1125,7 +1134,8 @@ const getIpHistory = (ip, limit, page) => {
         os: 1,
         createdAt: 1,
         session: 1,
-        isSpam: 1
+        isSpam: 1,
+        isPrivateBrowsing: 1
       };
 
       const ipHistoryResult = await UserBehaviorLogsModel.aggregate(query);

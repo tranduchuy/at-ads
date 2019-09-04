@@ -327,10 +327,10 @@ const getAccountHierachy = function (adwordId) {
       client_id: adwordConfig.client_id,
       client_secret: adwordConfig.client_secret,
       refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
+      clientCustomerId: adwordId
     });
 
-    let managedCustomerService = user.getService('managedCustomerService', adwordConfig.version);
+    let managedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
     const selector = {
       fields: ['CustomerId', 'Name'],
       ordering: [{ field: 'CustomerId', sortOrder: 'ASCENDING' }],
