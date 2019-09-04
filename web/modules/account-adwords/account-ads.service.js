@@ -555,7 +555,8 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
             isSpam: 1,
             ip: 1,
             keyword: 1,
-            location: 1
+            location: 1,
+            isPrivateBrowsing: 1
           }
       };
 
@@ -689,7 +690,8 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
                 os: '$os',
                 networkCompany: '$networkCompany',
                 browser: '$browser',
-                createdAt: '$createdAt'
+                createdAt: '$createdAt',
+                isPrivateBrowsing: '$isPrivateBrowsing'
                 }
             }
           }
@@ -811,7 +813,8 @@ const getAllIpInAutoBlackListIp = (accountId) =>
             _id: 1,
             campaigns: 1,
             numberOfCampaigns: {$size: "$campaigns"},
-            network: "$log.networkCompany.name"
+            network: "$log.networkCompany.name",
+            isPrivateBrowsing: '$log.isPrivateBrowsing'
           }
         };
         
@@ -1083,7 +1086,8 @@ const getIpHistory = (ip, limit, page) => {
           os: 1,
           createdAt: 1,
           session: 1,
-          isSpam: 1
+          isSpam: 1,
+          isPrivateBrowsing: 1
         }
       };
 
@@ -1125,7 +1129,8 @@ const getIpHistory = (ip, limit, page) => {
         os: 1,
         createdAt: 1,
         session: 1,
-        isSpam: 1
+        isSpam: 1,
+        isPrivateBrowsing: 1
       };
 
       const ipHistoryResult = await UserBehaviorLogsModel.aggregate(query);
@@ -1282,7 +1287,7 @@ const verifyGoogleAdIdToConnect = async (userId, googleAds) => {
   const tempResults = googleAds.map(ga => {
     return {
       googleAdId: ga.customerId,
-      name: ga.descriptiveName,
+      name: ga.name,
       availableToConnect: false,
       reason: ''
     }
@@ -1316,6 +1321,17 @@ const verifyGoogleAdIdToConnect = async (userId, googleAds) => {
   });
 };
 
+const getUnique = (arr, comp) => {
+  const unique = arr
+      .map(e => e[comp])
+       // store the keys of the unique objects
+      .map((e, i, final) => final.indexOf(e) === i && i)
+      // eliminate the dead keys & store unique objects
+      .filter(e => arr[e]).map(e => arr[e]);
+
+  return unique;
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1344,5 +1360,6 @@ module.exports = {
   checkAndConvertIP,
   getReportStatistic,
   backUpIpOnGoogleAds,
-  verifyGoogleAdIdToConnect
+  verifyGoogleAdIdToConnect,
+  getUnique
 };
