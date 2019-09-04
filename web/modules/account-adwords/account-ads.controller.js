@@ -328,7 +328,7 @@ const handleManipulationGoogleAds = async(req, res, next) => {
         const ipNotExistsInListArr = _.difference(blackList, arrAfterRemoveIdenticalElement);
 
         req.adsAccount.setting.customBlackList = ipNotExistsInListArr;
-        req.adsAccount.save((err)=>{
+        req.adsAccount.save( async err => {
           if(err)
           {
             logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
@@ -336,6 +336,15 @@ const handleManipulationGoogleAds = async(req, res, next) => {
               messages: ['Xóa ip không thành công.']
             });
           }
+
+           // log action history
+           const actionHistory = {
+            userId: req.user._id,
+            content: " Xóa ip ra khỏi danh sách blacklist: " + info.ips.join(', '),
+            param: {ips: info.ips}
+          };
+
+          await userActionHistoryService.createUserActionHistory(actionHistory);
           logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success\n', info);
           return res.status(HttpStatus.OK).json({
             messages: ['Xóa ip thành công.']
@@ -1248,7 +1257,7 @@ const unblockSampleIp = (req, res, next) => {
     AccountAdsService.removeSampleBlockingIp(adsId, accountId, campaignIds)
     .then(result => {
       req.adsAccount.setting.sampleBlockingIp = '';
-      req.adsAccount.save(error=> {
+      req.adsAccount.save( async error => {
         if(error)
         {
           logger.error('AccountAdsController::unblockSampleIp::error', error, '\n', info);
@@ -1256,6 +1265,15 @@ const unblockSampleIp = (req, res, next) => {
             messages: ['Xóa ip không thành công.']
           });
         }
+
+        // log action history
+        const actionHistory = {
+          userId: req.user._id,
+          content: " Xóa ip ra khỏi danh sách chặn thử: " + info.ip.join(', '),
+          param: {ip: info.ip}
+        };
+
+        await userActionHistoryService.createUserActionHistory(actionHistory);
         logger.info('AccountAdsController::unblockSampleIp::success\n', info);
           return res.status(HttpStatus.OK).json({
           messages: ['Xóa ip thành công.']
@@ -1770,7 +1788,7 @@ const removeIpInAutoBlackListIp = (req, res, next) => {
       const ipNotExistsInListArr = _.difference(autoBlackListIp, ipArrAfterRemoveIdenticalElement);
 
       req.adsAccount.setting.autoBlackListIp = ipNotExistsInListArr;
-      req.adsAccount.save((err)=>{
+      req.adsAccount.save(async err => {
         if(err)
         {
           logger.error('AccountAdsController::removeIpInAutoBlackListIp::error', err, '\n', info);
@@ -1778,6 +1796,15 @@ const removeIpInAutoBlackListIp = (req, res, next) => {
             messages: ['Xóa ip không thành công.']
           });
         }
+
+        // log action history
+        const actionHistory = {
+          userId: req.user._id,
+          content: " Xóa ip ra khỏi danh sách ip đã chặn: " + info.ips.join(', '),
+          param: {ips: info.ips}
+        };
+
+        await userActionHistoryService.createUserActionHistory(actionHistory);
         logger.info('AccountAdsController::removeIpInAutoBlackListIp::success\n', info);
         return res.status(HttpStatus.OK).json({
           messages: ['Xóa ip thành công.']
