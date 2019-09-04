@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const ObjectId = mongoose.Schema.Types.ObjectId;
 const userActionHistorySchema = new Schema({
-  userId: String,
+  userId: ObjectId,
   content: String,
   param: Object
 }, { timestamps: true });
