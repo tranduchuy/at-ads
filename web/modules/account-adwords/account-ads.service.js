@@ -760,9 +760,9 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
   });
 };
 
-const getAllIpInAutoBlackListIp = (accountId) => 
+const getAllIpInAutoBlackListIp = (accountId, page, limit) => 
 {
-  logger.info('AccountAdsService::getDailyClicking::is called ', {accountId});
+  logger.info('AccountAdsService::getDailyClicking::is called ', {accountId, page, limit});
   return new Promise(async (res, rej) => {
     try{
       const matchStage = {
@@ -817,30 +817,39 @@ const getAllIpInAutoBlackListIp = (accountId) =>
             isPrivateBrowsing: '$log.isPrivateBrowsing'
           }
         };
+
+        const facetStage = {
+          $facet: 
+          {
+            entries: [
+              { $skip: (page - 1) * limit },
+              { $limit: limit }
+            ],
+            meta: [
+              {$group: {_id: null, totalItems: {$sum: 1}}},
+            ],
+          }
+        };
         
-      const queryInfo = JSON.stringify([
-        matchStage,
-        unwindStage,
-        groupStage,
-        lookupStage,
-        projectStage,
-        projectStage1   
-      ]);
+        const query = [
+          matchStage,
+          unwindStage,
+          groupStage,
+          lookupStage,
+          projectStage,
+          projectStage1,
+          facetStage  
+        ];
+        
+      const queryInfo = JSON.stringify(query);
       logger.info('AccountAdsService::getAllIpInAutoBlackListIp::query', {accountId, queryInfo});
       
-      const result = await BlockingCriterionsModel.aggregate([
-        matchStage,
-        unwindStage,
-        groupStage,
-        lookupStage,
-        projectStage,
-        projectStage1    
-      ]);
+      const result = await BlockingCriterionsModel.aggregate(query);
     
-      logger.info('AccountAdsService::getAllIpInAutoBlackListIp::success ', {accountId});
+      logger.info('AccountAdsService::getAllIpInAutoBlackListIp::success ', {accountId, page, limit});
       return res(result);
     }catch(e){
-      logger.error('AccountAdsService::getAllIpInAutoBlackListIp::error ', e, {accountId});
+      logger.error('AccountAdsService::getAllIpInAutoBlackListIp::error ', e, {accountId, page, limit});
       return rej(e);
     }
   });
