@@ -7,5 +7,6 @@ router.use('/user-behaviors', require('../modules/user-behavior-log/user-behavio
 router.use('/account-adwords', require('../modules/account-adwords/account-ads.route'));
 router.use('/websites', require('../modules/website/website.route'));
 router.use('/fire-base-tokens', require('../modules/fire-base-tokens/fire-base-tokens.route'));
+router.use('/reports', require('../modules/report/report.route'));
 
 module.exports = router;
