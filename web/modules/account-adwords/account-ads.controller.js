@@ -1644,8 +1644,8 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 
         let { page, limit } = req.query;
 
-        page = !page ? Paging.PAGE : page;
-        limit = !limit ? Paging.LIMIT : limit;
+        page = page || Paging.PAGE;
+        limit = limit || Paging.LIMIT;
         page = Number(page);
         limit = Number(limit);
 
