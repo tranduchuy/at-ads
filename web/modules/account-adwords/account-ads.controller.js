@@ -789,6 +789,8 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
 
     if(campaignsNotInExistsInDB.length === 0)
     {
+      await AccountAdsService.backUpIpOnGoogleAds(req.adsAccount, campaignIdsAfterRemoveIdenticalElement);
+      
       logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thêm chiến dịch thành công"]
@@ -797,7 +799,7 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
 
     const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignsNotInExistsInDB);
 
-    BlockingCriterionsModel.insertMany(campaignsArr, (err)=>{
+    BlockingCriterionsModel.insertMany(campaignsArr, async err => {
       if(err)
       {
         logger.error('AccountAdsController::addCampaignsForAAccountAds::error', err, '\n', info);
@@ -805,6 +807,9 @@ const addCampaignsForAAccountAds = async(req, res, next) => {
           messages: ["Thêm chiến dịch không thành công"]
         });
       }
+
+      await AccountAdsService.backUpIpOnGoogleAds(req.adsAccount, campaignIdsAfterRemoveIdenticalElement);
+
       logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Thêm chiến dịch thành công"]
@@ -836,7 +841,7 @@ const getListOriginalCampaigns = async(req, res, next) => {
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
 
       const processCampaignList = AccountAdsService.filterTheCampaignInfoInTheCampaignList(result);
-
+      
       logger.info('AccountAdsController::getListOriginalCampaigns::success\n', info);
       return res.status(HttpStatus.OK).json({
         messages: ["Lấy danh sách chiến dịch thành công."],
