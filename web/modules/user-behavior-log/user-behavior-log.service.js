@@ -188,7 +188,7 @@ buildStageDetailUser = (queryCondition) => {
   return stages;
 };
 
-mappingTrafficSource = (referrer, href) => {
+const mappingTrafficSource = (referrer, href) => {
   if (referrer) {
     const referrerURL = new Url(referrer);
     const hostname = referrerURL.hostname;

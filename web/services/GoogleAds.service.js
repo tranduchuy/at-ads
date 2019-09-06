@@ -5,7 +5,6 @@ const adwordConfig = require('config').get('google-ads');
 const AdwordsConstants = require('node-adwords').AdwordsConstants;
 const ManagerCustomerMsgs = require('../constants/ManagerCustomerMsgs');
 const AdwordsReport = require('node-adwords').AdwordsReport;
-const DeviceConstants = require('../constants/device.constant');
 const config = require('config');
 
 /**
@@ -317,17 +316,17 @@ const mapManageCustomerErrorMessage = (error) => {
  * @param {string} adwordId
  * @return {Promise<[{id: string, name: string}]>}
  */
-const getAccountHierachy = function (adwordId) {
+const getAccountHierachy = function (refreshToken, adwordId) {
   return new Promise((resolve, reject) => {
     logger.info('GoogleAdsService::getAccountHierachy', adwordId);
 
-    const adwordConfig2 = config.get('google-ads2');
+    // const adwordConfig = config.get('google-ads');
     const user = new AdwordsUser({
-      developerToken: adwordConfig2.developerToken,
-      userAgent: adwordConfig2.userAgent,
-      client_id: adwordConfig2.clientId,
-      client_secret: adwordConfig2.clientSecret,
-      refresh_token: adwordConfig2.refresh_token,
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: refreshToken,
       clientCustomerId: adwordId
     });
 
@@ -461,12 +460,12 @@ const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
 
 const getListGoogleAdsAccount = (accessToken, refreshToken) => {
   return new Promise((resolve, reject) => {
-    const googleAdAccount2 = config.get('google-ads2');
+    // const googleAdAccount = config.get('google-ads');
     const authConfig = {
-      developerToken: googleAdAccount2.developerToken,
-      userAgent: googleAdAccount2.userAgent,
-      client_id: googleAdAccount2.clientId,
-      client_secret: googleAdAccount2.clientSecret,
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
       refresh_token: refreshToken,
       access_token: accessToken
     };
