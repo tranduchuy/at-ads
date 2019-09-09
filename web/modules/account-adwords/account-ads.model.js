@@ -11,6 +11,7 @@ const accountAdsSchema = new Schema({
     isConnected: {type: Boolean, default: AccountAdsConstant.isConnected},
     isDeleted: {type: Boolean, default: false},
     setting: {
+        maxIps: { type: Number, default: AccountAdsConstant.setting.maxIps },
         autoBlockByMaxClick: { type: Number, default: AccountAdsConstant.setting.autoBlockByMaxClick },
         autoRemoveBlocking: { type: Boolean, default: AccountAdsConstant.setting.autoRemoveBlocking },
         autoBlackListIp: { type: Array, default: AccountAdsConstant.setting.autoBlackListIp },

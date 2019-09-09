@@ -12,7 +12,8 @@ module.exports = {
       vietnammobile: false,
       fpt: false
     },
-    sampleBlockingIp: ''
+    sampleBlockingIp: '',
+    maxIps: 400,
   },
   isConnected: false,
   campaignStatus: {

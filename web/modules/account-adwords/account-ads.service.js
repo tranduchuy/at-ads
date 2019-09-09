@@ -87,7 +87,7 @@ const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaig
     return cb(null);
   }
   const criterionId = result.value[0].criterion.id;
-  const infoCampaign ={ip, criterionId};
+  const infoCampaign ={ip, criterionId, createdAt: new Date()};
   BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBlackList: infoCampaign}}).exec(err=>{
     if(err)
     {
@@ -471,7 +471,7 @@ const addIpAndCriterionIdForSampleBlockingIp = (accountInfo, callback) => {
   }
   const criterionId = accountInfo.result.value[0].criterion.id;
   const ip = accountInfo.ip;
-  const infoCampaign ={ip, criterionId};
+  const infoCampaign ={ip, criterionId, createdAt: new Date()};
   const campaignId = accountInfo.campaignId;
   const accountId = accountInfo.accountId;
   const adsId = accountInfo.adsId;
