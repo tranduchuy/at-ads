@@ -1912,7 +1912,10 @@ const statisticUser = async (req, res, next) => {
 
 		const result = await UserBehaviorLogModel.aggregate(stages);
 		const entries = result[0].entries.map(user => {
-			user._id = '***-' + user._id.slice(-6);
+			if (user._id) {
+				user._id = '***-' + user._id.slice(-6);
+			}
+
 			return user;
 		});
 
