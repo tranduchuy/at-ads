@@ -107,7 +107,7 @@ const getTrafficSourceStatisticByDay = (accountKey, from, to) => {
 			logger.info('ReportService::getTrafficSourceStatisticByDay::query ', JSON.stringify(query));
 			const result = await UserBehaviorLogModel.aggregate(query);
 
-			logger.info('ReportService::getTrafficSourceStatisticByDay::sussecc');
+			logger.info('ReportService::getTrafficSourceStatisticByDay::success');
 			return res(result);
 		}catch(e){
 			logger.info('ReportService::getTrafficSourceStatisticByDay:error ', e, '\n', { accountKey, from , to });
@@ -116,8 +116,118 @@ const getTrafficSourceStatisticByDay = (accountKey, from, to) => {
 	});
 };
 
+const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
+	logger.info('ReportService::getTrafficSourceLogs::is called ', { accountKey, from , to, page, limit });
+	return new Promise(async (res, rej) => {
+		try{
+			const matchStage = {
+				$match: {
+					accountKey,
+					createdAt: {
+						$gte: new Date(from),
+						$lt: new Date(to)
+					}
+				}
+			};
+
+			const projectStage = {
+				$project: {
+					info: "$$ROOT"
+				}
+			}
+
+			const facetStage = {
+				$facet: 
+				{
+				  entries: [
+					{ $skip: (page - 1) * limit },
+					{ $limit: limit }
+				  ],
+				  meta: [
+					{$group: {_id: null, totalItems: {$sum: 1}}},
+				  ],
+				}
+			};
+
+			const query = [
+				matchStage,
+				projectStage,
+				facetStage
+			];
+
+			logger.info('ReportService::getTrafficSourceLogs::query ', JSON.stringify(query));
+			const result = await UserBehaviorLogModel.aggregate(query);
+
+			logger.info('ReportService::getTrafficSourceLogs::success');
+			return res(result);
+
+		}catch(e){
+			logger.info('ReportService::getTrafficSourceLogs:error ', e, '\n', { accountKey, from , to, page, limit });
+			return rej(e);
+		}
+	});
+};
+
+const getSessionCountOfIp = (accountKey, from , to , ips) => {
+	logger.info('ReportService::getSessionCountOfIp::is called ', { accountKey, from , to, ips });
+	return new Promise(async (res, rej) => {
+		try{
+			const matchStage = {
+				$match: {
+					accountKey,
+					createdAt: {
+						$gte: new Date(from),
+						$lt: new Date(to)
+					},
+					ip: {
+						$in: ips
+					}
+				}
+			};
+
+			const groupStage = {
+				$group: {
+					_id: "$ip",
+					sessionCount: {$sum: 1}
+				} 
+			};
+
+			const query = [
+				matchStage,
+				groupStage
+			];
+
+			logger.info('ReportService::getSessionCountOfIp::query ', JSON.stringify(query));
+			const result = await UserBehaviorLogModel.aggregate(query);
+
+			logger.info('ReportService::getSessionCountOfIp::success');
+			return res(result);
+
+		}catch(e){
+			logger.info('ReportService::getSessionCountOfIp:error ', e, '\n', { accountKey, from , to, ips});
+			return rej(e);
+		}
+	});
+};
+
+const addSessionCountIntoTrafficSourceData = (trafficSourceArr, sessionsArr) => {
+	trafficSourceArr.forEach(ipInfo => {
+		sessionsArr.forEach(sessionInfo => {
+			if(ipInfo.ip === sessionInfo._id)
+			{
+				ipInfo.count = sessionInfo.sessionCount;
+			}
+		});
+	});
+
+	return trafficSourceArr;
+}
+
 module.exports = {
 	buildStageGetIPClicks,
 	buildStageGetDetailIPClick,
-	getTrafficSourceStatisticByDay
+	getTrafficSourceStatisticByDay,
+	getTrafficSourceLogs,
+	getSessionCountOfIp,
+	addSessionCountIntoTrafficSourceData
 };
