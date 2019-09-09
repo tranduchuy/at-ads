@@ -665,6 +665,9 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
 
   return new Promise(async (res, rej)=> {
     try{
+      const now = moment().startOf('day')._d;
+      const tomorrow = moment(now).endOf('day')._d;
+
       const sortStage = {
         $sort: {
           createdAt: -1
@@ -674,33 +677,31 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
       const matchStage = {
           $match: {
             accountKey,
-            type: LOGGING_TYPES.CLICK
+            type: LOGGING_TYPES.CLICK,
+            createdAt: {
+                $gte: now,
+                $lt: tomorrow
+            }
         }
-      };
-
-      const groupStage = { 
-          $group: { 
-            _id: "$ip", 
-            click: { 
-                $sum: 1
-            },
-            info: {$push: "$$ROOT"}
-          }
       };
 
       const projectStage = {
         $project: {
-           _id: 1,
-           click: 1,
-           info: { 
-               $slice: [ "$info", -1 ]
-            } 
+          _id: "$ip",
+          info: [
+            {
+              "location": "$location",
+              "keyword": "$keyword",
+              "isSpam": "$isSpam",
+              "os": "$os",
+              "networkCompany": "$networkCompany",
+              "browser": "$browser",
+              "createdAt": "$createdAt",
+              "isPrivateBrowsing": "$isPrivateBrowsing"
+            }
+          ]
         }
       };
-
-      // const conditionToRemove = {
-      //   $match: {click: {$lt: maxClick}}
-      // };
 
       const facetStage = {
         $facet: 
@@ -715,14 +716,13 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
         }
       };
 
-      let query = [];
+      let query = []
 
       if(maxClick > 0)
       {
         query = [
           sortStage,
           matchStage,
-          groupStage,
           projectStage,
           // conditionToRemove,
           facetStage   
@@ -733,7 +733,6 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
         query = [
           sortStage,
           matchStage,
-          groupStage,
           projectStage,
           facetStage   
         ];
@@ -1084,12 +1083,14 @@ const getIpHistory = (ip, limit, page) => {
           ip: 1,
           location: 1,
           device: 1,
+          referer: 1,
           browser: 1,
           os: 1,
           createdAt: 1,
           session: 1,
           isSpam: 1,
-          isPrivateBrowsing: 1
+          isPrivateBrowsing: 1,
+          type: 1
         }
       };
 
@@ -1134,6 +1135,9 @@ const getIpHistory = (ip, limit, page) => {
         isSpam: 1,
         isPrivateBrowsing: 1
       };
+
+      console.log('=======');
+      console.log(JSON.stringify(query));
 
       const ipHistoryResult = await UserBehaviorLogsModel.aggregate(query);
 
@@ -1437,6 +1441,45 @@ const getUnique = (arr, comp) => {
   return unique;
 };
 
+/**
+ *
+ * @param {string} accountKey
+ * @param {Date} startTime
+ * @param {Date} endTime
+ * @return {Promise<void>}
+ */
+const getNoClickOfIps = async (accountKey, startTime, endTime) => {
+  const stages = [
+    {
+      $match: {
+        accountKey,
+        createdAt: {
+          $gt: startTime,
+          $lt: endTime
+        },
+        type: LOGGING_TYPES.CLICK
+      }
+    },
+    {
+      $group: {
+        _id: "$ip",
+        count: {$sum: 1},
+        logs: {
+          $push: "$$ROOT"
+        }
+      }
+    }
+  ];
+  console.log('AccountAdService::getNoClickOfIps::stages', JSON.stringify(stages));
+  const results = await UserBehaviorLogsModel.aggregate(stages);
+  const noClickOfIpsObj = {};
+  results.forEach(r => {
+    noClickOfIpsObj[r._id] = r.count;
+  });
+
+  return noClickOfIpsObj
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1466,5 +1509,6 @@ module.exports = {
   getReportStatistic,
   backUpIpOnGoogleAds,
   verifyGoogleAdIdToConnect,
-  getUnique
+  getUnique,
+  getNoClickOfIps
 };

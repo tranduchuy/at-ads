@@ -1506,7 +1506,7 @@ const getDailyClicking = async (req, res, next) => {
 		page = Number(page);
 		limit = Number(limit);
 
-		const result = await AccountAdsService.getDailyClicking(accountKey, maxClick, page, limit)
+		const result = await AccountAdsService.getDailyClicking(accountKey, maxClick, page, limit);
 		let entries = [];
 		let totalItems = 0;
 
@@ -1514,6 +1514,14 @@ const getDailyClicking = async (req, res, next) => {
 			entries = result[0].entries;
 			totalItems = !isConnected ? entries.length : result[0].meta[0].totalItems;
 		}
+
+		// get number click in a day
+		const now = moment().startOf('day')._d;
+		const tomorrow = moment(now).endOf('day')._d;
+		const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, now, tomorrow);
+		entries.forEach((item, index) => {
+			entries[index].click = clickInDaysOfAccountKey[item._id];
+		});
 
 		logger.info('AccountAdsController::getDailyClicking::success\n', info);
 		return res.status(HttpStatus.OK).json({
