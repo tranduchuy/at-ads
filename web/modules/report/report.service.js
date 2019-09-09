@@ -25,6 +25,8 @@ buildStageGetIPClicks = (queryCondition) => {
 		{
 			$project: {
 				_id      : "$logClicks._id",
+				location: "$logClicks.location",
+				device: "$logClicks.device",
 				timestamp: "$_id"
 			}
 		},

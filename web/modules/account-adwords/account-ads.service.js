@@ -665,17 +665,16 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
 
   return new Promise(async (res, rej)=> {
     try{
-      const now = moment().startOf('day');;
-      const tomorow = moment(now).endOf('day');
+      const sortStage = {
+        $sort: {
+          createdAt: -1
+        }
+      };
 
       const matchStage = {
           $match: {
             accountKey,
-            type: LOGGING_TYPES.CLICK,
-            createdAt: {
-                $gte: new Date(now),
-                $lt: new Date(tomorow)
-            }
+            type: LOGGING_TYPES.CLICK
         }
       };
 
@@ -685,23 +684,13 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
             click: { 
                 $sum: 1
             },
-            info: {
-                $push: {
-                location: '$location',
-                keyword: '$keyword',
-                os: '$os',
-                networkCompany: '$networkCompany',
-                browser: '$browser',
-                createdAt: '$createdAt',
-                isPrivateBrowsing: '$isPrivateBrowsing'
-                }
-            }
+            info: {$push: "$$ROOT"}
           }
       };
 
       const projectStage = {
-        $project: { 
-           id: 1,
+        $project: {
+           _id: 1,
            click: 1,
            info: { 
                $slice: [ "$info", -1 ]
@@ -709,9 +698,9 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
         }
       };
 
-      const conditionToRemove = {
-        $match: {click: {$lt: maxClick}}  
-      };
+      // const conditionToRemove = {
+      //   $match: {click: {$lt: maxClick}}
+      // };
 
       const facetStage = {
         $facet: 
@@ -726,21 +715,23 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
         }
       };
 
-      let query = []
+      let query = [];
 
       if(maxClick > 0)
       {
         query = [
+          sortStage,
           matchStage,
           groupStage,
           projectStage,
-          conditionToRemove,
+          // conditionToRemove,
           facetStage   
         ];
       }
       else
       {
         query = [
+          sortStage,
           matchStage,
           groupStage,
           projectStage,
