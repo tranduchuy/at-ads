@@ -22,6 +22,7 @@ module.exports = {
     ISENABLED: true,
     ISDISABLED: false
   },
+  ipsNumberForAutoBlackList: 100, 
   googleCampaignStatus: {
     ENABLED: 'ENABLED',
     isTargetGoogleSearch: true
