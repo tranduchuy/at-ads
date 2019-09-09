@@ -1445,7 +1445,7 @@ const getReportForAccount = async (req, res, next) => {
 			totalItems = !isConnected ? logs.length : result[0].meta[0].totalItems
 		}
 
-		const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, new Date(from), new Date(to));
+		const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, from._d, endDateTime._d);
 		logs.forEach((item, index) => {
 			logs[index].click = clickInDaysOfAccountKey[item.ip] || 0;
 		});
@@ -1881,6 +1881,10 @@ const statisticUser = async (req, res, next) => {
 		});
 
 		const result = await UserBehaviorLogModel.aggregate(stages);
+		const entries = result[0].entries.map(user => {
+			user._id = '***-' + user._id.slice(-6);
+			return user;
+		});
 
 		const response = {
 			status  : HttpStatus.OK,
@@ -1891,7 +1895,7 @@ const statisticUser = async (req, res, next) => {
 					page      : page || 1,
 					totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
 				},
-				users: result[0].entries
+				users: entries
 			}
 		};
 
