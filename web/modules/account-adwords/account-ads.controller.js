@@ -776,7 +776,11 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 		}
 
 		if (campaignsNotInExistsInDB.length === 0) {
-			await AccountAdsService.backUpIpOnGoogleAds(req.adsAccount, campaignIdsAfterRemoveIdenticalElement);
+
+			if(campaignIdsAfterRemoveIdenticalElement.length > 0)
+			{
+				await AccountAdsService.backUpIpOnGoogleAds(req.adsAccount, campaignIdsAfterRemoveIdenticalElement);
+			}
 
 			logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
 			return res.status(HttpStatus.OK).json({
@@ -794,7 +798,10 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 				});
 			}
 
-			await AccountAdsService.backUpIpOnGoogleAds(req.adsAccount, campaignIdsAfterRemoveIdenticalElement);
+			if(campaignIdsAfterRemoveIdenticalElement.length > 0)
+			{
+				await AccountAdsService.backUpIpOnGoogleAds(req.adsAccount, campaignIdsAfterRemoveIdenticalElement);
+			}
 
 			logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
 			return res.status(HttpStatus.OK).json({
