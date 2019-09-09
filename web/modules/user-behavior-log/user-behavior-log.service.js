@@ -109,6 +109,7 @@ buildStageStatisticUser = (queryCondition) => {
   stages.push({
     $project: {
       count: "$count",
+      "uuid": "$info.uuid",
       "isPrivateBrowsing": "$info.isPrivateBrowsing",
       "isSpam": "$info.isSpam",
       "accountKey": "$info.accountKey",
