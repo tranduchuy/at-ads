@@ -1428,7 +1428,7 @@ const getReportForAccount = async (req, res, next) => {
 	const info = {
 		id   : req.adsAccount._id,
 		adsId: req.adsAccount.adsId
-	}
+	};
 	logger.info('AccountAdsController::getReportForAccount::is called\n', info);
 	try {
 
@@ -1474,6 +1474,11 @@ const getReportForAccount = async (req, res, next) => {
 			logs = result[0].entries;
 			totalItems = !isConnected ? logs.length : result[0].meta[0].totalItems
 		}
+
+		const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, new Date(from), new Date(to));
+		logs.forEach((item, index) => {
+			logs[index].click = clickInDaysOfAccountKey[item.ip] || 0;
+		});
 
 		logger.info('AccountAdsController::getReportForAccount::success\n', info);
 		return res.status(HttpStatus.OK).json({
