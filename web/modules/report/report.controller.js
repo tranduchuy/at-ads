@@ -99,6 +99,7 @@ const getDetailIPClick = async (req, res, next) => {
 			startTime : startLog ? startLog.createdAt : null,
 			endTime   : endLog ? endLog.createdAt : null
 		});
+		logger.info('ReportController::getDetailIPClick::stages', stages);
 
 		const result = await UserBehaviorLogModel.aggregate(stages);
 
