@@ -247,7 +247,7 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 			{
 				logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' ::Ips number in DB greater than ips default number ');
 				return res.status(HttpStatus.BAD_REQUEST).json({
-					messages: ['Số lượng ip đã vượt quá số lượng ip cho phép! Vui lòng xóa ip để tiếp tục chức năng này.']
+					messages: ['Số lượng ip đã vượt quá số lượng ip cho phép! Vui lòng xóa ip để tiếp tục sử dụng chức năng này.']
 				}) 
 			}
 
@@ -1112,7 +1112,7 @@ const blockSampleIp = (req, res, next) => {
 		{
 			logger.info('AccountAdsController::blockSampleIp::Ips number in DB greater than ips default number ');
 			return res.status(HttpStatus.BAD_REQUEST).json({
-				messages: ['Số lượng ip đã vượt quá số lượng ip cho phép! Vui lòng xóa ip để tiếp tục chức năng này.']
+				messages: ['Số lượng ip đã vượt quá số lượng ip cho phép! Vui lòng xóa ip để tiếp tục sử dụng chức năng này.']
 			}) 
 		}
 
