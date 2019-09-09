@@ -1,8 +1,8 @@
 const Joi = require('@hapi/joi');
 
 const getDetailIpClickValidationSchema = Joi.object().keys({
-    startTime: Joi.string(),
-    endTime: Joi.string().required(),
+    startId: Joi.string(),
+    endId: Joi.string().required()
 });
 
 module.exports = {
