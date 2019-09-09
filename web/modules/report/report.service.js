@@ -57,6 +57,8 @@ buildStageGetDetailIPClick = (queryCondition) => {
 		matchStage.createdAt['$lt'] = new Date(queryCondition.endTime);
 	}
 
+	stages.push({$match: matchStage});
+
 	stages.push({ '$sort': { 'createdAt': -1 } });
 	stages.push({ "$group": { _id: "$uuid", "count": { "$sum": 1 }, logs: { $push: "$$ROOT" } } });
 
