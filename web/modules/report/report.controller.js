@@ -74,14 +74,14 @@ const getDetailIPClick = async (req, res, next) => {
 		const { ip } = req.params;
 		const { startId, endId } = req.query;
 		const startLog = await UserBehaviorLogModel.findOne({ _id: startId });
-		if (!startLog) {
-			logger.error('ReportController::getDetailIPClick::error. log id (startId) not found', startId);
-			return res.status(HttpStatus.BAD_REQUEST).json({
-				messages: [
-					'Yêu cầu không hợp lệ'
-				]
-			})
-		}
+		// if (!startLog) {
+		// 	logger.error('ReportController::getDetailIPClick::error. log id (startId) not found', startId);
+		// 	return res.status(HttpStatus.BAD_REQUEST).json({
+		// 		messages: [
+		// 			'Yêu cầu không hợp lệ'
+		// 		]
+		// 	});
+		// }
 
 		const endLog = await UserBehaviorLogModel.findOne({ _id: endId });
 		if (!endLog) {
@@ -90,7 +90,7 @@ const getDetailIPClick = async (req, res, next) => {
 				messages: [
 					'Yêu cầu không hợp lệ'
 				]
-			})
+			});
 		}
 
 		const stages = ReportService.buildStageGetDetailIPClick({

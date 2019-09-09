@@ -1,4 +1,3 @@
-
 const UserBehaviorLogConstant = require('../user-behavior-log/user-behavior-log.constant');
 
 buildStageGetIPClicks = (queryCondition) => {
@@ -39,11 +38,11 @@ buildStageGetIPClicks = (queryCondition) => {
 
 buildStageGetDetailIPClick = (queryCondition) => {
 	let stages = [];
-	const matchStage = {};
-
-	matchStage['accountKey'] = queryCondition.accountKey;
-	matchStage['ip'] = queryCondition.ip;
-	matchStage['type'] = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
+	const matchStage = {
+		accountKey: queryCondition.accountKey,
+		ip        : queryCondition.ip,
+		type      : UserBehaviorLogConstant.LOGGING_TYPES.TRACK
+	};
 
 	if (queryCondition.startTime) {
 		matchStage.createdAt = {
@@ -53,16 +52,10 @@ buildStageGetDetailIPClick = (queryCondition) => {
 
 	if (queryCondition.endTime) {
 		matchStage.createdAt = matchStage.createdAt || {};
-		matchStage.createdAt['$lte'] = new Date(queryCondition.endTime);
+		matchStage.createdAt['$lt'] = new Date(queryCondition.endTime);
 	}
-
-	if (Object.keys(matchStage).length > 0) {
-		stages.push({ $match: matchStage });
-	}
-
 
 	stages.push({ '$sort': { 'createdAt': -1 } });
-
 	stages.push({ "$group": { _id: "$uuid", "count": { "$sum": 1 }, logs: { $push: "$$ROOT" } } });
 
 	return stages;
