@@ -69,13 +69,14 @@ buildStageGetDetailIPClick = (queryCondition) => {
 	return stages;
 };
 
-const getTrafficSourceStatisticByDay = (from, to) => {
-	logger.info('ReportService::getTrafficSourceStatisticByDay::is called ', { from , to });
+const getTrafficSourceStatisticByDay = (accountKey, from, to) => {
+	logger.info('ReportService::getTrafficSourceStatisticByDay::is called ', { accountKey, from , to });
 
 	return new Promise(async (res, rej) => {
 		try{
 			const matchStage ={
 				$match: {
+					accountKey,
 					createdAt: {
 						$gte: new Date(from),
 						$lt: new Date(to)
@@ -109,7 +110,7 @@ const getTrafficSourceStatisticByDay = (from, to) => {
 			logger.info('ReportService::getTrafficSourceStatisticByDay::sussecc');
 			return res(result);
 		}catch(e){
-			logger.info('ReportService::getTrafficSourceStatisticByDay:error ', e, '\n', { from , to });
+			logger.info('ReportService::getTrafficSourceStatisticByDay:error ', e, '\n', { accountKey, from , to });
 			return rej(e);
 		}
 	});

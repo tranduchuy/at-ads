@@ -149,7 +149,8 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 		}
 
 		const endDateTime = moment(to).endOf('day');
-		const result = await ReportService.getTrafficSourceStatisticByDay(from, endDateTime);
+		const accountKey = req.adsAccount.key;
+		const result = await ReportService.getTrafficSourceStatisticByDay(accountKey, from, endDateTime);
 
 		return res.status(HttpStatus.OK).json({
 			messages: ['Lấy dữ liệu thành công'],
