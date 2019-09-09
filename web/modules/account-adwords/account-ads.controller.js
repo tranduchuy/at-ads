@@ -237,6 +237,19 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 			const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
 			const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
 			const ipsArr = AccountAdsService.checkIpIsBlackListed(customBlackList, arrAfterRemoveIdenticalElement, ipInSampleBlocked, autoBlackListIp);
+			const ipSampleArr = ipInSampleBlocked === '' ? [] : [ipInSampleBlocked];
+			const allIps = customBlackList.concat(ipSampleArr, arrAfterRemoveIdenticalElement, autoBlackListIp);
+			const ipsNumber = allIps.length;
+			const maxIpsNumber = req.adsAccount.setting.maxIps || AdAccountConstant.setting.maxIps;
+			
+			console.log()
+			if(ipsNumber >= ( maxIpsNumber - AdAccountConstant.ipsNumberForAutoBlackList))
+			{
+				logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' ::Ips number in DB greater than ips default number ');
+				return res.status(HttpStatus.BAD_REQUEST).json({
+					messages: ['Số lượng ip đã vượt quá số lượng ip cho phép! Vui lòng xóa ip để tiếp tục chức năng này.']
+				}) 
+			}
 
 			if (ipsArr.length !== 0) {
 				logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::conflict\n', info);
@@ -1092,6 +1105,16 @@ const blockSampleIp = (req, res, next) => {
 		const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
 		allIpInBlackList = allIpInBlackList.concat(req.adsAccount.setting.autoBlackListIp);
 		const checkIpInDB = allIpInBlackList.filter(ele => ele === ip);
+		const ipsInBlackListNumber = allIpInBlackList.length;
+		const maxIpsNumber = req.adsAccount.setting.maxIps || AdAccountConstant.setting.maxIps;
+
+		if(ipsInBlackListNumber >= ( maxIpsNumber - AdAccountConstant.ipsNumberForAutoBlackList))
+		{
+			logger.info('AccountAdsController::blockSampleIp::Ips number in DB greater than ips default number ');
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ['Số lượng ip đã vượt quá số lượng ip cho phép! Vui lòng xóa ip để tiếp tục chức năng này.']
+			}) 
+		}
 
 		if (checkIpInDB.length !== 0) {
 			logger.info('AccountAdsController::blockSampleIp::blockSampleIp::Conflict\n', info);

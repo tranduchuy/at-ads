@@ -10,6 +10,8 @@ const moment = require('moment');
 const { LOGGING_TYPES } = require('../modules/user-behavior-log/user-behavior-log.constant');
 const NetworkCompanyName = require('../constants/networkCompanyName.contant');
 const { checkIpsInWhiteList } = require('../services/check-ip-in-white-list.service');
+const AccountAdsConstant = require('../modules/account-adwords/account-ads.constant');
+const AccountAdsService = require('../modules/account-adwords/account-ads.service');
 
 const saveIpIntoAutoBlackListIp = async (key, id, ip) => {
     logger.info('jobs::saveIpIntoAutoBlackListIp::is called', { key, id, ip });
@@ -97,35 +99,54 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg) 
         const adsId = accountAds.adsId;
         const accountId = accountAds._id;
 
-        console.log(campaignIds);
-
-        Async.eachSeries(campaignIds, (campaignId, callback) => {
-            GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
-                .then((result) => {
-                    const accountInfo = { result, accountId, campaignId, adsId, ip };
-                    RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
-                }).catch(err => {
-                    switch (GoogleAdsService.getErrorCode(err)) {
-                        case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
-                            logger.info('AccountAdsController::autoBlockIp::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-                            return callback();
-                        default:
-                            const message = GoogleAdsService.getErrorCode(err);
-                            logger.error('AccountAdsController::autoBlockIp::error', message);
-                            return callback(err);
-                    }
-                });
-        }, async error => {
-            if (error) {
-                logger.error('jobs::autoBlockIp::error', error, { id });
-                //   channel.ack(msg); // TODO: improve call google api limited.
+        Async.series([
+            cb => {
+                if(!checkIpsNumber(accountAds))
+                {
+                    logger.info('jobs::autoBlockIp::Ips number in DB greater than ips default number.', { id, ip });
+                    const ipFirst = [accountAds.setting.autoBlackListIp[0]];
+                    removeIps(accountAds, campaignIds, ipFirst, cb);      
+                }
+                else
+                {
+                    cb();
+                }
+            }
+        ], err => {
+            if(err)
+            {
+                logger.error('jobs::autoBlockIp::error', err, '\n', { id });
                 return;
             }
 
-            await saveIpIntoAutoBlackListIp(key, id, ip);
-            logger.info('jobs::autoBlockIp::success', { id });
-            channel.ack(msg);
-            return;
+            Async.eachSeries(campaignIds, (campaignId, callback) => {
+                GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
+                    .then((result) => {
+                        const accountInfo = { result, accountId, campaignId, adsId, ip };
+                        RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
+                    }).catch(err => {
+                        switch (GoogleAdsService.getErrorCode(err)) {
+                            case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
+                                logger.info('AccountAdsController::autoBlockIp::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+                                return callback();
+                            default:
+                                const message = GoogleAdsService.getErrorCode(err);
+                                logger.error('AccountAdsController::autoBlockIp::error', message);
+                                return callback(err);
+                        }
+                    });
+            }, async error => {
+                if (error) {
+                    logger.error('jobs::autoBlockIp::error', error, { id });
+                    //   channel.ack(msg); // TODO: improve call google api limited.
+                    return;
+                }
+    
+                await saveIpIntoAutoBlackListIp(key, id, ip);
+                logger.info('jobs::autoBlockIp::success', { id });
+                channel.ack(msg);
+                return;
+            });
         });
     }
     else {
@@ -135,6 +156,49 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg) 
         return;
     }
 };
+
+const checkIpsNumber = (accountAds) => {
+    const ipsInBlackList = accountAds.setting.customBlackList;
+    const ipsInAutoBlackList = accountAds.setting.autoBlackListIp;
+    const ipInSampleBlackList = accountAds.setting.sampleBlockingIp;
+    const ipSampleArr = ipInSampleBlackList === "" ? [] : [ipInSampleBlackList];
+    const allIpsArr = ipsInBlackList.concat(ipsInAutoBlackList, ipSampleArr);
+    const maxIps = accountAds.setting.maxIPs || AccountAdsConstant.setting.maxIps;
+    const ipsNumber = allIpsArr.length;
+
+    if(ipsNumber >= maxIps)
+    {
+        return false;
+    }
+
+    return true;
+};
+
+const removeIps = (accountAds, campaignIds, ip, cb) => {
+    logger.info('jobs::removeIps::is called',  {accountAds, campaignIds, ip});
+    Async.eachSeries(campaignIds, (campaignId, callback) => {
+        AccountAdsService.removeIpsToAutoBlackListOfOneCampaign(accountAds._id, accountAds.adsId, campaignId, ip, callback);
+    }, err => {
+        if(err)
+        {
+            logger.error('jobs::removeIps::error', err);
+            return cb(err);
+        }
+
+        const ipsInAutoBlackListAfterRemove = accountAds.setting.autoBlackListIp.splice(1);
+        accountAds.setting.autoBlackListIp = ipsInAutoBlackListAfterRemove;
+
+        accountAds.save(e => {
+            if(e)
+            {
+                logger.error('jobs::removeIps::error', e);
+                return cb(e);
+            }
+
+            return cb();
+        })    
+    })
+}
 
 module.exports = async (channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
@@ -159,7 +223,7 @@ module.exports = async (channel, msg) => {
             return;
         }
 
-        const ipInWhiteList = accountAds.setting.customWhiteList;
+        const ipInWhiteList = accountAds.setting.customWhiteList || [];
         const checkIpInCustomWhiteList = checkIpsInWhiteList([ip], ipInWhiteList);
 
         if(!checkIpInCustomWhiteList.status)
