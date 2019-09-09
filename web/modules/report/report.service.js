@@ -1,4 +1,8 @@
 const UserBehaviorLogConstant = require('../user-behavior-log/user-behavior-log.constant');
+const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
+
+const log4js = require('log4js');
+const logger = log4js.getLogger('Services');
 
 buildStageGetIPClicks = (queryCondition) => {
 	return [
@@ -65,7 +69,54 @@ buildStageGetDetailIPClick = (queryCondition) => {
 	return stages;
 };
 
+const getTrafficSourceStatisticByDay = (from, to) => {
+	logger.info('ReportService::getTrafficSourceStatisticByDay::is called ', { from , to });
+
+	return new Promise(async (res, rej) => {
+		try{
+			const matchStage ={
+				$match: {
+					createdAt: {
+						$gte: new Date(from),
+						$lt: new Date(to)
+					}
+				}
+			};
+
+			const groupStage = {
+				$group: {
+					_id: "$trafficSource",
+					uniqueSessions: {$addToSet: "$session"}
+				} 
+			};
+
+			const projectStage = {
+				$project: {
+					_id: 1, 
+					sessionCount: {$size: "$uniqueSessions"}
+				}
+			};
+
+			const query = [
+				matchStage,
+				groupStage,
+				projectStage
+			];
+
+			logger.info('ReportService::getTrafficSourceStatisticByDay::query ', JSON.stringify(query));
+			const result = await UserBehaviorLogModel.aggregate(query);
+
+			logger.info('ReportService::getTrafficSourceStatisticByDay::sussecc');
+			return res(result);
+		}catch(e){
+			logger.info('ReportService::getTrafficSourceStatisticByDay:error ', e, '\n', { from , to });
+			return rej(e);
+		}
+	});
+};
+
 module.exports = {
 	buildStageGetIPClicks,
-	buildStageGetDetailIPClick
+	buildStageGetDetailIPClick,
+	getTrafficSourceStatisticByDay
 };

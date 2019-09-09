@@ -1,12 +1,17 @@
-const messages = require("../../constants/messages");
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
 const HttpStatus = require("http-status-codes");
+const moment = require('moment');
+
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
-const { getDetailIpClickValidationSchema } = require('./validations/get-detail-ip-click.schema')
+
+const { getDetailIpClickValidationSchema } = require('./validations/get-detail-ip-click.schema');
+const { getTrafficSourceStatisticByDayValidationSchema } = require('./validations/get-traffic-source-statistic-by-day.schema');
+
 const ReportService = require('./report.service');
 const requestUtil = require('../../utils/RequestUtil');
+const messages = require("../../constants/messages");
 
 const getIPClicks = async (req, res, next) => {
 	const info = {
@@ -117,7 +122,50 @@ const getDetailIPClick = async (req, res, next) => {
 	}
 };
 
+const getTrafficSourceStatisticByDay = async (req, res, next) => {
+	const info = {
+		id   : req.adsAccount._id,
+		adsId: req.adsAccount.adsId,
+		from : req.params.from,
+		to   : req.params.to
+	};
+
+	logger.info('ReportController::getTrafficSourceStatisticByDay is called\n', info);
+	try{
+		const { error } = Joi.validate(req.query, getTrafficSourceStatisticByDayValidationSchema);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+		}
+		let { from, to } = req.query;
+		from = moment(from, 'DD-MM-YYYY');
+		to = moment(to, 'DD-MM-YYYY');
+
+		if (to.isBefore(from)) {
+			logger.info('AccountAdsController::getIpsInfoInClassD::babRequest\n', info);
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.']
+			});
+		}
+
+		const endDateTime = moment(to).endOf('day');
+		const result = await ReportService.getTrafficSourceStatisticByDay(from, endDateTime);
+
+		return res.status(HttpStatus.OK).json({
+			messages: ['Lấy dữ liệu thành công'],
+			data: {
+				TrafficSourceData: result
+			}
+		});
+	}catch(e){
+		logger.error('ReportController::getTrafficSourceStatisticByDay::error', e);
+		return next(e);
+	}
+};
+
 module.exports = {
 	getIPClicks,
-	getDetailIPClick
+	getDetailIPClick,
+	getTrafficSourceStatisticByDay
+
 };
