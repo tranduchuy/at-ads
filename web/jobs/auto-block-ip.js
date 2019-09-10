@@ -63,13 +63,14 @@ const checkNetWorkCompany = (log, accountAds) => {
     return 0;
 };
 
-const countClickInLogs = async (ip) => {
+const countClickInLogs = async (ip, accountKey) => {
     try {
         const now = moment().startOf('day');
         const tomorrow = moment(now).endOf('day');
 
         const countQuery = {
             ip,
+            accountKey,
             type: LOGGING_TYPES.CLICK,
             createdAt: {
                 $gte: new Date(now),
@@ -234,20 +235,20 @@ module.exports = async (channel, msg) => {
         }
 
         let ipRangesFlag = 0;
-        const ipRangesClassD = accountAds.setting.autoBlackListIpRanges.classD;
+        const ipRangesClassC = accountAds.setting.autoBlackListIpRanges.classC;
         const splitIp = ip.split('.');
 
-        if (ipRangesClassD) {
-           const sliceIp = splitIp.slice(0,3);
-           ip = sliceIp.join('.') + ".0/24";
-           ipRangesFlag = 1;
+        if (ipRangesClassC) {
+            const sliceIp = splitIp.slice(0,2);
+            ip = sliceIp.join('.') + ".0.0/16";
+            ipRangesFlag = 1;
         }
 
-        const ipRangesClassC = accountAds.setting.autoBlackListIpRanges.classC;
+        const ipRangesClassD = accountAds.setting.autoBlackListIpRanges.classD;
 
-        if (ipRangesFlag === 0 && ipRangesClassC) {
-           const sliceIp = splitIp.slice(0,2);
-           ip = sliceIp.join('.') + ".0.0/16";
+        if (ipRangesFlag === 0 && ipRangesClassD) {
+           const sliceIp = splitIp.slice(0,3);
+           ip = sliceIp.join('.') + ".0/24";
            ipRangesFlag = 1;
         }
 
@@ -266,7 +267,7 @@ module.exports = async (channel, msg) => {
         }
 
         if (ipRangesFlag === 0) {
-            if (!isPrivateBrowsing) {
+            if (!isPrivateBrowsing || !accountAds.setting.blockByPrivateBrowser) {
                 let flag = 0;
 
                 if (log.networkCompany.name) {
@@ -274,20 +275,14 @@ module.exports = async (channel, msg) => {
                 }
 
                 if (flag === 0) {
-                    const countClick = await countClickInLogs(ip);
+                    const countClick = await countClickInLogs(ip, key);
                     const maxClick = accountAds.setting.autoBlockByMaxClick;
 
-                    if (maxClick === -1 || countClick < maxClick || !log.gclid) {
+                    if (maxClick === -1 || countClick <= maxClick || !log.gclid) {
                         logger.info('jobs::autoBlockIp::success.', { id });
                         channel.ack(msg);
                         return;
                     }
-                }
-            } else {
-                if(accountAds.setting.blockByPrivateBrowser === false){
-                    logger.info('jobs::autoBlockIp::success.', { id });
-                    channel.ack(msg);
-                    return;
                 }
             }
         }
