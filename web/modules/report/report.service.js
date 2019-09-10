@@ -130,6 +130,12 @@ const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
 				}
 			};
 
+			const sortStage = {
+				$sort: {
+					"createdAt": -1
+				}  
+			};
+
 			const projectStage = {
 				$project: {
 					info: "$$ROOT"
@@ -151,6 +157,7 @@ const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
 
 			const query = [
 				matchStage,
+				sortStage,
 				projectStage,
 				facetStage
 			];

@@ -191,6 +191,8 @@ const getTrafficSourceLogs = async (req, res, next) => {
 		let limit = req.query.limit || Paging.LIMIT;
 		page = Number(page);
 		limit = Number(limit);
+		const twoWeek = moment(from).add(14, 'd');
+		const endDateTime = moment(to).endOf('day');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getTrafficSourceLogs::babRequest\n', info);
@@ -199,7 +201,14 @@ const getTrafficSourceLogs = async (req, res, next) => {
 			});
 		}
 
-		const endDateTime = moment(to).endOf('day');
+		if(twoWeek.isBefore(endDateTime))
+		{
+			logger.info('AccountAdsController::getTrafficSourceLogs::babRequest\n', info);
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ['Khoảng cách giữa ngày bắt đầu và ngày kết thúc tối đa là 2 tuần.']
+			});
+		}
+
 		const accountKey = req.adsAccount.key;
 		const result = await ReportService.getTrafficSourceLogs(accountKey, from, endDateTime, page, limit);
 		let trafficSourceData = [];
