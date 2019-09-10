@@ -1,12 +1,19 @@
-const messages = require("../../constants/messages");
 const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
 const HttpStatus = require("http-status-codes");
+const moment = require('moment');
+
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
-const { getDetailIpClickValidationSchema } = require('./validations/get-detail-ip-click.schema')
+
+const { getDetailIpClickValidationSchema } = require('./validations/get-detail-ip-click.schema');
+const { getTrafficSourceStatisticByDayValidationSchema } = require('./validations/get-traffic-source-statistic-by-day.schema');
+const { getTrafficSourceLogsValidationSchema } = require('./validations/get-traffic-source-logs.schema');
+
 const ReportService = require('./report.service');
 const requestUtil = require('../../utils/RequestUtil');
+const messages = require("../../constants/messages");
+const { Paging } = require("../account-adwords/account-ads.constant");
 
 const getIPClicks = async (req, res, next) => {
 	const info = {
@@ -117,7 +124,114 @@ const getDetailIPClick = async (req, res, next) => {
 	}
 };
 
+const getTrafficSourceStatisticByDay = async (req, res, next) => {
+	const info = {
+		id   : req.adsAccount._id,
+		adsId: req.adsAccount.adsId,
+		from : req.query.from,
+		to   : req.query.to
+	};
+
+	logger.info('ReportController::getTrafficSourceStatisticByDay is called\n', info);
+	try{
+		const { error } = Joi.validate(req.query, getTrafficSourceStatisticByDayValidationSchema);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+		}
+		let { from, to } = req.query;
+		from = moment(from, 'DD-MM-YYYY');
+		to = moment(to, 'DD-MM-YYYY');
+
+		if (to.isBefore(from)) {
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::babRequest\n', info);
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.']
+			});
+		}
+
+		const endDateTime = moment(to).endOf('day');
+		const accountKey = req.adsAccount.key;
+		const result = await ReportService.getTrafficSourceStatisticByDay(accountKey, from, endDateTime);
+
+		logger.info('AccountAdsController::getTrafficSourceStatisticByDay::success');
+		return res.status(HttpStatus.OK).json({
+			messages: ['Lấy dữ liệu thành công'],
+			data: {
+				TrafficSourceData: result
+			}
+		});
+	}catch(e){
+		logger.error('ReportController::getTrafficSourceStatisticByDay::error', e);
+		return next(e);
+	}
+};
+
+const getTrafficSourceLogs = async (req, res, next) => {
+	const info = {
+		id   : req.adsAccount._id,
+		adsId: req.adsAccount.adsId,
+		from : req.query.from,
+		to   : req.query.to,
+		page : req.query.page,
+		limit: req.query.limit
+	};
+
+	logger.info('ReportController::getTrafficSourceLogs is called\n', info);
+	try{
+		const { error } = Joi.validate(req.query, getTrafficSourceLogsValidationSchema);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+		}
+		let { from, to } = req.query;
+		from = moment(from, 'DD-MM-YYYY');
+		to = moment(to, 'DD-MM-YYYY');
+		let page = req.query.page || Paging.PAGE;
+		let limit = req.query.limit || Paging.LIMIT;
+		page = Number(page);
+		limit = Number(limit);
+
+		if (to.isBefore(from)) {
+			logger.info('AccountAdsController::getTrafficSourceLogs::babRequest\n', info);
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.']
+			});
+		}
+
+		const endDateTime = moment(to).endOf('day');
+		const accountKey = req.adsAccount.key;
+		const result = await ReportService.getTrafficSourceLogs(accountKey, from, endDateTime, page, limit);
+		let trafficSourceData = [];
+		let totalItems = 0;
+
+		if (result[0].entries.length !== 0) {
+			trafficSourceData = result[0].entries;
+			totalItems = result[0].meta[0].totalItems;
+			trafficSourceData = trafficSourceData.map(ele => ele.info);
+			const ips = trafficSourceData.map(ele => ele.ip);
+			const sessions = await ReportService.getSessionCountOfIp(accountKey, from, to, ips);;
+			trafficSourceData = ReportService.addSessionCountIntoTrafficSourceData(trafficSourceData, sessions);
+		}
+
+		logger.info('AccountAdsController::getTrafficSourceLogs::success');
+		return res.status(HttpStatus.OK).json({
+			messages: ['Lấy dữ liệu thành công'],
+			data: {
+				trafficSourceData,
+				totalItems
+			}
+		});
+	}catch(e){
+		logger.error('ReportController::getTrafficSourceLogs::error', e);
+		return next(e);
+	}
+};
+
 module.exports = {
 	getIPClicks,
-	getDetailIPClick
+	getDetailIPClick,
+	getTrafficSourceStatisticByDay,
+	getTrafficSourceLogs
+
 };
