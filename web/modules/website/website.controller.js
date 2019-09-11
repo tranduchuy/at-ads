@@ -10,10 +10,6 @@ const PackagesModel = require('../packages/packages.model');
 const WebsiteService = require('./website.service');
 const mongoose = require('mongoose');
 
-const UserConstant = require('../user/user.constant');
-const WebsitesConstant = require('../website/website.constant');
-const PackagesConstant = require('../packages/packages.constant');
-
 const { DeleteDomainValidationSchema } = require("./validations/delete-domain.schema");
 const { EditDomainValidationSchema } = require("./validations/edit-domain.schema");
 const { GetWebsitesValidationSchema } = require("./validations/get-websites.schema");
@@ -207,14 +203,6 @@ const updateDomainToVip = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    if(req.user.role !== UserConstant.role.admin)
-    {
-      logger.info('WebsiteController::updateDomainToVip::notAuthorized\n',  info);
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        messages: ["tài khoản Không có quyền."],
-      });
-    }
-
     const { code, packageId } = req.body;
     const domain = await WebsiteModel.findOne({code});
     
@@ -236,37 +224,13 @@ const updateDomainToVip = async (req, res, next) => {
       });
     }
 
-    let vipType = WebsitesConstant.vipType.notTheVip;
-    let expiredAt = WebsitesConstant.expiredAt.doesNotExpire;
+    const getVipTypeAndExpiredAt = WebsiteService.getVipTypeAndExpiredAt(package);
 
-    switch (package.name)
-    {
-        case PackagesConstant.name.vip1 :
-          vipType = WebsitesConstant.vipType.vipWithinAMonth;
-          expiredAt = WebsitesConstant.expiredAt.aMonth;
-          break;
-        case PackagesConstant.name.vip2 :
-            vipType = WebsitesConstant.vipType.vipWithinThreeMonths;
-            expiredAt = WebsitesConstant.expiredAt.threeMonths;
-            break;
-        case PackagesConstant.name.vip3 :
-            vipType = WebsitesConstant.vipType.vipWithinSixMonths;
-            expiredAt = WebsitesConstant.expiredAt.sixMonths;
-            break;
-        case PackagesConstant.name.vip4 :
-            vipType = WebsitesConstant.vipType.vipWithinAYear;
-            expiredAt = WebsitesConstant.expiredAt.aYear;
-            break;
-        default:
-            vipType = WebsitesConstant.vipType.notTheVip;
-            expiredAt = WebsitesConstant.expiredAt.doesNotExpire;   
-    }
-
-    domain.vipType = vipType;
-    domain.expiredAt = new Date(expiredAt);
+    domain.vipType = getVipTypeAndExpiredAt.vipType;
+    domain.expiredAt = new Date(getVipTypeAndExpiredAt.expiredAt);
 
     await domain.save();
-    await WebsiteService.saveHistoryTransactionsInfo({package: package._id, code: domain.code, price: package.price});
+    await WebsiteService.saveHistoryTransactionsInfo({ package: package._id, websiteCode: domain.code, price: package.price });
 
     logger.info('WebsiteController::updateDomainToVip::success\n',  info);
     return res.status(HttpStatus.OK).json({

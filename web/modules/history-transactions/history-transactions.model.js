@@ -4,7 +4,7 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const historyTransactionsSchema = new Schema({
   package: ObjectId,
-  code: String,
+  websiteCode: String,
   price: Number
 }, { timestamps: true });
 

@@ -4,6 +4,7 @@ const UserController = require('./user.controller');
 const UserActionHistoryController = require('../user-action-history/user-action-history.controller');
 const websiteController = require('../website/website.controller');
 const CheckTokenMiddleware = require('../../middlewares/check-token');
+const CheckUserAdminMidddleware = require('../../middlewares/check-user-admin');
 const multer = require('multer');
 
 router.post('/check', UserController.check);
@@ -18,6 +19,6 @@ router.post('/forget-password', UserController.forgetPassword);
 router.post('/reset-password', UserController.resetPassword);
 router.get('/info', CheckTokenMiddleware, UserController.getLoggedInInfo);
 router.get('/actions-history', CheckTokenMiddleware, UserActionHistoryController.getActionsHistory);
-router.put('/website', CheckTokenMiddleware, websiteController.updateDomainToVip);
+router.put('/website', CheckTokenMiddleware, CheckUserAdminMidddleware, websiteController.updateDomainToVip);
 
 module.exports = router;
