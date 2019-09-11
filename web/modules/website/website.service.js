@@ -1,5 +1,6 @@
 const WebsiteModel = require('./website.model');
 const AccountAdsModel = require('../account-adwords/account-ads.model');
+const HistoryTransactionsModel = require('../history-transactions/history-transactions.model');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 /**
@@ -54,9 +55,20 @@ const getValidDomains = async ()=> {
   return domains;
 };
 
+const saveHistoryTransactionsInfo = async ({package, code, price}) => {
+  const historyTransactions = new HistoryTransactionsModel({
+    package,
+    code,
+    price
+  });
+
+  return await historyTransactions.save();
+}
+
 module.exports = {
   createDomain,
   getWebsitesByAccountId,
   isOwnDomain,
-  getValidDomains
+  getValidDomains,
+  saveHistoryTransactionsInfo
 };
