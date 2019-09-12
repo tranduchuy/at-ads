@@ -15,6 +15,7 @@ const { EditDomainValidationSchema } = require("./validations/edit-domain.schema
 const { GetWebsitesValidationSchema } = require("./validations/get-websites.schema");
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
 const { updateDomainToVipValidationsSchema } = require('./validations/update-domain-to-vip.schema');
+const { checkWebsiteByCodeValidationSchema } = require('./validations/check-website-by-code.schema');
 
 const Request = require('../../utils/Request');
 const addDomainForAccountAds = async (req, res, next) => {
@@ -240,12 +241,50 @@ const updateDomainToVip = async (req, res, next) => {
     logger.error('WebsiteController::updateDomainToVip::error', e, '\n', info);
     return next(e);
   }
-}
+};
+
+const checkWebsiteByCode = async (req, res, next) => {
+  const info = {
+    userId: req.user._id,
+    code: req.params.code,
+  }
+  logger.info('WebsiteController::checkWebsiteByCode::is called\n', info);
+  try{
+    const { error } = Joi.validate(req.params, checkWebsiteByCodeValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { code } = req.params;
+    const domain = await WebsiteModel.findOne({code});
+    
+    if(!domain)
+    {
+      logger.info('WebsiteController::checkWebsiteByCode::websiteNotFound\n',  info);
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ["Không tìm thấy domain."],
+      });
+    }
+
+    logger.info('WebsiteController::checkWebsiteByCode::success\n',  info);
+    return res.status(HttpStatus.OK).json({
+      messages: ["Kiểm tra domain thành công."],
+      data: {
+        domain
+      }
+    });
+  }catch(e){
+    logger.error('WebsiteController::checkWebsiteByCode::error', e, '\n', info);
+    return next(e);
+  }
+};
 
 module.exports = {
   addDomainForAccountAds,
   getWebsitesByAccountId,
   editDomain,
   deleteDomain,
-  updateDomainToVip
+  updateDomainToVip,
+  checkWebsiteByCode
 };
