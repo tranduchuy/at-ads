@@ -219,7 +219,7 @@ const getTrafficSourceLogs = async (req, res, next) => {
 			totalItems = result[0].meta[0].totalItems;
 			trafficSourceData = trafficSourceData.map(ele => ele.info);
 			const ips = trafficSourceData.map(ele => ele.ip);
-			const sessions = await ReportService.getSessionCountOfIp(accountKey, from, to, ips);;
+			const sessions = await ReportService.getSessionCountOfIp(accountKey, from, endDateTime, ips);;
 			trafficSourceData = ReportService.addSessionCountIntoTrafficSourceData(trafficSourceData, sessions);
 		}
 

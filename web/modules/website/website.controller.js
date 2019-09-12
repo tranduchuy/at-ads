@@ -6,6 +6,7 @@ const messages = require("../../constants/messages");
 const requestUtil = require('../../utils/RequestUtil');
 const WebsiteModel = require('./website.model');
 const AccountAdsModel = require('../account-adwords/account-ads.model');
+const PackagesModel = require('../packages/packages.model');
 const WebsiteService = require('./website.service');
 const mongoose = require('mongoose');
 
@@ -13,6 +14,7 @@ const { DeleteDomainValidationSchema } = require("./validations/delete-domain.sc
 const { EditDomainValidationSchema } = require("./validations/edit-domain.schema");
 const { GetWebsitesValidationSchema } = require("./validations/get-websites.schema");
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
+const { updateDomainToVipValidationsSchema } = require('./validations/update-domain-to-vip.schema');
 
 const Request = require('../../utils/Request');
 const addDomainForAccountAds = async (req, res, next) => {
@@ -187,10 +189,63 @@ const deleteDomain = async (req, res, next) => {
   }
 };
 
+const updateDomainToVip = async (req, res, next) => {
+  const info = {
+    userId: req.user._id,
+    code: req.body.code,
+    packageId: req.body.packageId
+  }
+  logger.info('WebsiteController::updateDomainToVip::is called\n', info);
+  try{
+    const { error } = Joi.validate(req.body, updateDomainToVipValidationsSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { code, packageId } = req.body;
+    const domain = await WebsiteModel.findOne({code});
+    
+    if(!domain)
+    {
+      logger.info('WebsiteController::updateDomainToVip::websiteNotFound\n',  info);
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ["Không tìm thấy domain."],
+      });
+    }
+
+    const package = await PackagesModel.findOne({_id: packageId});
+
+    if(!package)
+    {
+      logger.info('WebsiteController::updateDomainToVip::packageNotFound\n',  info);
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ["Không tìm thấy package."],
+      });
+    }
+
+    const getVipTypeAndExpiredAt = WebsiteService.getVipTypeAndExpiredAt(package);
+
+    domain.vipType = getVipTypeAndExpiredAt.vipType;
+    domain.expiredAt = new Date(getVipTypeAndExpiredAt.expiredAt);
+
+    await domain.save();
+    await WebsiteService.saveHistoryTransactionsInfo({ package: package._id, websiteCode: domain.code, price: package.price });
+
+    logger.info('WebsiteController::updateDomainToVip::success\n',  info);
+    return res.status(HttpStatus.OK).json({
+      messages: ["Cập nhật thành công."],
+    });
+  }catch(e){
+    logger.error('WebsiteController::updateDomainToVip::error', e, '\n', info);
+    return next(e);
+  }
+}
 
 module.exports = {
   addDomainForAccountAds,
   getWebsitesByAccountId,
   editDomain,
-  deleteDomain
+  deleteDomain,
+  updateDomainToVip
 };
