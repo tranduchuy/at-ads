@@ -1,5 +1,6 @@
 const UserBehaviorLogConstant = require('../user-behavior-log/user-behavior-log.constant');
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
+const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
@@ -228,7 +229,169 @@ const addSessionCountIntoTrafficSourceData = (trafficSourceArr, sessionsArr) => 
 	});
 
 	return trafficSourceArr;
+};
+
+const getInfoOfIpInAutoBlackList = (accountId, page, limit) => {
+	logger.info('ReportService::getInfoOfIpInAutoBlackList::is called ', {accountId, page, limit});
+	return new Promise(async (res, rej) => {
+	  try{
+		const matchStage = {
+			$match: {
+			  accountId
+			}
+		  };
+	  
+		const unwindStage = {
+			$unwind: {
+				path: "$autoBlackListIp"
+			}
+		  };
+	  
+		const groupStage = {
+			$group: {
+				_id: "$autoBlackListIp.ip",
+				campaigns: {
+					$push: {
+					  campaignId: "$campaignId",
+					  campaignName: "$campaignName"
+					}
+				}
+			}
+		};
+	  
+		const projectStage = {
+		  $project: {
+			  _id: 1,
+			  campaigns: 1,
+			  numberOfCampaigns: {$size: "$campaigns"}
+			}
+		};
+  
+		  const facetStage = {
+			$facet: 
+			{
+			  entries: [
+				{ $skip: (page - 1) * limit },
+				{ $limit: limit }
+			  ],
+			  meta: [
+				{$group: {_id: null, totalItems: {$sum: 1}}},
+			  ],
+			}
+		  };
+		  
+		  const query = [
+			matchStage,
+			unwindStage,
+			groupStage,
+			projectStage,
+			facetStage  
+		  ];
+		  
+		const queryInfo = JSON.stringify(query);
+		logger.info('ReportService::getInfoOfIpInAutoBlackList::query', {accountId, queryInfo});
+		
+		const result = await BlockingCriterionsModel.aggregate(query);
+	  
+		logger.info('ReportService::getInfoOfIpInAutoBlackList::success ', {accountId, page, limit});
+		return res(result);
+	  }catch(e){
+		logger.error('ReportService::getInfoOfIpInAutoBlackList::error ', e, {accountId, page, limit});
+		return rej(e);
+	  }
+	});
+};
+  
+const getLogsOfIpsInAutoBlackList = (accountKey, ipsArr) => {
+	logger.info('AccountAdsService::getLogsOfIpsInAutoBlackList::is called ', {accountKey, ipsArr});
+	return new Promise(async (res, rej) => {
+	  try{
+		const matchStage = {
+			$match: {
+			  accountKey,
+			  ip: {$in: ipsArr}
+			}
+		};
+  
+		const sortStage = {
+		  $sort: {
+			createdAt: -1
+		  }
+		};
+	  
+		const groupStage = {
+			$group: {
+				_id: "$ip",
+				logs: {
+					$push: '$$ROOT'
+				}
+			}
+		};
+	  
+		const projectStage = {
+		  $project: {
+			  _id: 1,
+			  log: {
+				$arrayElemAt: ["$logs", 0]
+			  }
+		  }
+		};
+  
+		const projectStage1 = {
+		  $project: {
+			  _id: 1,
+			  network: "$log.networkCompany.name",
+			  isPrivateBrowsing: '$log.isPrivateBrowsing'
+		  }
+		};
+		  
+		const query = [
+		  matchStage,
+		  sortStage,
+		  groupStage,
+		  projectStage,
+		  projectStage1
+		];
+		  
+		const queryInfo = JSON.stringify(query);
+		logger.info('ReportService::getLogsOfIpsInAutoBlackList::query', {accountKey, queryInfo});
+		
+		const result = await UserBehaviorLogModel.aggregate(query);
+	  
+		logger.info('ReportService::getLogsOfIpsInAutoBlackList::success ', {accountKey, ipsArr});
+		return res(result);
+	  }catch(e){
+		logger.error('ReportService::getLogsOfIpsInAutoBlackList::error ', e, {accountKey, ipsArr});
+		return rej(e);
+	  }
+	});
+};
+  
+const addLogInfoIntoIpInfo = (logsInfo, ipsInfo) => {
+	ipsInfo.forEach(ipInfo => {
+		logsInfo.forEach(logInfo => {
+			if(ipInfo._id === logInfo._id)
+			{
+		ipInfo.network = logInfo.network;
+		ipInfo.isPrivateBrowsing = logInfo.isPrivateBrowsing;
+			}
+		});
+	});
+
+	return ipsInfo;
 }
+  
+const filterGroupIpAndSampleIp = (ips) => {
+	let sampleIps = [];
+	let groupIps = [];
+	const regex = new RegExp(/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/);
+
+	ips.forEach(ip => {
+		regex.test(ip) ? sampleIps.push(ip) : groupIps.push(ip);
+	}); 
+
+	return { sampleIps, groupIps };
+};
 
 module.exports = {
 	buildStageGetIPClicks,
@@ -236,5 +399,9 @@ module.exports = {
 	getTrafficSourceStatisticByDay,
 	getTrafficSourceLogs,
 	getSessionCountOfIp,
-	addSessionCountIntoTrafficSourceData
+	addSessionCountIntoTrafficSourceData,
+	getInfoOfIpInAutoBlackList,
+	getLogsOfIpsInAutoBlackList,
+	addLogInfoIntoIpInfo,
+	filterGroupIpAndSampleIp
 };
