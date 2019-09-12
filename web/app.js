@@ -50,4 +50,7 @@ app.use(function (err, req, res, next) {
     });
 });
 
+// seed database
+require('./database/dump-data');
+
 module.exports = app;
