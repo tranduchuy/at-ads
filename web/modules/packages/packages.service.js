@@ -31,28 +31,28 @@ const getPackageInfo = (name) => {
             packageInfo = {
                 name: PackagesConstant.name.vip1,
                 price: PackagesConstant.price.aMonth,
-                numOfDay: PackagesConstant.numOfDay.aMonth
+                numOfDays: PackagesConstant.numOfDay.aMonth
             };
             break;
         case PackagesConstant.name.vip2 :
             packageInfo = {
                 name: PackagesConstant.name.vip2,
                 price: PackagesConstant.price.threeMonth,
-                numOfDay: PackagesConstant.numOfDay.threeMonth
+                numOfDays: PackagesConstant.numOfDay.threeMonth
             };
             break;
         case PackagesConstant.name.vip3 :
             packageInfo = {
                 name: PackagesConstant.name.vip3,
                 price: PackagesConstant.price.sixMonth,
-                numOfDay: PackagesConstant.numOfDay.sixMonth
+                numOfDays: PackagesConstant.numOfDay.sixMonth
             };
             break;
         case PackagesConstant.name.vip4 :
             packageInfo = {
                 name: PackagesConstant.name.vip4,
                 price: PackagesConstant.price.aYear,
-                numOfDay: PackagesConstant.numOfDay.aYear
+                numOfDays: PackagesConstant.numOfDay.aYear
             };
             break;
         default:

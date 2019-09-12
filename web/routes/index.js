@@ -8,5 +8,6 @@ router.use('/account-adwords', require('../modules/account-adwords/account-ads.r
 router.use('/websites', require('../modules/website/website.route'));
 router.use('/fire-base-tokens', require('../modules/fire-base-tokens/fire-base-tokens.route'));
 router.use('/reports', require('../modules/report/report.route'));
+router.use('/packages', require('../modules/packages/packages.route'));
 
 module.exports = router;
