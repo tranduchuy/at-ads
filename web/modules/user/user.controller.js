@@ -528,6 +528,7 @@ const getLoggedInInfo = async (req, res, next) => {
       birthday,
       gender,
       avatar,
+      role: req.user.role,
       usePassword: !!req.user.passwordHash || !!req.user.passwordSalt
     };
 
