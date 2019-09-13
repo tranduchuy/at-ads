@@ -237,6 +237,13 @@ const mappingTrafficSource = (referrer, href) => {
       }
     }
   } else {
+  
+    const hrefURL = new Url(href);
+    const hrefQuery = queryString.parse(hrefURL.query);
+    if (hrefQuery.gclid) {
+      return TRAFFIC_SOURCE_TYPES["google/cpc"];
+    }
+    
     return TRAFFIC_SOURCE_TYPES["direct/none"];
   }
 }
