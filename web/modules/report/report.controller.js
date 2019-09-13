@@ -153,7 +153,8 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 
 		const endDateTime = moment(to).endOf('day');
 		const accountKey = req.adsAccount.key;
-		const result = await ReportService.getTrafficSourceStatisticByDay(accountKey, from, endDateTime);
+		let result = await ReportService.getTrafficSourceStatisticByDay(accountKey, from, endDateTime);
+		result.sort((trafficSource, trafficSource1) =>  trafficSource1.sessionCount - trafficSource.sessionCount);
 
 		logger.info('AccountAdsController::getTrafficSourceStatisticByDay::success');
 		return res.status(HttpStatus.OK).json({
