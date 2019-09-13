@@ -369,7 +369,7 @@ const getDataForIntroPage = () => {
           device: 1,
           os: 1,
           browser: 1,
-          ip: { $concat: [ "*.", "$classC", ".", "$classD"]}}
+          ip: { $concat: [ "*.", "*.", "$classC", ".", "$classD"]}}
       }
       const limitStage = {
         $limit : 30  
