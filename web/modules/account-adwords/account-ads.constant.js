@@ -2,6 +2,7 @@ module.exports = {
   setting: {
     autoBlockByMaxClick: 2,
     autoRemoveBlocking: false,
+    autoBlockWithAiAndBigData: true,
     autoBlackListIp: [],
     autoBlackListIpRanges: false,
     customBlackList: [],

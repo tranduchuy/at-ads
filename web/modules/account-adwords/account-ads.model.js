@@ -13,6 +13,7 @@ const accountAdsSchema = new Schema({
     setting: {
         maxIps: { type: Number, default: AccountAdsConstant.setting.maxIps },
         autoBlockByMaxClick: { type: Number, default: AccountAdsConstant.setting.autoBlockByMaxClick },
+        autoBlockWithAiAndBigData: {type: Boolean, default: AccountAdsConstant.setting.autoBlockWithAiAndBigData},
         autoRemoveBlocking: { type: Boolean, default: AccountAdsConstant.setting.autoRemoveBlocking },
         autoBlackListIp: { type: Array, default: AccountAdsConstant.setting.autoBlackListIp },
         autoBlackListIpRanges: {
