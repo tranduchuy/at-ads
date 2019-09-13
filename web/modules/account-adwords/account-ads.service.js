@@ -752,101 +752,6 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
   });
 };
 
-const getAllIpInAutoBlackListIp = (accountId, page, limit) => 
-{
-  logger.info('AccountAdsService::getDailyClicking::is called ', {accountId, page, limit});
-  return new Promise(async (res, rej) => {
-    try{
-      const matchStage = {
-          $match: {
-            accountId
-          }
-        };
-    
-      const unwindStage = {
-          $unwind: {
-              path: "$autoBlackListIp"
-          }
-        };
-    
-      const groupStage = {
-          $group: {
-              _id: "$autoBlackListIp.ip",
-              campaigns: {
-                  $push: {
-                    campaignId: "$campaignId",
-                    campaignName: "$campaignName"
-                  }
-              }
-          }
-        };
-    
-      const lookupStage = {
-          $lookup: {
-              "from": "UserBehaviorLogs",
-              "localField": "_id",
-              "foreignField": "ip",
-              "as": "logs"
-          }
-        };
-    
-      const projectStage = {
-          $project: {
-              _id: 1,
-              campaigns: 1,
-              log: {
-                  $arrayElemAt: ["$logs", 0]
-              }
-            }
-        };
-    
-      const projectStage1 = {
-        $project: {
-            _id: 1,
-            campaigns: 1,
-            numberOfCampaigns: {$size: "$campaigns"},
-            network: "$log.networkCompany.name",
-            isPrivateBrowsing: '$log.isPrivateBrowsing'
-          }
-        };
-
-        const facetStage = {
-          $facet: 
-          {
-            entries: [
-              { $skip: (page - 1) * limit },
-              { $limit: limit }
-            ],
-            meta: [
-              {$group: {_id: null, totalItems: {$sum: 1}}},
-            ],
-          }
-        };
-        
-        const query = [
-          matchStage,
-          unwindStage,
-          groupStage,
-          lookupStage,
-          projectStage,
-          projectStage1,
-          facetStage  
-        ];
-        
-      const queryInfo = JSON.stringify(query);
-      logger.info('AccountAdsService::getAllIpInAutoBlackListIp::query', {accountId, queryInfo});
-      
-      const result = await BlockingCriterionsModel.aggregate(query);
-    
-      logger.info('AccountAdsService::getAllIpInAutoBlackListIp::success ', {accountId, page, limit});
-      return res(result);
-    }catch(e){
-      logger.error('AccountAdsService::getAllIpInAutoBlackListIp::error ', e, {accountId, page, limit});
-      return rej(e);
-    }
-  });
-};
-
 const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
   logger.info('AccountAdsService::getIpsInfoInClassD::is called ', {accountKey});
   return new Promise(async(res, rej) => {
@@ -1500,7 +1405,6 @@ module.exports = {
   saveSetUpCampaignsByOneDevice,
   getDailyClicking,
   getReportForAccount,
-  getAllIpInAutoBlackListIp,
   getIpsInfoInClassD,
   getIpAndCampaigNumberInCustomBlockingIp,
   removeIpsToAutoBlackListOfOneCampaign,

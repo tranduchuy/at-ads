@@ -37,7 +37,6 @@ const { getIpsInfoInClassDValidationSchema } = require('./validations/get-ips-in
 const { removeIpInAutoBlackListValidationSchema } = require('./validations/remove-Ip-In-Auto-Black-List-Ip.schema');
 const { getIpHistoryValidationSchema } = require('./validations/get-ip-history.schema');
 const { getReportStatisticValidationSchema } = require('./validations/get-report-Statistic.schema');
-const { getIpsInAutoBlackListOfAccountValidationSchema } = require('./validations/get-ips-in-auto-black-list-of-account.schema');
 
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
@@ -1608,60 +1607,6 @@ const getDetailAccountAdword = async (req, res) => {
 		logger.error('AccountAdsController::getDetailAccountAdword::error', e);
 		return next(e);
 	}
-}
-const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
-	const info = {
-		id   : req.adsAccount._id,
-		adsId: req.adsAccount.adsId
-	}
-
-	if (!req.adsAccount.isConnected) {
-		logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::success\n', info);
-		return res.status(HttpStatus.OK).json({
-			messages: ['Lấy dữ liệu thành công.'],
-			data    : {
-				ips: []
-			}
-		});
-	}
-
-	logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::is called\n', info);
-	try {
-		const { error } = Joi.validate(req.query, getIpsInAutoBlackListOfAccountValidationSchema);
-		if (error) {
-			return requestUtil.joiValidationResponse(error, res);
-		}
-
-		let { page, limit } = req.query;
-
-		page = page || Paging.PAGE;
-		limit = limit || Paging.LIMIT;
-		page = Number(page);
-		limit = Number(limit);
-
-		const accountId = req.adsAccount._id;
-		const result = await AccountAdsService.getAllIpInAutoBlackListIp(accountId, page, limit);
-		let entries = [];
-		let totalItems = 0;
-
-		if (result[0].entries.length !== 0) {
-			entries = result[0].entries;
-			totalItems = result[0].meta[0].totalItems;
-		}
-
-		logger.info('AccountAdsController::getIpsInAutoBlackListOfAccount::success\n', info);
-		return res.status(HttpStatus.OK).json({
-			messages: ['Lấy dữ liệu thành công.'],
-			data    : {
-				ips: entries,
-				totalItems
-			}
-		});
-
-	} catch (e) {
-		logger.error('AccountAdsController::getIpsInAutoBlackListOfAccount::error', e, '\n', info);
-		next(e);
-	}
 };
 
 const getIpsInfoInClassD = async (req, res, next) => {
@@ -2142,7 +2087,6 @@ module.exports = {
 	getCampaignsInDB,
 	getSettingOfAccountAds,
 	getDailyClicking,
-	getIpsInAutoBlackListOfAccount,
 	getIpsInfoInClassD,
 	removeAccountAds,
 	removeIpInAutoBlackListIp,
