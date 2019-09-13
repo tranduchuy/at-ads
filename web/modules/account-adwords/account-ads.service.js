@@ -733,8 +733,8 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
       {
         query = [
           matchStage,
-          projectStage,
           sortStage,
+          projectStage,
           // conditionToRemove,
           facetStage   
         ];

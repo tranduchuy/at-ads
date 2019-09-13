@@ -419,7 +419,7 @@ const autoBlockIp = (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		let { maxClick, autoRemove } = req.body;
+		let { maxClick, autoRemove, autoBlockWithAiAndBigData } = req.body;
 		maxClick = Number(maxClick);
 
 		if (maxClick == 0 || maxClick == -1) {
@@ -430,11 +430,13 @@ const autoBlockIp = (req, res, next) => {
 			req.adsAccount.setting.autoRemoveBlocking = autoRemove;
 		}
 
+		req.adsAccount.setting.autoBlockWithAiAndBigData = autoBlockWithAiAndBigData;
+
 		req.adsAccount.save(async (err) => {
 			if (err) {
 				logger.error('AccountAdsController::autoBlockingIp::error', e, '\n', info);
 				return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-					messages: ["Thiết lập block ip tự động không thành công"]
+					messages: ["Thiết lập không thành công"]
 				});
 			}
 
@@ -451,7 +453,7 @@ const autoBlockIp = (req, res, next) => {
 
 			logger.info('AccountAdsController::autoBlockingIp::success\n', info);
 			return res.status(HttpStatus.OK).json({
-				messages: ["Thiết lập block ip tự động thành công"]
+				messages: ["Thiết lập thành công"]
 			});
 		});
 	} catch (e) {
