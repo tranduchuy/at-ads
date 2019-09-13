@@ -37,7 +37,15 @@ const createDomain = async ({ domain, accountId }) => {
  * @returns {Promise<[{domain: string, code: string, expiredAt: Date, status: number}]>} list website.
  */
 const getWebsitesByAccountId = async (accountId) => {
-  return await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(accountId) }).select('domain code expiredAt status isTracking');
+  const websites = await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(accountId) })
+    .select('domain code expiredAt status isTracking isValid')
+    .lean();
+
+	websites.forEach((website, index) => {
+    websites[index].isExpired = isExpired(website);
+	});
+
+  return websites;
 };
 
 /**
@@ -77,7 +85,7 @@ const getVipTypeAndExpiredAt = (package, expired) => {
       case PackagesConstant.name.vip1 :
         expiredAt = !expired || expiredDay.isBefore(now) ? WebsitesConstant.expiredAt.aMonth : moment(expired).add(WebsitesConstant.month.aMonth, 'M').endOf('day');
         vipType = WebsitesConstant.vipType.vipWithinAMonth;
-       
+
         break;
       case PackagesConstant.name.vip2 :
           expiredAt = !expired || expiredDay.isBefore(now) ? WebsitesConstant.expiredAt.threeMonths : moment(expired).add(WebsitesConstant.month.threeMonths, 'M').endOf('day');
@@ -93,7 +101,7 @@ const getVipTypeAndExpiredAt = (package, expired) => {
           break;
       default:
           vipType = WebsitesConstant.vipType.notTheVip;
-          expiredAt = WebsitesConstant.expiredAt.doesNotExpire;   
+          expiredAt = WebsitesConstant.expiredAt.doesNotExpire;
   }
 
   return {vipType, expiredAt};
@@ -107,6 +115,30 @@ const getWebsiteByDomain = async (domain) => {
   }
 };
 
+const findWebsite = async (codeOrIdOrDomain) => {
+  return await WebsiteModel.findOne({
+    $or: [
+      {_id: codeOrIdOrDomain},
+      {code: codeOrIdOrDomain},
+      {domain: codeOrIdOrDomain}
+    ]
+  })
+};
+
+const isExpired = (website) => {
+  if (!website) {
+    return true;
+  }
+
+  if (!website.expiredAt) {
+    return true;
+  }
+
+  const now = moment();
+  const expiredAt = moment(website).endOf('day');
+  return now.isAfter(expiredAt);
+};
+
 module.exports = {
   createDomain,
   getWebsitesByAccountId,
@@ -114,5 +146,7 @@ module.exports = {
   getAllDomainNames,
   saveHistoryTransactionsInfo,
   getVipTypeAndExpiredAt,
-  getWebsiteByDomain
+  getWebsiteByDomain,
+  findWebsite,
+  isExpired
 };
