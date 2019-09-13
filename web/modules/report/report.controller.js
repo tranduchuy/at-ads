@@ -9,6 +9,7 @@ const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.mod
 const { getDetailIpClickValidationSchema } = require('./validations/get-detail-ip-click.schema');
 const { getTrafficSourceStatisticByDayValidationSchema } = require('./validations/get-traffic-source-statistic-by-day.schema');
 const { getTrafficSourceLogsValidationSchema } = require('./validations/get-traffic-source-logs.schema');
+const { getIpsInAutoBlackListOfAccountValidationSchema } = require('./validations/get-ips-in-auto-black-list-of-account.schema');
 
 const ReportService = require('./report.service');
 const requestUtil = require('../../utils/RequestUtil');
@@ -237,10 +238,80 @@ const getTrafficSourceLogs = async (req, res, next) => {
 	}
 };
 
+const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
+	const info = {
+		id   : req.adsAccount._id,
+		adsId: req.adsAccount.adsId
+	}
+
+	if (!req.adsAccount.isConnected) {
+		logger.info('ReportController::getIpsInAutoBlackListOfAccount::success\n', info);
+		return res.status(HttpStatus.OK).json({
+			messages: ['Lấy dữ liệu thành công.'],
+			data    : {
+				ips: []
+			}
+		});
+	}
+
+	logger.info('ReportController::getIpsInAutoBlackListOfAccount::is called\n', info);
+	try {
+		const { error } = Joi.validate(req.query, getIpsInAutoBlackListOfAccountValidationSchema);
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+		}
+
+		let page =  req.query.page || Paging.PAGE;
+		let limit =  req.query.limit || Paging.LIMIT;
+		page = Number(page);
+		limit = Number(limit);
+
+		const accountId = req.adsAccount._id;
+		const accountKey = req.adsAccount.key;
+		const result = await ReportService.getInfoOfIpInAutoBlackList(accountId, page, limit);
+		let entries = [];
+		let totalItems = 0;
+
+		if (result[0].entries.length !== 0) {
+			entries = result[0].entries;
+			totalItems = result[0].meta[0].totalItems;
+			let ips = entries.map(infoOfIp => infoOfIp._id );
+			ips = ReportService.filterGroupIpAndSampleIp(ips);
+
+			if(ips.groupIps.length > 0)
+			{
+				entries = await ReportService.getInfoLogForGroupIp(ips.groupIps, entries);
+			}
+			
+			if(ips.sampleIps.length > 0)
+			{
+				const logsInfo = await ReportService.getLogsOfIpsInAutoBlackList(accountKey, ips.sampleIps);
+				if(logsInfo.length > 0)
+				{
+					entries = ReportService.addLogInfoIntoIpInfo(logsInfo, entries);
+				}
+			}
+		}
+
+		logger.info('ReportController::getIpsInAutoBlackListOfAccount::success\n', info);
+		return res.status(HttpStatus.OK).json({
+			messages: ['Lấy dữ liệu thành công.'],
+			data    : {
+				ips: entries,
+				totalItems
+			}
+		});
+
+	} catch (e) {
+		logger.error('ReportController::getIpsInAutoBlackListOfAccount::error', e, '\n', info);
+		next(e);
+	}
+};
+
 module.exports = {
 	getIPClicks,
 	getDetailIPClick,
 	getTrafficSourceStatisticByDay,
-	getTrafficSourceLogs
-
+	getTrafficSourceLogs,
+	getIpsInAutoBlackListOfAccount
 };

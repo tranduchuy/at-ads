@@ -15,5 +15,11 @@ module.exports = {
     vipWithinThreeMonths: 2,
     vipWithinSixMonths: 3,
     vipWithinAYear: 4
+  },
+  month: {
+    aMonth: 1,
+    threeMonths: 3,
+    sixMonths: 6,
+    aYear: 12
   }
 };

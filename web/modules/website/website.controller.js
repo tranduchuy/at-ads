@@ -225,7 +225,7 @@ const updateDomainToVip = async (req, res, next) => {
       });
     }
 
-    const getVipTypeAndExpiredAt = WebsiteService.getVipTypeAndExpiredAt(package);
+    const getVipTypeAndExpiredAt = WebsiteService.getVipTypeAndExpiredAt(package, domain.expiredAt);
 
     domain.vipType = getVipTypeAndExpiredAt.vipType;
     domain.expiredAt = new Date(getVipTypeAndExpiredAt.expiredAt);
