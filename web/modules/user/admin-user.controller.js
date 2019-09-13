@@ -45,13 +45,13 @@ const login = async (req, res, next) => {
     const user = await UserService.findByEmail(email);
     if (!user) {
       return res.status(HttpStatus.NOT_FOUND).json({
-        messages: 'Email hoặc mật khẩu sai'
+        messages: ['Email hoặc mật khẩu sai']
       });
     }
 
     if (!bcrypt.compareSync(password, user.passwordHash)) {
       return res.status(HttpStatus.NOT_FOUND).json({
-        messages: 'Email hoặc mật khẩu sai'
+        messages: ['Email hoặc mật khẩu sai']
       });
     }
 

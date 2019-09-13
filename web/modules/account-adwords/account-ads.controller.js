@@ -1920,6 +1920,14 @@ const detailUser = async (req, res, next) => {
 
 		const result = await UserBehaviorLogModel.aggregate(stages);
 
+
+		// get last log
+		const lastLog = await UserBehaviorLogModel.findOne({
+			uuid : id,
+		}).sort({
+			createdAt: -1
+		});
+
 		const response = {
 			status  : HttpStatus.OK,
 			messages: [messages.ResponseMessages.SUCCESS],
@@ -1929,7 +1937,8 @@ const detailUser = async (req, res, next) => {
 					page      : page || 1,
 					totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
 				},
-				logs: result[0].entries
+				logs: result[0].entries,
+				last: lastLog
 			}
 		};
 
