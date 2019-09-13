@@ -679,12 +679,6 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
       const now = moment().startOf('day')._d;
       const tomorrow = moment(now).endOf('day')._d;
 
-      const sortStage = {
-        $sort: {
-          createdAt: -1
-        }
-      };
-
       const matchStage = {
           $match: {
             accountKey,
@@ -693,6 +687,12 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
                 $gte: now,
                 $lt: tomorrow
             }
+        }
+      };
+
+      const sortStage = {
+        $sort: {
+          createdAt: -1
         }
       };
 
@@ -732,9 +732,9 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
       if(maxClick > 0)
       {
         query = [
-          sortStage,
           matchStage,
           projectStage,
+          sortStage,
           // conditionToRemove,
           facetStage   
         ];
