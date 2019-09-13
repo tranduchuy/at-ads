@@ -237,6 +237,13 @@ const mappingTrafficSource = (referrer, href) => {
       }
     }
   } else {
+  
+    const hrefURL = new Url(href);
+    const hrefQuery = queryString.parse(hrefURL.query);
+    if (hrefQuery.gclid) {
+      return TRAFFIC_SOURCE_TYPES["google/cpc"];
+    }
+    
     return TRAFFIC_SOURCE_TYPES["direct/none"];
   }
 }
@@ -362,7 +369,7 @@ const getDataForIntroPage = () => {
           device: 1,
           os: 1,
           browser: 1,
-          ip: { $concat: [ "*.", "$classC", ".", "$classD"]}}
+          ip: { $concat: [ "*.", "*.", "$classC", ".", "$classD"]}}
       }
       const limitStage = {
         $limit : 30  

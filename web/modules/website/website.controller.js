@@ -61,6 +61,13 @@ const addDomainForAccountAds = async (req, res, next) => {
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
+    const websitesOfAccount = await WebsiteService.getWebsitesByAccountId(accountId);
+    if (websitesOfAccount.length >= 2) {
+      return res.json(HttpStatus.BAD_REQUEST).json({
+        messages: [`Tài khoàn ${accountAds.adsId} đã đạt giới hạn 2 website`]
+      });
+    }
+
     await WebsiteService.createDomain({ domain, accountId });
     const response = {
       messages: [messages.ResponseMessages.Website.Register.REGISTER_SUCCESS],

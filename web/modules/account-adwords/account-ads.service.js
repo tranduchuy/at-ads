@@ -1,5 +1,6 @@
 const AccountAdsModel = require('./account-ads.model');
 const WebsiteModel = require('../website/website.model');
+const WebsiteService = require('../website/website.service');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const mongoose = require('mongoose');
 
@@ -113,7 +114,7 @@ const getAccountsAdsByUserId = async (userId) => {
   
   if (accountsAds.length !== 0) {
     const promises = accountsAds.map(async (account) => {
-      const websites = await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(account._id) });
+      const websites = await WebsiteService.getWebsitesByAccountId(account._id);
       const query = { 
         accountId: mongoose.Types.ObjectId(account._id),
         isDeleted: false
@@ -126,12 +127,22 @@ const getAccountsAdsByUserId = async (userId) => {
         isConnected: account.isConnected,
         websites,
         key: account.key,
-        campaignNumber
+        campaignNumber,
+        isFree: await isFreeAccount(account)
       }
     });
     return await Promise.all(promises);
   }
   return null;
+};
+
+const isFreeAccount = async (account) => {
+  const websites = await WebsiteService.getWebsitesByAccountId(account._id);
+  let flagNotFree = websites.some(website => {
+    return !website.isExpired;
+  });
+
+  return !flagNotFree;
 };
 
 const createCampaign = (accountId, campaignId) => {
