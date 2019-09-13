@@ -275,13 +275,21 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 		if (result[0].entries.length !== 0) {
 			entries = result[0].entries;
 			totalItems = result[0].meta[0].totalItems;
-			const ips = entries.map(infoOfIp => infoOfIp._id );
-			ips.push('192.146.20.0/24');
-			console.log(ReportService.filterGroupIpAndSampleIp(ips));
-			const logsInfo = await ReportService.getLogsOfIpsInAutoBlackList(accountKey, ips);
-			if(logsInfo.length > 0)
+			let ips = entries.map(infoOfIp => infoOfIp._id );
+			ips = ReportService.filterGroupIpAndSampleIp(ips);
+
+			if(ips.groupIps.length > 0)
 			{
-				entries = ReportService.addLogInfoIntoIpInfo(logsInfo, entries);
+				entries = await ReportService.getInfoLogForGroupIp(ips.groupIps, entries);
+			}
+			
+			if(ips.sampleIps.length > 0)
+			{
+				const logsInfo = await ReportService.getLogsOfIpsInAutoBlackList(accountKey, ips.sampleIps);
+				if(logsInfo.length > 0)
+				{
+					entries = ReportService.addLogInfoIntoIpInfo(logsInfo, entries);
+				}
 			}
 		}
 

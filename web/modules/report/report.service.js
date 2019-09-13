@@ -1,6 +1,7 @@
 const UserBehaviorLogConstant = require('../user-behavior-log/user-behavior-log.constant');
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
+const Async = require('async');
 
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
@@ -393,6 +394,75 @@ const filterGroupIpAndSampleIp = (ips) => {
 	return { sampleIps, groupIps };
 };
 
+const getInfoLogForGroupIp = async (groupIps, ipsInfo) => {
+	logger.info('ReportService::getInfoLogForGroupIp::is called ', {groupIps, ipsInfo});
+	return new Promise((res, rej) => {
+		try{
+			let logsArr = [];
+			Async.eachSeries(groupIps, (ip, callback) => {
+				const ipClass = splitIp(ip);
+
+				if(!ip) {
+					return callback(null);
+				}
+				
+				UserBehaviorLogModel.find({'ip': {$regex: ipClass}})
+				.sort({createdAt: -1})
+				.limit(1)
+				.exec((err, result) => {
+					if(err)
+					{
+						logger.error('ReportService::getInfoLogForGroupIp::error', err, '\n', {groupIps, ipsInfo});
+						return callback(err);
+					}
+					
+					if(result.length > 0)
+					{
+						const data = {
+							_id: ip,
+							network: result[0].networkCompany.name,
+							isPrivateBrowsing: result[0].isPrivateBrowsing
+						}
+
+						logsArr.push(data);
+						return callback();
+					}	
+				});
+			},err => {
+				if(err)
+				{
+					logger.error('ReportService::getInfoLogForGroupIp::error', err, '\n', {groupIps, ipsInfo});
+					return rej(err);
+				}
+
+				return res(addLogInfoIntoIpInfo(logsArr, ipsInfo));
+			});
+		}catch(e){
+			logger.error('ReportService::getInfoLogForGroupIp::error', e, '\n', {groupIps, ipsInfo});
+			return rej(e);
+		}
+	});
+};
+
+const splitIp = (ip) => {
+	const splitIp = ip.split('.');
+	const splitIpClassD = splitIp[3].split('/');	
+	let ipClass = null;
+	
+	switch(splitIpClassD[1]){
+		case '16':
+			ipClass = new RegExp(`^${splitIp.slice(0,2).join('.')}`);
+			break;
+		case '24': 
+			ipClass = new RegExp(`^${splitIp.slice(0,3).join('.')}`);
+			break;
+		default :
+			ipClass = null;
+	}
+
+	return ipClass;
+};
+
 module.exports = {
 	buildStageGetIPClicks,
 	buildStageGetDetailIPClick,
@@ -403,5 +473,6 @@ module.exports = {
 	getInfoOfIpInAutoBlackList,
 	getLogsOfIpsInAutoBlackList,
 	addLogInfoIntoIpInfo,
-	filterGroupIpAndSampleIp
+	filterGroupIpAndSampleIp,
+	getInfoLogForGroupIp
 };
