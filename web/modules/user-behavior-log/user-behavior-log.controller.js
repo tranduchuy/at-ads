@@ -26,22 +26,20 @@ const logTrackingBehavior = async (req, res, next) => {
     let { key, uuid} = req.cookies;
 
     const hrefURL = new Url(href);
-    const domains = await WebsiteService.getValidDomains();
     const hrefOrigin = hrefURL.origin;
 
-    if(domains.indexOf(hrefOrigin) === -1){
-      return res.json({
-        status: HttpStatus.UNAUTHORIZED,
-        data: {},
-        messages: [messages.ResponseMessages.UNAUTHORIZED]
-      });
+    const accountOfKey = await AdAccountModel.findOne({key}).lean();
+
+    const website = await WebsiteService.getWebsiteByDomain(hrefOrigin);
+    if (!website) {
+      return res.json({});
     }
 
-    const accountOfKey = await AdAccountModel.findOne({
-      key: key
-    });
+    if (website.accountAd.toString() !== accountOfKey._id.toString()) {
+      return res.json({});
+    }
 
-    if(!accountOfKey){
+    if(!accountOfKey) {
       key = '';
     }
 

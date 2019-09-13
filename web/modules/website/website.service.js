@@ -50,12 +50,9 @@ const isOwnDomain = async (accountId, userId) => {
   return account.user.toString() === userId.toString();
 };
 
-const getValidDomains = async ()=> {
-  const websites = await WebsiteModel.find();
-  const domains = websites.map(website => {
-    return website.domain;
-  });
-  return domains;
+const getAllDomainNames = async ()=> {
+  const websites = await WebsiteModel.find().lean();
+  return websites.map(website => website.domain);
 };
 
 const saveHistoryTransactionsInfo = async ({package, websiteCode, price}) => {
@@ -96,13 +93,22 @@ const getVipTypeAndExpiredAt = (package) => {
   }
 
   return {vipType, expiredAt};
-}
+};
+
+const getWebsiteByDomain = async (domain) => {
+  try {
+    return await WebsiteModel.findOne({domain}).lean();
+  } catch (e) {
+    return null;
+  }
+};
 
 module.exports = {
   createDomain,
   getWebsitesByAccountId,
   isOwnDomain,
-  getValidDomains,
+  getAllDomainNames,
   saveHistoryTransactionsInfo,
-  getVipTypeAndExpiredAt
+  getVipTypeAndExpiredAt,
+  getWebsiteByDomain
 };
