@@ -30,10 +30,14 @@ buildStageGetIPClicks = (queryCondition) => {
 		},
 		{
 			$project: {
-				_id      : "$logClicks._id",
-				location: "$logClicks.location",
-				device: "$logClicks.device",
-				timestamp: "$_id"
+				_id               : "$logClicks._id",
+				location          : "$logClicks.location",
+				device            : "$logClicks.device",
+				isSpam            : "$logClicks.isSpam",
+				browser           : "$logClicks.browser",
+				os                : "$logClicks.os",
+				isPrivateBrowsing : "$logClicks.isPrivateBrowsing",
+				timestamp         : "$_id"
 			}
 		},
 		{
