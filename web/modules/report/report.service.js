@@ -6,44 +6,44 @@ const Async = require('async');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
 
-buildStageGetIPClicks = (queryCondition) => {
+buildStageGetIPClicks = (queryCondition, page, limit) => {
 	return [
 		{
 			"$match": {
 				"accountKey": queryCondition.accountKey,
-				"ip"        : queryCondition.ip,
-				"type"      : UserBehaviorLogConstant.LOGGING_TYPES.CLICK
-			}
-		},
-		{
-			"$group": {
-				_id      : "$createdAt",
-				logClicks: {
-					$push: "$$ROOT"
-				}
-			}
-		},
-		{
-			$unwind: {
-				path: "$logClicks"
+				"ip"        : queryCondition.ip
 			}
 		},
 		{
 			$project: {
-				_id               : "$logClicks._id",
-				location          : "$logClicks.location",
-				device            : "$logClicks.device",
-				isSpam            : "$logClicks.isSpam",
-				browser           : "$logClicks.browser",
-				os                : "$logClicks.os",
-				isPrivateBrowsing : "$logClicks.isPrivateBrowsing",
-				timestamp         : "$_id"
+				createdAt     : 1,
+				browser       : 1,
+				device        : 1,
+				isSpam        : 1,
+				href          : 1,
+				networkCompany: 1,
+				location      : 1,
+				type          : 1,
+				ip            : 1,
+				uuid          : 1
 			}
 		},
 		{
-			"$sort": {
-				"_id": -1
+			$sort: {
+				createdAt: -1
 			}
+		},
+		{
+			$facet:
+				{
+					entries: [
+						{ $skip: (page - 1) * limit },
+						{ $limit: limit }
+					],
+					meta   : [
+						{ $group: { _id: null, totalItems: { $sum: 1 } } },
+					],
+				}
 		}
 	];
 };
@@ -67,7 +67,7 @@ buildStageGetDetailIPClick = (queryCondition) => {
 		matchStage.createdAt['$lt'] = new Date(queryCondition.endTime);
 	}
 
-	stages.push({$match: matchStage});
+	stages.push({ $match: matchStage });
 
 	stages.push({ '$sort': { 'createdAt': -1 } });
 	stages.push({ "$group": { _id: "$uuid", "count": { "$sum": 1 }, logs: { $push: "$$ROOT" } } });
@@ -76,31 +76,31 @@ buildStageGetDetailIPClick = (queryCondition) => {
 };
 
 const getTrafficSourceStatisticByDay = (accountKey, from, to) => {
-	logger.info('ReportService::getTrafficSourceStatisticByDay::is called ', { accountKey, from , to });
+	logger.info('ReportService::getTrafficSourceStatisticByDay::is called ', { accountKey, from, to });
 
 	return new Promise(async (res, rej) => {
-		try{
-			const matchStage ={
+		try {
+			const matchStage = {
 				$match: {
 					accountKey,
 					createdAt: {
 						$gte: new Date(from),
-						$lt: new Date(to)
+						$lt : new Date(to)
 					}
 				}
 			};
 
 			const groupStage = {
 				$group: {
-					_id: "$trafficSource",
-					uniqueSessions: {$addToSet: "$session"}
-				} 
+					_id           : "$trafficSource",
+					uniqueSessions: { $addToSet: "$session" }
+				}
 			};
 
 			const projectStage = {
 				$project: {
-					_id: 1, 
-					sessionCount: {$size: "$uniqueSessions"}
+					_id         : 1,
+					sessionCount: { $size: "$uniqueSessions" }
 				}
 			};
 
@@ -115,23 +115,23 @@ const getTrafficSourceStatisticByDay = (accountKey, from, to) => {
 
 			logger.info('ReportService::getTrafficSourceStatisticByDay::success');
 			return res(result);
-		}catch(e){
-			logger.info('ReportService::getTrafficSourceStatisticByDay:error ', e, '\n', { accountKey, from , to });
+		} catch (e) {
+			logger.info('ReportService::getTrafficSourceStatisticByDay:error ', e, '\n', { accountKey, from, to });
 			return rej(e);
 		}
 	});
 };
 
 const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
-	logger.info('ReportService::getTrafficSourceLogs::is called ', { accountKey, from , to, page, limit });
+	logger.info('ReportService::getTrafficSourceLogs::is called ', { accountKey, from, to, page, limit });
 	return new Promise(async (res, rej) => {
-		try{
+		try {
 			const matchStage = {
 				$match: {
 					accountKey,
 					createdAt: {
 						$gte: new Date(from),
-						$lt: new Date(to)
+						$lt : new Date(to)
 					}
 				}
 			};
@@ -139,7 +139,7 @@ const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
 			const sortStage = {
 				$sort: {
 					"createdAt": -1
-				}  
+				}
 			};
 
 			const projectStage = {
@@ -149,16 +149,16 @@ const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
 			}
 
 			const facetStage = {
-				$facet: 
-				{
-				  entries: [
-					{ $skip: (page - 1) * limit },
-					{ $limit: limit }
-				  ],
-				  meta: [
-					{$group: {_id: null, totalItems: {$sum: 1}}},
-				  ],
-				}
+				$facet:
+					{
+						entries: [
+							{ $skip: (page - 1) * limit },
+							{ $limit: limit }
+						],
+						meta   : [
+							{ $group: { _id: null, totalItems: { $sum: 1 } } },
+						],
+					}
 			};
 
 			const query = [
@@ -174,25 +174,25 @@ const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
 			logger.info('ReportService::getTrafficSourceLogs::success');
 			return res(result);
 
-		}catch(e){
-			logger.info('ReportService::getTrafficSourceLogs:error ', e, '\n', { accountKey, from , to, page, limit });
+		} catch (e) {
+			logger.info('ReportService::getTrafficSourceLogs:error ', e, '\n', { accountKey, from, to, page, limit });
 			return rej(e);
 		}
 	});
 };
 
-const getSessionCountOfIp = (accountKey, from , to , ips) => {
-	logger.info('ReportService::getSessionCountOfIp::is called ', { accountKey, from , to, ips });
+const getSessionCountOfIp = (accountKey, from, to, ips) => {
+	logger.info('ReportService::getSessionCountOfIp::is called ', { accountKey, from, to, ips });
 	return new Promise(async (res, rej) => {
-		try{
+		try {
 			const matchStage = {
 				$match: {
 					accountKey,
 					createdAt: {
 						$gte: new Date(from),
-						$lt: new Date(to)
+						$lt : new Date(to)
 					},
-					ip: {
+					ip       : {
 						$in: ips
 					}
 				}
@@ -200,9 +200,9 @@ const getSessionCountOfIp = (accountKey, from , to , ips) => {
 
 			const groupStage = {
 				$group: {
-					_id: "$ip",
-					sessionCount: {$sum: 1}
-				} 
+					_id         : "$ip",
+					sessionCount: { $sum: 1 }
+				}
 			};
 
 			const query = [
@@ -216,8 +216,8 @@ const getSessionCountOfIp = (accountKey, from , to , ips) => {
 			logger.info('ReportService::getSessionCountOfIp::success');
 			return res(result);
 
-		}catch(e){
-			logger.info('ReportService::getSessionCountOfIp:error ', e, '\n', { accountKey, from , to, ips});
+		} catch (e) {
+			logger.info('ReportService::getSessionCountOfIp:error ', e, '\n', { accountKey, from, to, ips });
 			return rej(e);
 		}
 	});
@@ -226,8 +226,7 @@ const getSessionCountOfIp = (accountKey, from , to , ips) => {
 const addSessionCountIntoTrafficSourceData = (trafficSourceArr, sessionsArr) => {
 	trafficSourceArr.forEach(ipInfo => {
 		sessionsArr.forEach(sessionInfo => {
-			if(ipInfo.ip === sessionInfo._id)
-			{
+			if (ipInfo.ip === sessionInfo._id) {
 				ipInfo.count = sessionInfo.sessionCount;
 			}
 		});
@@ -237,155 +236,154 @@ const addSessionCountIntoTrafficSourceData = (trafficSourceArr, sessionsArr) => 
 };
 
 const getInfoOfIpInAutoBlackList = (accountId, page, limit) => {
-	logger.info('ReportService::getInfoOfIpInAutoBlackList::is called ', {accountId, page, limit});
+	logger.info('ReportService::getInfoOfIpInAutoBlackList::is called ', { accountId, page, limit });
 	return new Promise(async (res, rej) => {
-	  try{
-		const matchStage = {
-			$match: {
-			  accountId
-			}
-		  };
-	  
-		const unwindStage = {
-			$unwind: {
-				path: "$autoBlackListIp"
-			}
-		  };
-	  
-		const groupStage = {
-			$group: {
-				_id: "$autoBlackListIp.ip",
-				campaigns: {
-					$push: {
-					  campaignId: "$campaignId",
-					  campaignName: "$campaignName"
+		try {
+			const matchStage = {
+				$match: {
+					accountId
+				}
+			};
+
+			const unwindStage = {
+				$unwind: {
+					path: "$autoBlackListIp"
+				}
+			};
+
+			const groupStage = {
+				$group: {
+					_id      : "$autoBlackListIp.ip",
+					campaigns: {
+						$push: {
+							campaignId  : "$campaignId",
+							campaignName: "$campaignName"
+						}
 					}
 				}
-			}
-		};
-	  
-		const projectStage = {
-		  $project: {
-			  _id: 1,
-			  campaigns: 1,
-			  numberOfCampaigns: {$size: "$campaigns"}
-			}
-		};
-  
-		  const facetStage = {
-			$facet: 
-			{
-			  entries: [
-				{ $skip: (page - 1) * limit },
-				{ $limit: limit }
-			  ],
-			  meta: [
-				{$group: {_id: null, totalItems: {$sum: 1}}},
-			  ],
-			}
-		  };
-		  
-		  const query = [
-			matchStage,
-			unwindStage,
-			groupStage,
-			projectStage,
-			facetStage  
-		  ];
-		  
-		const queryInfo = JSON.stringify(query);
-		logger.info('ReportService::getInfoOfIpInAutoBlackList::query', {accountId, queryInfo});
-		
-		const result = await BlockingCriterionsModel.aggregate(query);
-	  
-		logger.info('ReportService::getInfoOfIpInAutoBlackList::success ', {accountId, page, limit});
-		return res(result);
-	  }catch(e){
-		logger.error('ReportService::getInfoOfIpInAutoBlackList::error ', e, {accountId, page, limit});
-		return rej(e);
-	  }
-	});
-};
-  
-const getLogsOfIpsInAutoBlackList = (accountKey, ipsArr) => {
-	logger.info('AccountAdsService::getLogsOfIpsInAutoBlackList::is called ', {accountKey, ipsArr});
-	return new Promise(async (res, rej) => {
-	  try{
-		const matchStage = {
-			$match: {
-			  accountKey,
-			  ip: {$in: ipsArr}
-			}
-		};
-  
-		const sortStage = {
-		  $sort: {
-			createdAt: -1
-		  }
-		};
-	  
-		const groupStage = {
-			$group: {
-				_id: "$ip",
-				logs: {
-					$push: '$$ROOT'
+			};
+
+			const projectStage = {
+				$project: {
+					_id              : 1,
+					campaigns        : 1,
+					numberOfCampaigns: { $size: "$campaigns" }
 				}
-			}
-		};
-	  
-		const projectStage = {
-		  $project: {
-			  _id: 1,
-			  log: {
-				$arrayElemAt: ["$logs", 0]
-			  }
-		  }
-		};
-  
-		const projectStage1 = {
-		  $project: {
-			  _id: 1,
-			  network: "$log.networkCompany.name",
-			  isPrivateBrowsing: '$log.isPrivateBrowsing'
-		  }
-		};
-		  
-		const query = [
-		  matchStage,
-		  sortStage,
-		  groupStage,
-		  projectStage,
-		  projectStage1
-		];
-		  
-		const queryInfo = JSON.stringify(query);
-		logger.info('ReportService::getLogsOfIpsInAutoBlackList::query', {accountKey, queryInfo});
-		
-		const result = await UserBehaviorLogModel.aggregate(query);
-	  
-		logger.info('ReportService::getLogsOfIpsInAutoBlackList::success ', {accountKey, ipsArr});
-		return res(result);
-	  }catch(e){
-		logger.error('ReportService::getLogsOfIpsInAutoBlackList::error ', e, {accountKey, ipsArr});
-		return rej(e);
-	  }
+			};
+
+			const facetStage = {
+				$facet:
+					{
+						entries: [
+							{ $skip: (page - 1) * limit },
+							{ $limit: limit }
+						],
+						meta   : [
+							{ $group: { _id: null, totalItems: { $sum: 1 } } },
+						],
+					}
+			};
+
+			const query = [
+				matchStage,
+				unwindStage,
+				groupStage,
+				projectStage,
+				facetStage
+			];
+
+			const queryInfo = JSON.stringify(query);
+			logger.info('ReportService::getInfoOfIpInAutoBlackList::query', { accountId, queryInfo });
+
+			const result = await BlockingCriterionsModel.aggregate(query);
+
+			logger.info('ReportService::getInfoOfIpInAutoBlackList::success ', { accountId, page, limit });
+			return res(result);
+		} catch (e) {
+			logger.error('ReportService::getInfoOfIpInAutoBlackList::error ', e, { accountId, page, limit });
+			return rej(e);
+		}
 	});
 };
-  
+
+const getLogsOfIpsInAutoBlackList = (accountKey, ipsArr) => {
+	logger.info('AccountAdsService::getLogsOfIpsInAutoBlackList::is called ', { accountKey, ipsArr });
+	return new Promise(async (res, rej) => {
+		try {
+			const matchStage = {
+				$match: {
+					accountKey,
+					ip: { $in: ipsArr }
+				}
+			};
+
+			const sortStage = {
+				$sort: {
+					createdAt: -1
+				}
+			};
+
+			const groupStage = {
+				$group: {
+					_id : "$ip",
+					logs: {
+						$push: '$$ROOT'
+					}
+				}
+			};
+
+			const projectStage = {
+				$project: {
+					_id: 1,
+					log: {
+						$arrayElemAt: ["$logs", 0]
+					}
+				}
+			};
+
+			const projectStage1 = {
+				$project: {
+					_id              : 1,
+					network          : "$log.networkCompany.name",
+					isPrivateBrowsing: '$log.isPrivateBrowsing'
+				}
+			};
+
+			const query = [
+				matchStage,
+				sortStage,
+				groupStage,
+				projectStage,
+				projectStage1
+			];
+
+			const queryInfo = JSON.stringify(query);
+			logger.info('ReportService::getLogsOfIpsInAutoBlackList::query', { accountKey, queryInfo });
+
+			const result = await UserBehaviorLogModel.aggregate(query);
+
+			logger.info('ReportService::getLogsOfIpsInAutoBlackList::success ', { accountKey, ipsArr });
+			return res(result);
+		} catch (e) {
+			logger.error('ReportService::getLogsOfIpsInAutoBlackList::error ', e, { accountKey, ipsArr });
+			return rej(e);
+		}
+	});
+};
+
 const addLogInfoIntoIpInfo = (logsInfo, ipsInfo) => {
 	ipsInfo.forEach(ipInfo => {
 		logsInfo.forEach(logInfo => {
-			if(ipInfo._id === logInfo._id)
-			{
-		ipInfo.network = logInfo.network;
-		ipInfo.isPrivateBrowsing = logInfo.isPrivateBrowsing;
+			if (ipInfo._id === logInfo._id) {
+				ipInfo.network = logInfo.network;
+				ipInfo.isPrivateBrowsing = logInfo.isPrivateBrowsing;
 			}
 		});
 	});
 
 	return ipsInfo;
 }
-  
+
 const filterGroupIpAndSampleIp = (ips) => {
 	let sampleIps = [];
 	let groupIps = [];
@@ -393,58 +391,55 @@ const filterGroupIpAndSampleIp = (ips) => {
 
 	ips.forEach(ip => {
 		regex.test(ip) ? sampleIps.push(ip) : groupIps.push(ip);
-	}); 
+	});
 
 	return { sampleIps, groupIps };
 };
 
 const getInfoLogForGroupIp = async (groupIps, ipsInfo) => {
-	logger.info('ReportService::getInfoLogForGroupIp::is called ', {groupIps, ipsInfo});
+	logger.info('ReportService::getInfoLogForGroupIp::is called ', { groupIps, ipsInfo });
 	return new Promise((res, rej) => {
-		try{
+		try {
 			let logsArr = [];
 			Async.eachSeries(groupIps, (ip, callback) => {
 				const ipClass = splitIp(ip);
 
-				if(!ip) {
+				if (!ip) {
 					return callback(null);
 				}
-				
-				UserBehaviorLogModel.find({'ip': {$regex: ipClass}})
-				.sort({createdAt: -1})
-				.limit(1)
-				.exec((err, result) => {
-					if(err)
-					{
-						logger.error('ReportService::getInfoLogForGroupIp::error', err, '\n', {groupIps, ipsInfo});
-						return callback(err);
-					}
-					
-					if(result.length > 0)
-					{
-						const data = {
-							_id: ip,
-							network: result[0].networkCompany.name,
-							isPrivateBrowsing: result[0].isPrivateBrowsing
+
+				UserBehaviorLogModel.find({ 'ip': { $regex: ipClass } })
+					.sort({ createdAt: -1 })
+					.limit(1)
+					.exec((err, result) => {
+						if (err) {
+							logger.error('ReportService::getInfoLogForGroupIp::error', err, '\n', { groupIps, ipsInfo });
+							return callback(err);
 						}
 
-						logsArr.push(data);
-						return callback();
-					}
+						if (result.length > 0) {
+							const data = {
+								_id              : ip,
+								network          : result[0].networkCompany.name,
+								isPrivateBrowsing: result[0].isPrivateBrowsing
+							}
 
-					return callback()
-				});
-			},err => {
-				if(err)
-				{
-					logger.error('ReportService::getInfoLogForGroupIp::error', err, '\n', {groupIps, ipsInfo});
+							logsArr.push(data);
+							return callback();
+						}
+
+						return callback(null);
+					});
+			}, err => {
+				if (err) {
+					logger.error('ReportService::getInfoLogForGroupIp::error', err, '\n', { groupIps, ipsInfo });
 					return rej(err);
 				}
 
 				return res(addLogInfoIntoIpInfo(logsArr, ipsInfo));
 			});
-		}catch(e){
-			logger.error('ReportService::getInfoLogForGroupIp::error', e, '\n', {groupIps, ipsInfo});
+		} catch (e) {
+			logger.error('ReportService::getInfoLogForGroupIp::error', e, '\n', { groupIps, ipsInfo });
 			return rej(e);
 		}
 	});
@@ -452,15 +447,15 @@ const getInfoLogForGroupIp = async (groupIps, ipsInfo) => {
 
 const splitIp = (ip) => {
 	const splitIp = ip.split('.');
-	const splitIpClassD = splitIp[3].split('/');	
+	const splitIpClassD = splitIp[3].split('/');
 	let ipClass = null;
-	
-	switch(splitIpClassD[1]){
+
+	switch (splitIpClassD[1]) {
 		case '16':
-			ipClass = new RegExp(`^${splitIp.slice(0,2).join('.')}`);
+			ipClass = new RegExp(`^${splitIp.slice(0, 2).join('.')}`);
 			break;
-		case '24': 
-			ipClass = new RegExp(`^${splitIp.slice(0,3).join('.')}`);
+		case '24':
+			ipClass = new RegExp(`^${splitIp.slice(0, 3).join('.')}`);
 			break;
 		default :
 			ipClass = null;
