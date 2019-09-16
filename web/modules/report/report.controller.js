@@ -54,10 +54,11 @@ const getIPClicks = async (req, res, next) => {
 
 		logger.info('ReportController::getIPClicks::stages ', JSON.stringify(stages));
 		const result = await UserBehaviorLogModel.aggregate(stages);
-		const last = await UserBehaviorLogModel.findOne({
-			ip        : ip,
-			accountKey: req.adsAccount.key
-		})
+		const last = await UserBehaviorLogModel
+			.findOne({
+				ip        : ip,
+				accountKey: req.adsAccount.key
+			})
 			.sort({
 				createdAt: -1
 			});

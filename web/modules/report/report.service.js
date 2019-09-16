@@ -427,6 +427,8 @@ const getInfoLogForGroupIp = async (groupIps, ipsInfo) => {
 							logsArr.push(data);
 							return callback();
 						}
+
+						return callback();
 					});
 			}, err => {
 				if (err) {
