@@ -1846,8 +1846,28 @@ const statisticUser = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		const { limit, page, startDate, endDate } = req.query;
+		let { limit, page, startDate, endDate } = req.query;
 
+		startDate = startDate ? moment(startDate, 'DD-MM-YYYY') : null;
+		endDate = endDate ? moment(endDate, 'DD-MM-YYYY') : null;
+		startDate = !startDate ? moment().add(-7, 'd').startOf('day') : moment(startDate).startOf('day');
+		endDate = !endDate ? moment().endOf('day') : moment(endDate).endOf('day');
+		const twoWeek = moment(startDate).add(14, 'd').endOf('day');
+
+		if (endDate.isBefore(startDate)) {
+			logger.info('UserBehaviorLogController::statisticUser::babRequest\n', info);
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.']
+			});
+		}
+
+		if(twoWeek.isBefore(endDate))
+		{
+			logger.info('UserBehaviorLogController::statisticUser::babRequest\n', info);
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ['Khoảng cách giữa ngày bắt đầu và ngày kết thúc tối đa là 2 tuần.']
+			});
+		}
 
 		const stages = UserBehaviorLogService.buildStageStatisticUser({
 			accountKey: req.adsAccount.key ? req.adsAccount.key : null,
@@ -1856,6 +1876,8 @@ const statisticUser = async (req, res, next) => {
 			startDate,
 			endDate
 		});
+
+		logger.info('UserBehaviorLogController::query', JSON.stringify(stages));
 
 		const result = await UserBehaviorLogModel.aggregate(stages);
 		const entries = result[0].entries.map(user => {

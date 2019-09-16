@@ -69,26 +69,15 @@ const createUserBehaviorLog = async ({
 
 buildStageStatisticUser = (queryCondition) => {
   let stages = [];
-  const matchStage = {};
+  const matchStage = {
+    accountKey: queryCondition.accountKey,
+    createdAt: {
+        $gte: new Date(queryCondition.startDate),
+        $lt: new Date(queryCondition.endDate)
+    }
+  };
 
-  matchStage['accountKey'] = queryCondition.accountKey;
-  if (queryCondition.startDate) {
-    matchStage.createdAt = {
-      $gte: moment(queryCondition.startDate, 'DD-MM-YYYY').startOf('date')._d
-    };
-  }
-
-  if (queryCondition.endDate) {
-    matchStage.createdAt = matchStage.createdAt || {};
-    matchStage.createdAt['$lt'] = moment(queryCondition.endDate, 'DD-MM-YYYY').endOf('date')._d;
-  }
-
-  if (Object.keys(matchStage).length > 0) {
-    stages.push({$match: matchStage});
-  }
-
-
-  stages.push({"$sort": {"createdAt": -1}});
+  stages.push({$match: matchStage});
 
   stages.push({
     $group:
@@ -128,7 +117,9 @@ buildStageStatisticUser = (queryCondition) => {
       "utmCampaign": "$info.utmCampaign",
       "utmMedium": "$info.utmMedium",
       "utmSource": "$info.utmSource",
-      "session": "$info.session"
+      "session": "$info.session",
+      "browser": "$info.browser",
+      "os": "$info.os" 
     }
   });
 
