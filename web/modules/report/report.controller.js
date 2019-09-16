@@ -34,20 +34,44 @@ const getIPClicks = async (req, res, next) => {
 	try {
 
 		const { ip } = req.params;
+		let { page, limit } = req.query;
+
+		if (!page) {
+			page = Paging.PAGE;
+		}
+
+		if (!limit) {
+			limit = Paging.LIMIT;
+		}
+
+		page = Number(page);
+		limit = Number(limit);
 
 		const stages = ReportService.buildStageGetIPClicks({
 			ip        : ip,
 			accountKey: req.adsAccount.key
-		});
+		}, page, limit);
 
-		console.log('ReportController::getIPClicks::stages ', JSON.stringify(stages));
-
+		logger.info('ReportController::getIPClicks::stages ', JSON.stringify(stages));
 		const result = await UserBehaviorLogModel.aggregate(stages);
+		const last = await UserBehaviorLogModel.findOne({
+			ip        : ip,
+			accountKey: req.adsAccount.key
+		})
+			.sort({
+				createdAt: -1
+			});
 
 		const response = {
 			status  : HttpStatus.OK,
 			messages: [messages.ResponseMessages.SUCCESS],
-			data    : result
+			data    : {
+				meta : {
+					totalItems: result[0].meta.length > 0 ? result[0].meta[0].totalItems : 0,
+				},
+				items: result[0].entries,
+				last
+			}
 		};
 
 		return res.status(HttpStatus.OK).json(response);
@@ -134,7 +158,7 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 	};
 
 	logger.info('ReportController::getTrafficSourceStatisticByDay is called\n', info);
-	try{
+	try {
 		const { error } = Joi.validate(req.query, getTrafficSourceStatisticByDayValidationSchema);
 
 		if (error) {
@@ -154,16 +178,16 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 		const endDateTime = moment(to).endOf('day');
 		const accountKey = req.adsAccount.key;
 		let result = await ReportService.getTrafficSourceStatisticByDay(accountKey, from, endDateTime);
-		result.sort((trafficSource, trafficSource1) =>  trafficSource1.sessionCount - trafficSource.sessionCount);
+		result.sort((trafficSource, trafficSource1) => trafficSource1.sessionCount - trafficSource.sessionCount);
 
 		logger.info('AccountAdsController::getTrafficSourceStatisticByDay::success');
 		return res.status(HttpStatus.OK).json({
 			messages: ['Lấy dữ liệu thành công'],
-			data: {
+			data    : {
 				TrafficSourceData: result
 			}
 		});
-	}catch(e){
+	} catch (e) {
 		logger.error('ReportController::getTrafficSourceStatisticByDay::error', e);
 		return next(e);
 	}
@@ -180,7 +204,7 @@ const getTrafficSourceLogs = async (req, res, next) => {
 	};
 
 	logger.info('ReportController::getTrafficSourceLogs is called\n', info);
-	try{
+	try {
 		const { error } = Joi.validate(req.query, getTrafficSourceLogsValidationSchema);
 
 		if (error) {
@@ -203,8 +227,7 @@ const getTrafficSourceLogs = async (req, res, next) => {
 			});
 		}
 
-		if(twoWeek.isBefore(endDateTime))
-		{
+		if (twoWeek.isBefore(endDateTime)) {
 			logger.info('AccountAdsController::getTrafficSourceLogs::babRequest\n', info);
 			return res.status(HttpStatus.BAD_REQUEST).json({
 				messages: ['Khoảng cách giữa ngày bắt đầu và ngày kết thúc tối đa là 2 tuần.']
@@ -221,19 +244,20 @@ const getTrafficSourceLogs = async (req, res, next) => {
 			totalItems = result[0].meta[0].totalItems;
 			trafficSourceData = trafficSourceData.map(ele => ele.info);
 			const ips = trafficSourceData.map(ele => ele.ip);
-			const sessions = await ReportService.getSessionCountOfIp(accountKey, from, endDateTime, ips);;
+			const sessions = await ReportService.getSessionCountOfIp(accountKey, from, endDateTime, ips);
+			;
 			trafficSourceData = ReportService.addSessionCountIntoTrafficSourceData(trafficSourceData, sessions);
 		}
 
 		logger.info('AccountAdsController::getTrafficSourceLogs::success');
 		return res.status(HttpStatus.OK).json({
 			messages: ['Lấy dữ liệu thành công'],
-			data: {
+			data    : {
 				trafficSourceData,
 				totalItems
 			}
 		});
-	}catch(e){
+	} catch (e) {
 		logger.error('ReportController::getTrafficSourceLogs::error', e);
 		return next(e);
 	}
@@ -262,8 +286,8 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		let page =  req.query.page || Paging.PAGE;
-		let limit =  req.query.limit || Paging.LIMIT;
+		let page = req.query.page || Paging.PAGE;
+		let limit = req.query.limit || Paging.LIMIT;
 		page = Number(page);
 		limit = Number(limit);
 
@@ -276,19 +300,16 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 		if (result[0].entries.length !== 0) {
 			entries = result[0].entries;
 			totalItems = result[0].meta[0].totalItems;
-			let ips = entries.map(infoOfIp => infoOfIp._id );
+			let ips = entries.map(infoOfIp => infoOfIp._id);
 			ips = ReportService.filterGroupIpAndSampleIp(ips);
 
-			if(ips.groupIps.length > 0)
-			{
+			if (ips.groupIps.length > 0) {
 				entries = await ReportService.getInfoLogForGroupIp(ips.groupIps, entries);
 			}
-			
-			if(ips.sampleIps.length > 0)
-			{
+
+			if (ips.sampleIps.length > 0) {
 				const logsInfo = await ReportService.getLogsOfIpsInAutoBlackList(accountKey, ips.sampleIps);
-				if(logsInfo.length > 0)
-				{
+				if (logsInfo.length > 0) {
 					entries = ReportService.addLogInfoIntoIpInfo(logsInfo, entries);
 				}
 			}
