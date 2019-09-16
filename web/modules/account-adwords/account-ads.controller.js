@@ -816,33 +816,15 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 };
 
 const getListOriginalCampaigns = async (req, res, next) => {
-	const info = {
-		id   : req.adsAccount._id,
-		adsId: req.adsAccount.adsId
-	}
-
-	if (!req.adsAccount.isConnected) {
-		logger.info('AccountAdsController::getListOriginalCampaigns::accountAdsNotConnected\n', info);
-		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
-		});
-	}
-
-	logger.info('AccountAdsController::getListOriginalCampaigns is called\n', info);
+	logger.info('AccountAdsController::getListOriginalCampaigns is called');
 	try {
-		const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
+		const result = await AccountAdsService.retry(req, AdAccountConstant.retryCount, AccountAdsService.getListOriginalCampaigns);
 
-		const processCampaignList = AccountAdsService.filterTheCampaignInfoInTheCampaignList(result);
-
-		logger.info('AccountAdsController::getListOriginalCampaigns::success\n', info);
-		return res.status(HttpStatus.OK).json({
-			messages: ["Lấy danh sách chiến dịch thành công."],
-			data    : { campaignList: processCampaignList }
-		});
+		logger.info('AccountAdsController::connectionConfirmation::success\n');
+		return res.status(result.status).json(result);
 	} catch (e) {
-		const message = GoogleAdwordsService.mapManageCustomerErrorMessage(e);
-		logger.error('AccountAdsController::getOriginalCampaigns::error', e, '\n', info);
-		return next(message);
+		logger.error('AccountAdsController::getOriginalCampaigns::error', e);
+		return next(e);
 	}
 };
 
@@ -2025,7 +2007,7 @@ const getReportStatistic = async (req, res, next) => {
 	}
 };
 
-const getListGoogleAdsOfUser = (req, res, next) => {
+const getListGoogleAdsOfUser = async (req, res, next) => {
 	logger.info('AccountAdsController::getListGoogleAdsOfUser is called. Get list google ads of google id', req.user.googleId);
 	try {
 		const { error } = Joi.validate(req.query, getListGoogleAdsOfUserValidationSchema);
@@ -2040,48 +2022,12 @@ const getListGoogleAdsOfUser = (req, res, next) => {
 			return next(new Error('Chỉ dành cho tài khoản đăng nhập bằng google'));
 		}
 
-		GoogleAdwordsService.getListGoogleAdsAccount(accessToken, refreshToken)
-			.then(results => {
+		req.accessToken  = accessToken;
+		req.refreshToken = refreshToken;
 
-				let adsInfo = results.map(ads => { return { customerId: ads.customerId, name: ads.descriptiveName }});
-				const adsIds = results.map(ads => ads.customerId);
-				console.log(adsIds);
+		const retry = await AccountAdsService.retry(req, AdAccountConstant.retryCount, AccountAdsService.getListGoogleAdsOfUser);
 
-				Async.eachSeries(adsIds, (adsId, callback) => {
-					GoogleAdwordsService.getAccountHierachy(refreshToken, adsId)
-						.then(result => {
-							adsInfo = result.length > 0 ? adsInfo.concat(result) : adsInfo;
-							return callback()
-						}).catch(e => {
-						if (GoogleAdwordsService.getErrorCode(e) === 'USER_PERMISSION_DENIED') {
-							logger.error('AccountAdsController::getListGoogleAdsOfUser::USER_PERMISSION_DENIED');
-							return callback(null);
-						}
-						return callback(e);
-					})
-				}, async err => {
-					if (err) {
-						logger.error('AccountAdsController::getListGoogleAdsOfUser::error', err);
-						return next(err);
-					}
-
-					adsInfo = AccountAdsService.getUnique(adsInfo, 'customerId');
-					const googleAds = adsInfo.length > 0 ? await AccountAdsService.verifyGoogleAdIdToConnect(req.user._id, adsInfo) : [];
-
-					return res.json({
-						status: HttpStatus.OK,
-						data  : {
-							googleAds
-						}
-					});
-				});
-			})
-			.catch(err => {
-				if (GoogleAdwordsService.getErrorCode(err) === 'CUSTOMER_NOT_FOUND') {
-					return next(new Error('Bạn không có tài khoản hợp lệ.'));
-				}
-				return next(err);
-			});
+		return res.json(retry);
 	} catch (e) {
 		logger.error('AccountAdsController::getListGoogleAdsOfUser::error', e);
 		return next(e);
