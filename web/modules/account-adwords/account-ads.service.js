@@ -3,6 +3,7 @@ const WebsiteModel = require('../website/website.model');
 const WebsiteService = require('../website/website.service');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const mongoose = require('mongoose');
+const HttpStatus = require('http-status-codes');
 
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
@@ -1396,6 +1397,120 @@ const getNoClickOfIps = async (accountKey, startTime, endTime) => {
   return noClickOfIpsObj
 };
 
+const retry = async (req, retryCount, handleFn) => {
+  logger.info('AccountAdService::retry is called\n');
+  let count = 1;
+
+  const fn = async () => {
+    try {
+      const r = await handleFn(req);
+      logger.info('AccountAdService::retry::success\n');
+     return r;
+    } catch (e) {
+      if(count <= retryCount)
+      {
+        logger.info('AccountAdService::retry::', count);
+        count++;
+        return await fn();
+      }
+
+      logger.error('AccountAdService::retry::error', e);
+      throw e;
+    } 
+  }
+
+  return await fn();
+};
+
+const getListOriginalCampaigns = (req) => {
+	const info = {
+		id   : req.adsAccount._id,
+		adsId: req.adsAccount.adsId
+	}
+
+  return new Promise( async (resolve, reject) => {
+    if (!req.adsAccount.isConnected) {
+      logger.info('AccountAdService::getListOriginalCampaigns::accountAdsNotConnected\n', info);
+      return resolve({
+        status   : HttpStatus.BAD_REQUEST,
+        messages : ['Tài khoản chưa được kết nối']
+      });
+    }
+  
+    logger.info('AccountAdService::getListOriginalCampaigns is called\n', info);
+    try {
+      const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
+  
+      const processCampaignList = filterTheCampaignInfoInTheCampaignList(result);
+  
+      logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
+      return resolve({
+        status    : HttpStatus.OK,
+        messages  : ["Lấy danh sách chiến dịch thành công."],
+        data      : { campaignList: processCampaignList }
+      });
+    } catch (e) {
+      const message = GoogleAdwordsService.mapManageCustomerErrorMessage(e);
+      logger.error('AccountAdService::getOriginalCampaigns::error', e, '\n', info);
+      return reject(message);
+    }
+  });
+};
+
+const getListGoogleAdsOfUser = (req) => {
+  return new Promise((resolve, reject) => {
+    logger.info('AccountAdService::getListGoogleAdsOfUser is called. Get list google ads of google id', req.user.googleId);
+    try {
+      GoogleAdwordsService.getListGoogleAdsAccount(req.accessToken, req.refreshToken)
+        .then(results => {
+
+          let adsInfo = results.map(ads => { return { customerId: ads.customerId, name: ads.descriptiveName }});
+          const adsIds = results.map(ads => ads.customerId);
+          console.log(adsIds);
+
+          Async.eachSeries(adsIds, (adsId, callback) => {
+            GoogleAdwordsService.getAccountHierachy(req.refreshToken, adsId)
+              .then(result => {
+                adsInfo = result.length > 0 ? adsInfo.concat(result) : adsInfo;
+                return callback()
+              }).catch(e => {
+              if (GoogleAdwordsService.getErrorCode(e) === 'USER_PERMISSION_DENIED') {
+                logger.error('AccountAdService::getListGoogleAdsOfUser::USER_PERMISSION_DENIED');
+                return callback(null);
+              }
+              return callback(e);
+            })
+          }, async err => {
+            if (err) {
+              logger.error('AccountAdService::getListGoogleAdsOfUser::error', err);
+              return reject(err);
+            }
+
+            adsInfo = getUnique(adsInfo, 'customerId');
+            const googleAds = adsInfo.length > 0 ? await verifyGoogleAdIdToConnect(req.user._id, adsInfo) : [];
+
+            return resolve({
+              status: HttpStatus.OK,
+              data  : {
+                googleAds
+              }
+            });
+            
+          });
+        })
+        .catch(err => {
+          if (GoogleAdwordsService.getErrorCode(err) === 'CUSTOMER_NOT_FOUND') {
+            return reject(new Error('Bạn không có tài khoản hợp lệ.'));
+          }
+          return reject(err);
+        });
+    } catch (e) {
+      logger.error('AccountAdService::getListGoogleAdsOfUser::error', e);
+      return reject(e);
+    }
+  })
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1425,5 +1540,8 @@ module.exports = {
   backUpIpOnGoogleAds,
   verifyGoogleAdIdToConnect,
   getUnique,
-  getNoClickOfIps
+  getNoClickOfIps,
+  retry,
+  getListOriginalCampaigns,
+  getListGoogleAdsOfUser
 };
