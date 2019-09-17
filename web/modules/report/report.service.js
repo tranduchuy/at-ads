@@ -16,16 +16,18 @@ buildStageGetIPClicks = (queryCondition, page, limit) => {
 		},
 		{
 			$project: {
-				createdAt     : 1,
-				browser       : 1,
-				device        : 1,
-				isSpam        : 1,
-				href          : 1,
-				networkCompany: 1,
-				location      : 1,
-				type          : 1,
-				ip            : 1,
-				uuid          : 1
+				createdAt        : 1,
+				browser          : 1,
+				device           : 1,
+				isSpam           : 1,
+				href             : 1,
+				networkCompany   : 1,
+				location         : 1,
+				type             : 1,
+				ip               : 1,
+				uuid             : 1,
+				os               : 1,
+				isPrivateBrowsing: 1
 			}
 		},
 		{

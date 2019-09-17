@@ -54,10 +54,11 @@ const getIPClicks = async (req, res, next) => {
 
 		logger.info('ReportController::getIPClicks::stages ', JSON.stringify(stages));
 		const result = await UserBehaviorLogModel.aggregate(stages);
-		const last = await UserBehaviorLogModel.findOne({
-			ip        : ip,
-			accountKey: req.adsAccount.key
-		})
+		const last = await UserBehaviorLogModel
+			.findOne({
+				ip        : ip,
+				accountKey: req.adsAccount.key
+			})
 			.sort({
 				createdAt: -1
 			});
@@ -69,7 +70,10 @@ const getIPClicks = async (req, res, next) => {
 				meta : {
 					totalItems: result[0].meta.length > 0 ? result[0].meta[0].totalItems : 0,
 				},
-				items: result[0].entries,
+				items: result[0].entries.map(e => {
+					e.uuid = `*${e.uuid.slice(-12)}*`;
+					return e;
+				}),
 				last
 			}
 		};
