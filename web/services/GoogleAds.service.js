@@ -483,6 +483,42 @@ const getListGoogleAdsAccount = (accessToken, refreshToken) => {
   })
 };
 
+const getClickReport = (adwordId, campaignIds, fields) => {
+  logger.info('GoogleAdsService::getClickReport', adwordId);
+  return new Promise((resolve, reject) => {
+    const report = new AdwordsReport({
+      developerToken: adwordConfig.developerToken,
+      userAgent: adwordConfig.userAgent,
+      client_id: adwordConfig.client_id,
+      client_secret: adwordConfig.client_secret,
+      refresh_token: adwordConfig.refresh_token,
+      clientCustomerId: adwordId,
+    });
+    report.getReport(adwordConfig.version, {
+      reportName: 'Click Performace report',
+      reportType: 'CLICK_PERFORMANCE_REPORT',
+      fields,
+      filters: [
+        { field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED'] },
+        { field: 'CampaignId', operator: 'IN', values: campaignIds }
+      ],
+      dateRangeType: 'TODAY',
+      format: 'CSV',
+      additionalHeaders: {
+          skipReportHeader: true,
+          skipReportSummary: true
+      }
+    }, (error, report) => {
+      if (error) {
+        logger.error('GoogleAdsService::getClickReport::error', error);
+        return reject(error);
+      }
+      logger.info('GoogleAdsService::getClickReport::success', report);
+      return resolve(report);
+    });
+  });
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
@@ -496,5 +532,6 @@ module.exports = {
   getReportOnDevice,
   enabledOrPauseTheCampaignByDevice,
   getCampaignsName,
-  getIpBlockOfCampaigns
+  getIpBlockOfCampaigns,
+  getClickReport
 };
