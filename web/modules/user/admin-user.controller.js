@@ -1,13 +1,19 @@
 const _ = require('lodash');
 const log4js = require('log4js');
+const Joi = require('@hapi/joi');
 const bcrypt = require('bcrypt');
 const HttpStatus = require('http-status-codes');
 const logger = log4js.getLogger('Controllers');
 const {convertObjectToQueryString} = require('../../utils/RequestUtil');
+const requestUtil = require('../../utils/RequestUtil');
 const UserModel = require('./user.model');
 const UserService = require('./user.service');
 const UserConstants = require('./user.constant');
 const UserTokenService = require('../userToken/userToken.service');
+const { Paging } = require('../account-adwords/account-ads.constant');
+const AdminUserService = require('./admin-user.service');
+
+const { getUsersListForAdminPageValidationSchema } = require('./validations/get-user-list-for-admin-page.schema');
 
 const list = async (req, res, next) => {
   logger.info('UserController::list::called');
@@ -86,10 +92,46 @@ const login = async (req, res, next) => {
   }
 };
 
+const getUsersListForAdminPage = async (req, res, next) => {
+  logger.info('Admin/UserController::getListUserForAdminPage::is Called', { id: req.user._id });
+  try{
+    const { error } = Joi.validate(req.query, getUsersListForAdminPageValidationSchema);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+    }
+    
+    const { email, name } = req.query;
+
+    let limit = parseInt(req.query.limit || Paging.LIMIT);
+    let page = parseInt(req.query.page || Paging.PAGE);
+
+    const data = await AdminUserService.getUsersListForAdminPage(email, name, page, limit);
+    let entries = [];
+    let totalItems = 0;
+    if(data[0].entries.length > 0)
+    {
+      entries = data[0].entries;
+      totalItems = data[0].meta[0].totalItems
+    }
+
+    res.status(HttpStatus.OK).json({
+      messages: ['Lấy dữ liệu thành công.'],
+      data: {
+        entries,
+        totalItems
+      }
+    })
+  }catch(e){
+    return next(e);
+  }
+}
+
 const AdminUserController = {
   list,
   update,
-  login
+  login,
+  getUsersListForAdminPage
 };
 
 module.exports = AdminUserController;
