@@ -70,13 +70,7 @@ const getIPClicks = async (req, res, next) => {
 				meta : {
 					totalItems: result[0].meta.length > 0 ? result[0].meta[0].totalItems : 0,
 				},
-				items: result[0].entries.map(e => {
-					if(e.uuid)
-					{
-						e.uuid = `*${e.uuid.slice(-12)}*`;	
-					}
-					return e;
-				}),
+				items: result[0].entries,
 				last
 			}
 		};
