@@ -2,6 +2,8 @@ const log4js = require('log4js');
 const UserModel = require('../user/user.model');
 const GlobalConstant = require('../../constants/global.constant');
 const logger = log4js.getLogger(GlobalConstant.LoggerTargets.Service);
+const AccountAdsModel = require('../account-adwords/account-ads.model');
+const Mongoose = require('mongoose');
 
 const getUsersListForAdminPage = (email, name, page, limit) => {
     return new Promise( async (res, rej) => {
@@ -25,11 +27,43 @@ const getUsersListForAdminPage = (email, name, page, limit) => {
                 };
             }
         
-            const projectStage = {
-                $project: {
-                    user:  '$$ROOT'
+            const facetStage = {
+                $facet:
+                    {
+                        entries: [
+                            { $skip: (page - 1) * limit },
+                            { $limit: limit }
+                        ],
+                        meta   : [
+                            { $group: { _id: null, totalItems: { $sum: 1 } } },
+                        ],
+                    }
+            };
+        
+            const query = email || name ? [matchStage, facetStage] : [facetStage];
+
+            logger.info('Admin/UserService::getUsersListForAdminPage::query\n', JSON.stringify(query));
+
+            const usersList = await UserModel.aggregate(query);
+            return res(usersList);
+        }catch(e){
+            logger.error('Admin/UserService::getUsersListForAdminPage::error\n', e);
+            return rej(e);
+        }
+    });
+};
+
+const getAccountsListForAdminPage = (userId, page, limit) => {
+    return new Promise( async (res, rej) => {
+        logger.info('Admin/UserService::getAccountsListForAdminPage::is Called', { userId, page, limit });
+        try
+        {
+            const user = new Mongoose.Types.ObjectId(userId);
+            const matchStage = { 
+                $match: {
+                    user
                 }
-            }
+            };
         
             const facetStage = {
                 $facet:
@@ -44,19 +78,21 @@ const getUsersListForAdminPage = (email, name, page, limit) => {
                     }
             };
         
-            const query = email || name ? [matchStage, projectStage, facetStage] : [projectStage, facetStage];
+            const query = userId ? [matchStage, facetStage] : [facetStage];
 
-            logger.info('Admin/UserService::getUsersListForAdminPage::query\n', JSON.stringify(query));
+            const accountsList = await AccountAdsModel.aggregate(query);
 
-            const usersList = await UserModel.aggregate(query);
-            return res(usersList);
+            logger.info('Admin/UserService::getAccountsListForAdminPage::query\n', JSON.stringify(query));
+
+            return res(accountsList);
         }catch(e){
-            logger.error('Admin/UserService::getUsersListForAdminPage::error\n', e);
+            logger.error('Admin/UserService::getAccountsListForAdminPage::error\n', e);
             return rej(e);
         }
     });
-};
+}
 
 module.exports = {
-    getUsersListForAdminPage
+    getUsersListForAdminPage,
+    getAccountsListForAdminPage
 };

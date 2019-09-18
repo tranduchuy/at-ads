@@ -14,6 +14,7 @@ const { Paging } = require('../account-adwords/account-ads.constant');
 const AdminUserService = require('./admin-user.service');
 
 const { getUsersListForAdminPageValidationSchema } = require('./validations/get-user-list-for-admin-page.schema');
+const { getAccountsListForAdminPageValidationSchema } = require('./validations/get-accounts-list-for-admin-page.schema');
 
 const list = async (req, res, next) => {
   logger.info('UserController::list::called');
@@ -125,13 +126,49 @@ const getUsersListForAdminPage = async (req, res, next) => {
   }catch(e){
     return next(e);
   }
-}
+};
+
+const getAccountsListForAdminPage = async (req, res, next) => {
+  logger.info('Admin/UserController::getAccountsListForAdminPage::is Called', { id: req.user._id });
+  try{
+    const { error } = Joi.validate(req.query, getAccountsListForAdminPageValidationSchema);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+    }
+    
+    const { userId } = req.query;
+
+    let limit = parseInt(req.query.limit || Paging.LIMIT);
+    let page = parseInt(req.query.page || Paging.PAGE);
+
+    const data = await AdminUserService.getAccountsListForAdminPage(userId, page, limit);
+    let entries = [];
+    let totalItems = 0;
+    if(data[0].entries.length > 0)
+    {
+      entries = data[0].entries;
+      totalItems = data[0].meta[0].totalItems
+    }
+
+    res.status(HttpStatus.OK).json({
+      messages: ['Lấy dữ liệu thành công.'],
+      data: {
+        entries,
+        totalItems
+      }
+    })
+  }catch(e){
+    return next(e);
+  }
+};
 
 const AdminUserController = {
   list,
   update,
   login,
-  getUsersListForAdminPage
+  getUsersListForAdminPage,
+  getAccountsListForAdminPage
 };
 
 module.exports = AdminUserController;
