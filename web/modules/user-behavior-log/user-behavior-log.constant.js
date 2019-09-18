@@ -222,8 +222,23 @@ const GOOGLE_URLs = [
   "google.co.zw"
 ];
 
+const MESSAGE = {
+  accountNotFound: 'Không tìm thấy tài khoản GoogleAds',
+  campaignNotFound: 'Không tìm thấy chiến dịch',
+  logNotFound: 'Không tìm thấy log',
+  ipExistsInDB: 'Ip đang nằm trong blackList',
+  ipExistsInWhiteList: 'Ip đang nằm trong whiteList',
+  blockIpByGroup: 'Ip bị chặn, do thiết lập chặn theo nhóm',
+  ipNumberGreaterThanMaxClick: 'Ip bị chặn, do số lượng click của ip lớn hơn giới hạn click cho phép',
+  ipNumberLessThanMaxClick: 'Số lượng click của ip nhỏ hơn giới hạn click cho phép || không có gclib',
+  blockIpByNetworkCompany: 'Ip bị chặn theo thiết lập chặn theo nhà mạng',
+  errorGoogle: 'Lỗi trong lúc xử lý',
+  privateBrowser: 'Ip bị chặn, do thiết lập chặn vào trang bằng trình ẩn danh'
+}
+
 module.exports = {
   LOGGING_TYPES,
   GOOGLE_URLs,
-  TRAFFIC_SOURCE_TYPES
+  TRAFFIC_SOURCE_TYPES,
+  MESSAGE
 };
