@@ -8,7 +8,7 @@ const googleAdsErrorsSchema = new Schema({
 	serviceVersion: String,
 	authConfig: Object,
 	params: Object,
-	error: Object,
+	error: String,
 	functionName: String
 }, { timestamps: true });
 
