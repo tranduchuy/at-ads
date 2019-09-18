@@ -15,7 +15,7 @@ const AccountAdsService = require('../modules/account-adwords/account-ads.servic
 const { MESSAGE } = require('../modules/user-behavior-log/user-behavior-log.constant');
 
 const saveIpIntoAutoBlackListIp = async (key, id, ip, message) => {
-    logger.info('\n\n\n\n\n\njobs::saveIpIntoAutoBlackListIp::is called', { key, id, ip });
+    logger.info('jobs::saveIpIntoAutoBlackListIp::is called', { key, id, ip });
     try {
         const updateData = { $push: { "setting.autoBlackListIp": ip } };
         await AccountAdsModel.updateOne({ key }, updateData);
