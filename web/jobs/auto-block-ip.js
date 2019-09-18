@@ -12,13 +12,14 @@ const NetworkCompanyName = require('../constants/networkCompanyName.contant');
 const { checkIpsInWhiteList } = require('../services/check-ip-in-white-list.service');
 const AccountAdsConstant = require('../modules/account-adwords/account-ads.constant');
 const AccountAdsService = require('../modules/account-adwords/account-ads.service');
+const { MESSAGE } = require('../modules/user-behavior-log/user-behavior-log.constant');
 
-const saveIpIntoAutoBlackListIp = async (key, id, ip) => {
+const saveIpIntoAutoBlackListIp = async (key, id, ip, message) => {
     logger.info('jobs::saveIpIntoAutoBlackListIp::is called', { key, id, ip });
     try {
         const updateData = { $push: { "setting.autoBlackListIp": ip } };
         await AccountAdsModel.updateOne({ key }, updateData);
-        await updateIsSpamStatus(id);
+        await updateIsSpamStatus(id, message);
 
         return;
     } catch (e) {
@@ -27,11 +28,11 @@ const saveIpIntoAutoBlackListIp = async (key, id, ip) => {
     }
 };
 
-const updateIsSpamStatus = async (id) => {
+const updateIsSpamStatus = async (id, message) => {
     logger.info('jobs::updateIsSpamStatus::is called', { id });
     try {
         const queryUpdate = { _id: id };
-        const dataUpdate = { $set: { isSpam: true } };
+        const dataUpdate = { $set: { isSpam: true, reason: { message } } };
 
         const query = JSON.stringify({ queryUpdate, dataUpdate });
 
@@ -85,13 +86,17 @@ const countClickInLogs = async (ip, accountKey) => {
     }
 };
 
-const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg) => {
+const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, message, log) => {
     if (isConnected) {
         const query = { accountId: accountAds._id, isDeleted: false };
         const campaignsOfAccount = await BlockingCriterionsModel.find(query);
 
         if (campaignsOfAccount.length === 0) {
             logger.info('jobs::autoBlockIp::accountAdsWithoutCampaign.', { id });
+            log.reason = {
+                message: MESSAGE.campaignNotFound
+            }
+            await log.save();
             channel.ack(msg);
             return;
         }
@@ -139,11 +144,16 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg) 
             }, async error => {
                 if (error) {
                     logger.error('jobs::autoBlockIp::error', error, { id });
+                    log.reason = {
+                        message: MESSAGE.errorGoogle,
+                        error: JSON.stringify(error)
+                    }
+                    await log.save();
                     //   channel.ack(msg); // TODO: improve call google api limited.
                     return;
                 }
     
-                await saveIpIntoAutoBlackListIp(key, id, ip);
+                await saveIpIntoAutoBlackListIp(key, id, ip, message);
                 logger.info('jobs::autoBlockIp::success', { id });
                 channel.ack(msg);
                 return;
@@ -151,7 +161,7 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg) 
         });
     }
     else {
-        await updateIsSpamStatus(id);
+        await updateIsSpamStatus(id, message);
         logger.info('jobs::autoBlockIp::success', { id });
         channel.ack(msg);
         return;
@@ -206,6 +216,7 @@ module.exports = async (channel, msg) => {
     try {
         const id = JSON.parse(msg.content.toString());
         const log = await UserBehaviorLogsModel.findOne({ _id: id });
+        let message = '';
 
         if (!log) {
             logger.info('jobs::autoBlockIp::CannotFindLog.', { id });
@@ -220,6 +231,10 @@ module.exports = async (channel, msg) => {
 
         if (!accountAds) {
             logger.info('jobs::autoBlockIp::accountAdsNotFound.', { id });
+            log.reason = {
+                message: MESSAGE.accountNotFound
+            };
+            await log.save();
             channel.ack(msg);
             return;
         }
@@ -230,6 +245,10 @@ module.exports = async (channel, msg) => {
         if(!checkIpInCustomWhiteList.status)
         {
             logger.info('jobs::autoBlockIp::IpExistsInCustomWhiteList.', { id, ip });
+            log.reason = {
+                message: MESSAGE.ipExistsInWhiteList
+            };
+            await log.save();
             channel.ack(msg);
             return;
         }
@@ -242,6 +261,7 @@ module.exports = async (channel, msg) => {
             const sliceIp = splitIp.slice(0,2);
             ip = sliceIp.join('.') + ".0.0/16";
             ipRangesFlag = 1;
+            message = MESSAGE.blockIpByGroup;
         }
 
         const ipRangesClassD = accountAds.setting.autoBlackListIpRanges.classD;
@@ -250,6 +270,7 @@ module.exports = async (channel, msg) => {
            const sliceIp = splitIp.slice(0,3);
            ip = sliceIp.join('.') + ".0/24";
            ipRangesFlag = 1;
+           message = MESSAGE.blockIpByGroup;
         }
 
         const blackList = {
@@ -262,6 +283,11 @@ module.exports = async (channel, msg) => {
 
         if (ips.length !== 0) {
             logger.info('jobs::autoBlockIp::ipExistsInBlackList.', { id });
+            log.reason = {
+                message: MESSAGE.ipExistsInDB
+            };
+            log.isSpam = true;
+            await log.save();
             channel.ack(msg);
             return;
         }
@@ -274,20 +300,32 @@ module.exports = async (channel, msg) => {
                     flag = checkNetWorkCompany(log, accountAds);
                 }
 
+                message = MESSAGE.blockIpByNetworkCompany;
+
                 if (flag === 0) {
                     const countClick = await countClickInLogs(ip, key);
                     const maxClick = accountAds.setting.autoBlockByMaxClick;
 
-                    if (maxClick === -1 || countClick <= maxClick || !log.gclid) {
+                    if (maxClick === -1 || countClick < maxClick || !log.gclid) {
                         logger.info('jobs::autoBlockIp::success.', { id });
+                        log.reason = {
+                            message: MESSAGE.ipNumberLessThanMaxClick
+                        }
+                        await log.save();
                         channel.ack(msg);
                         return;
                     }
+
+                    message = MESSAGE.ipNumberGreaterThanMaxClick;
                 }
+            }
+            else
+            {
+                message = MESSAGE.privateBrowser;
             }
         }
 
-        await saveIpIntoDB(isConnected, accountAds, ip, key, id, channel, msg);     
+        await saveIpIntoDB(isConnected, accountAds, ip, key, id, channel, msg, message, log);     
     } catch (e) {
         logger.error('jobs::autoBlockIp::error', e);
         channel.ack(msg);

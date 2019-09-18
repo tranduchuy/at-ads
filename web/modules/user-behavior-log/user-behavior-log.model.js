@@ -46,7 +46,8 @@ const userBehaviorLogSchema = new Schema({
   },
   isPrivateBrowsing: {type: Boolean, default: false},
   isSpam: {type: Boolean, default: false},
-  trafficSource: Number
+  trafficSource: Number,
+  reason: Object
 }, { timestamps: true });
 
 const UserBehaviorLogSchema = mongoose.model('UserBehaviorLog', userBehaviorLogSchema, 'UserBehaviorLogs');
