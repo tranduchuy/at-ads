@@ -28,7 +28,7 @@ buildStageGetIPClicks = (queryCondition, page, limit) => {
 				uuid             : 1,
 				os               : 1,
 				isPrivateBrowsing: 1,
-				path             : 1,
+				pathname         : 1,
 				domain           : 1
 			}
 		},
