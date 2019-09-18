@@ -17,7 +17,6 @@ const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-do
 const { updateDomainToVipValidationsSchema } = require('./validations/update-domain-to-vip.schema');
 const { checkWebsiteByCodeValidationSchema } = require('./validations/check-website-by-code.schema');
 
-const Request = require('../../utils/Request');
 const addDomainForAccountAds = async (req, res, next) => {
   logger.info('WebsiteController::addDomainForAccountAds is called, userId:', req.user._id);
   try {
@@ -28,17 +27,6 @@ const addDomainForAccountAds = async (req, res, next) => {
     }
 
     const { domain, accountId } = req.body;
-
-    const html = await Request.getHTML(domain);
-
-    if(!html) {
-      const result = {
-        messages: [messages.ResponseMessages.Website.NOT_VALID],
-        data: {}
-      };
-      logger.info('WebsiteController::addDomainForAccountAds::domainInValid::userId:', req.user._id);
-      return res.status(HttpStatus.BAD_REQUEST).json(result);
-    }
 
     const duplicateDomain = await WebsiteModel.findOne({ domain: domain });
     if (duplicateDomain !== null) {

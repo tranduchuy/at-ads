@@ -96,6 +96,7 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, 
             log.reason = {
                 message: MESSAGE.campaignNotFound
             }
+            log.isSpam = true;
             await log.save();
             channel.ack(msg);
             return;
