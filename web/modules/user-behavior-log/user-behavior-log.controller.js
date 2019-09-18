@@ -21,6 +21,7 @@ const Config = require('config');
 const rabbitChannels = Config.get('rabbitChannels');
 
 const logTrackingBehavior = async (req, res, next) => {
+  logger.info('UserBehaviorController::logTrackingBehavior::is called');
   try {
     const href = req.body.href;
     let { key, uuid} = req.cookies;
@@ -111,7 +112,7 @@ const logTrackingBehavior = async (req, res, next) => {
       messages: [messages.ResponseMessages.SUCCESS]
     });
   } catch (e) {
-    logger.error('UserController::logTrackingBehavior::error', e);
+    logger.error('UserBehaviorController::logTrackingBehavior::error', e);
     return next(e);
   }
 };
@@ -123,13 +124,13 @@ const getlogTrackingBehavior = async (req, res, next) => {
       messages: [messages.ResponseMessages.SUCCESS]
     });
   } catch (e) {
-    logger.error('UserController::logTrackingBehavior::error', e);
+    logger.error('UserBehaviorController::logTrackingBehavior::error', e);
     return next(e);
   }
 };
 
 const getLogForIntroPage = async (req, res, next) => {
-  logger.error('UserController::getLogForIntroPage::is called');
+  logger.info('UserBehaviorController::getLogForIntroPage::is called');
   try{
     const data = await UserBehaviorLogService.getDataForIntroPage();
     return res.status(HttpStatus.OK).json({
@@ -140,7 +141,7 @@ const getLogForIntroPage = async (req, res, next) => {
     });
   }catch(e)
   {
-    logger.error('UserController::getLogForIntroPage::error', e);
+    logger.error('UserBehaviorController::getLogForIntroPage::error', e);
     return next(e);
   }
 };
