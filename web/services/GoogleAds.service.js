@@ -6,6 +6,7 @@ const AdwordsConstants = require('node-adwords').AdwordsConstants;
 const ManagerCustomerMsgs = require('../constants/ManagerCustomerMsgs');
 const AdwordsReport = require('node-adwords').AdwordsReport;
 const config = require('config');
+const GoogleAdsErrorService = require('../modules/google-ads-error/google-ads-error.service');
 
 /**
  * Send request to manage an adword id
@@ -13,40 +14,50 @@ const config = require('config');
  * @return {Promise<any>}
  */
 const sendManagerRequest = function (accountAdsId) {
-  return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::sendManagerRequest', accountAdsId);
+	return new Promise((resolve, reject) => {
+		logger.info('GoogleAdsService::sendManagerRequest', accountAdsId);
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : adwordConfig.refresh_token,
+			clientCustomerId: adwordConfig.clientCustomerId,
+		};
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordConfig.clientCustomerId,
-    });
+		const user = new AdwordsUser(authConfig);
+		const ManagedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
+		const operation = {
+			operator: 'ADD',
+			operand : {
+				managerCustomerId     : adwordConfig.managerCustomerId,
+				clientCustomerId      : accountAdsId,
+				linkStatus            : 'PENDING',
+				pendingDescriptiveName: adwordConfig.pendingDescriptiveName,
+				isHidden              : false
+			}
+		};
+		const params = { operations: [operation] };
 
-    const ManagedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
-    const operation = {
-      operator: 'ADD',
-      operand: {
-        managerCustomerId: adwordConfig.managerCustomerId,
-        clientCustomerId: accountAdsId,
-        linkStatus: 'PENDING',
-        pendingDescriptiveName: adwordConfig.pendingDescriptiveName,
-        isHidden: false
-      }
-    };
+		ManagedCustomerService.mutateLink(params, (error, result) => {
+			if (error) {
+				logger.error('GoogleAdsService::sendManagerRequest::error', error);
+				GoogleAdsErrorService.createLogError({
+					authConfig,
+					params,
+					functionName  : 'GoogleAdsService::sendManagerRequest',
+					error         : JSON.parse(JSON.stringify(error)),
+					serviceVersion: adwordConfig.version,
+					serviceName   : 'ManagedCustomerService',
+					moduleName    : 'AdwordsUser'
+				});
+				return reject(error);
+			}
 
-    ManagedCustomerService.mutateLink({ operations: [operation] }, (error, result) => {
-      if (error) {
-        logger.error('GoogleAdsService::sendManagerRequest::error', error);
-        return reject(error);
-      }
-
-      logger.info('GoogleAdsService::sendManagerRequest::result', result);
-      return resolve(result);
-    });
-  });
+			logger.info('GoogleAdsService::sendManagerRequest::result', result);
+			return resolve(result);
+		});
+	});
 };
 
 /**
@@ -55,79 +66,101 @@ const sendManagerRequest = function (accountAdsId) {
  * @return {Promise<[{id: string, name: string}]>}
  */
 const getListCampaigns = function (adwordId) {
-  return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::getListCampaigns', adwordId);
+	return new Promise((resolve, reject) => {
+		logger.info('GoogleAdsService::getListCampaigns', adwordId);
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const user = new AdwordsUser(authConfig);
 
-    let campaignService = user.getService('CampaignService', adwordConfig.version);
-    const selector = {
-      fields: ['Id', 'Name', 'Status', 'ServingStatus', 'TargetGoogleSearch'],
-      ordering: [{ field: 'Name', sortOrder: 'ASCENDING' }],
-      paging: { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
-    };
+		let campaignService = user.getService('CampaignService', adwordConfig.version);
+		const selector = {
+			fields  : ['Id', 'Name', 'Status', 'ServingStatus', 'TargetGoogleSearch'],
+			ordering: [{ field: 'Name', sortOrder: 'ASCENDING' }],
+			paging  : { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
+		};
+		const params = { serviceSelector: selector };
 
-    campaignService.get({ serviceSelector: selector }, (error, result) => {
-      if (error) {
-        logger.error('GoogleAdsService::getListCampaigns::error', error);
-        return reject(error);
-      }
+		campaignService.get(params, (error, result) => {
+			if (error) {
+				logger.error('GoogleAdsService::getListCampaigns::error', error);
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::getListCampaigns',
+					error         : JSON.parse(JSON.stringify(error)),
+					params,
+					serviceName   : 'CampaignService',
+					moduleName    : 'AdwordsUser'
+				});
+				return reject(error);
+			}
 
-      logger.info('GoogleAdsService::getListCampaigns::success', result);
-      if (result.entries) {
-        return resolve(result.entries);
-      }
+			logger.info('GoogleAdsService::getListCampaigns::success', result);
+			if (result.entries) {
+				return resolve(result.entries);
+			}
 
-      return resolve([]);
-    });
-  });
+			return resolve([]);
+		});
+	});
 };
 
 /**
  * Get list campaign of an adword id
  * @param {string} adwordId
+ * @param {string[]} campaignIds
  * @return {Promise<[{id: string, name: string}]>}
  */
 const getCampaignsName = function (adwordId, campaignIds) {
-  return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::getCampaignsName', adwordId);
+	return new Promise((resolve, reject) => {
+		logger.info('GoogleAdsService::getCampaignsName', adwordId);
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const user = new AdwordsUser(authConfig);
+		const campaignService = user.getService('CampaignService', adwordConfig.version);
+		const selector = {
+			fields    : ['Id', 'Name'],
+			predicates: [{ field: 'Id', operator: 'IN', values: campaignIds }],
+		};
+		const params = { serviceSelector: selector };
 
-    let campaignService = user.getService('CampaignService', adwordConfig.version);
-    const selector = {
-      fields: ['Id', 'Name'],
-      predicates: [{ field: 'Id', operator: 'IN', values: campaignIds }],
-    };
+		campaignService.get(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::getCampaignsName',
+					error         : JSON.parse(JSON.stringify(error)),
+					params,
+					serviceName   : 'CampaignService',
+					moduleName    : 'AdwordsUser'
+				});
+				logger.error('GoogleAdsService::getCampaignsName::error', error);
+				return reject(error);
+			}
 
-    campaignService.get({ serviceSelector: selector }, (error, result) => {
-      if (error) {
-        logger.error('GoogleAdsService::getCampaignsName::error', error);
-        return reject(error);
-      }
+			logger.info('GoogleAdsService::getCampaignsName::success', result);
+			if (result.entries) {
+				return resolve(result.entries);
+			}
 
-      logger.info('GoogleAdsService::getCampaignsName::success', result);
-      if (result.entries) {
-        return resolve(result.entries);
-      }
-
-      return resolve([]);
-    });
-  });
+			return resolve([]);
+		});
+	});
 };
 /**
  * Add an ip to blacklist
@@ -137,42 +170,52 @@ const getCampaignsName = function (adwordId, campaignIds) {
  * @return {Promise<any>}
  */
 const addIpBlackList = function (adwordId, campaignId, ipAddress) {
-  return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignId, ipAddress);
+	return new Promise((resolve, reject) => {
+		logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignId, ipAddress);
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const user = new AdwordsUser(authConfig);
+		const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+		const operation = {
+			operator: 'ADD',
+			operand : {
+				campaignId: campaignId,
+				criterion : {
+					type      : 'IP_BLOCK',
+					'xsi:type': 'IpBlock',
+					ipAddress : ipAddress,
+				},
+				'xsi:type': 'NegativeCampaignCriterion'
+			}
+		};
+		const params = { operations: [operation] };
 
-    const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
-    const operation = {
-      operator: 'ADD',
-      operand: {
-        campaignId: campaignId,
-        criterion: {
-          type: 'IP_BLOCK',
-          'xsi:type': 'IpBlock',
-          ipAddress: ipAddress,
-        },
-        'xsi:type': 'NegativeCampaignCriterion'
-      }
-    };
+		CampaignCriterionService.mutate(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::addIpBlackList',
+					error         : JSON.parse(JSON.stringify(error)),
+					params,
+					serviceName   : 'CampaignCriterionService',
+					moduleName    : 'AdwordsUser'
+				});
+				logger.error('GoogleAdsService::addIpBlackList::error', error);
+				return reject(error);
+			}
 
-    CampaignCriterionService.mutate({ operations: [operation] }, (error, result) => {
-      if (error) {
-        logger.error('GoogleAdsService::addIpBlackList::error', error);
-        return reject(error);
-      }
-
-      logger.info('GoogleAdsService::addIpBlackList::success', result);
-      return resolve(result);
-    });
-  });
+			logger.info('GoogleAdsService::addIpBlackList::success', result);
+			return resolve(result);
+		});
+	});
 };
 
 /**
@@ -184,41 +227,52 @@ const addIpBlackList = function (adwordId, campaignId, ipAddress) {
  * @return {Promise<any>}
  */
 const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion) {
-  return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::removeIpBlackList', adwordId, campaignId, ipAddress);
+	return new Promise((resolve, reject) => {
+		logger.info('GoogleAdsService::removeIpBlackList', adwordId, campaignId, ipAddress);
 
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
-    const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
-    const operation = {
-      operator: 'REMOVE',
-      operand: {
-        campaignId: campaignId,
-        criterion: {
-          id: idCriterion,
-          type: 'IP_BLOCK',
-          'xsi:type': 'IpBlock',
-          ipAddress: ipAddress,
-        },
-        'xsi:type': 'NegativeCampaignCriterion'
-      }
-    };
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const user = new AdwordsUser(authConfig);
+		const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+		const operation = {
+			operator: 'REMOVE',
+			operand : {
+				campaignId: campaignId,
+				criterion : {
+					id        : idCriterion,
+					type      : 'IP_BLOCK',
+					'xsi:type': 'IpBlock',
+					ipAddress : ipAddress,
+				},
+				'xsi:type': 'NegativeCampaignCriterion'
+			}
+		};
+		const params = { operations: [operation] };
 
-    CampaignCriterionService.mutate({ operations: [operation] }, (error, result) => {
-      if (error) {
-        logger.error('GoogleAdsService::removeIpBlackList::error', error);
-        return reject(error);
-      }
-      logger.info('GoogleAdsService::removeIpBlackList::success', result);
-      return resolve(result);
-    });
-  });
+		CampaignCriterionService.mutate(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::removeIpBlackList',
+					error         : JSON.parse(JSON.stringify(error)),
+					params,
+					serviceName   : 'CampaignCriterionService',
+					moduleName    : 'AdwordsUser'
+				});
+				logger.error('GoogleAdsService::removeIpBlackList::error', error);
+				return reject(error);
+			}
+			logger.info('GoogleAdsService::removeIpBlackList::success', result);
+			return resolve(result);
+		});
+	});
 };
 
 /**
@@ -268,47 +322,47 @@ const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion
  * @return {Promise<[InvitationPending]>}
  */
 const getPendingInvitations = () => {
-  return new Promise((resolve, reject) => {
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-    });
+	return new Promise((resolve, reject) => {
+		const user = new AdwordsUser({
+			developerToken: adwordConfig.developerToken,
+			userAgent     : adwordConfig.userAgent,
+			client_id     : adwordConfig.client_id,
+			client_secret : adwordConfig.client_secret,
+			refresh_token : adwordConfig.refresh_token,
+		});
 
-    const ManagedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
-    ManagedCustomerService.getPendingInvitations({ selector: {} }, (error, result) => {
-      if (error) {
-        return reject(error);
-      }
+		const ManagedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
+		ManagedCustomerService.getPendingInvitations({ selector: {} }, (error, result) => {
+			if (error) {
+				return reject(error);
+			}
 
-      return resolve(result);
-    });
-  });
+			return resolve(result);
+		});
+	});
 };
 
 const getErrorCode = (error) => {
-  return (
-    !error ||
-    !error.root ||
-    !error.root.Envelope ||
-    !error.root.Envelope.Body ||
-    !error.root.Envelope.Body.Fault ||
-    !error.root.Envelope.Body.Fault.detail ||
-    !error.root.Envelope.Body.Fault.detail ||
-    !error.root.Envelope.Body.Fault.detail.ApiExceptionFault ||
-    !error.root.Envelope.Body.Fault.detail.ApiExceptionFault.errors ||
-    !error.root.Envelope.Body.Fault.detail.ApiExceptionFault.errors.reason
-  ) ? ''
-    : error.root.Envelope.Body.Fault.detail.ApiExceptionFault.errors.reason;
+	return (
+		!error ||
+		!error.root ||
+		!error.root.Envelope ||
+		!error.root.Envelope.Body ||
+		!error.root.Envelope.Body.Fault ||
+		!error.root.Envelope.Body.Fault.detail ||
+		!error.root.Envelope.Body.Fault.detail ||
+		!error.root.Envelope.Body.Fault.detail.ApiExceptionFault ||
+		!error.root.Envelope.Body.Fault.detail.ApiExceptionFault.errors ||
+		!error.root.Envelope.Body.Fault.detail.ApiExceptionFault.errors.reason
+	) ? ''
+		: error.root.Envelope.Body.Fault.detail.ApiExceptionFault.errors.reason;
 };
 
 const mapManageCustomerErrorMessage = (error) => {
-  const reason = getErrorCode(error);
-  logger.info('GoogleAdsService::mapManageCustomerErrorMessage::info', { reason });
+	const reason = getErrorCode(error);
+	logger.info('GoogleAdsService::mapManageCustomerErrorMessage::info', { reason });
 
-  return ManagerCustomerMsgs[reason];
+	return ManagerCustomerMsgs[reason];
 };
 
 /**
@@ -317,184 +371,236 @@ const mapManageCustomerErrorMessage = (error) => {
  * @return {Promise<[{id: string, name: string}]>}
  */
 const getAccountHierachy = function (refreshToken, adwordId) {
-  return new Promise((resolve, reject) => {
-    logger.info('GoogleAdsService::getAccountHierachy', adwordId);
+	return new Promise((resolve, reject) => {
+		logger.info('GoogleAdsService::getAccountHierachy', adwordId);
 
-    // const adwordConfig = config.get('google-ads');
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: refreshToken,
-      clientCustomerId: adwordId
-    });
+		// const adwordConfig = config.get('google-ads');
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : refreshToken,
+			clientCustomerId: adwordId
+		};
+		const user = new AdwordsUser(authConfig);
+		const managedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
+		const selector = {
+			fields  : ['CustomerId', 'Name'],
+			ordering: [{ field: 'CustomerId', sortOrder: 'ASCENDING' }],
+			paging  : { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
+		};
+		const params = { serviceSelector: selector };
 
-    let managedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
-    const selector = {
-      fields: ['CustomerId', 'Name'],
-      ordering: [{ field: 'CustomerId', sortOrder: 'ASCENDING' }],
-      paging: { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
-    };
+		managedCustomerService.get(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::getAccountHierachy',
+					error         : JSON.parse(JSON.stringify(error)),
+					params,
+					serviceName   : 'ManagedCustomerService',
+					moduleName    : 'AdwordsUser'
+				});
+				logger.error('GoogleAdsService::getAccountHierachy::error', error);
+				return reject(error);
+			}
 
-    managedCustomerService.get({ serviceSelector: selector }, (error, result) => {
-      if (error) {
-        logger.error('GoogleAdsService::getAccountHierachy::error', error);
-        return reject(error);
-      }
+			logger.info('GoogleAdsService::getAccountHierachy::success', result);
+			if (result.entries) {
+				return resolve(result.entries);
+			}
 
-      logger.info('GoogleAdsService::getAccountHierachy::success', result);
-      if (result.entries) {
-        return resolve(result.entries);
-      }
-
-      return resolve([]);
-    });
-  });
+			return resolve([]);
+		});
+	});
 };
 
 const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) => {
-  logger.info('GoogleAdsService::getReportOfOneCampaign', adwordId);
-  return new Promise((resolve, reject) => {
-    const report = new AdwordsReport({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
-    report.getReport(adwordConfig.version, {
-      reportName: 'Custom Adgroup Performance Report',
-      reportType: 'CAMPAIGN_PERFORMANCE_REPORT',
-      fields,
-      filters: [
-        { field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED'] },
-        { field: 'CampaignId', operator: 'IN', values: campaignIds }
-      ],
-      dateRangeType: 'CUSTOM_DATE',
-      startDate,
-      endDate,
-      format: 'CSV'
-    }, (error, report) => {
-      if (error) {
-        logger.error('GoogleAdsService::getReportOnDevice::error', error);
-        return reject(error);
-      }
-      logger.info('GoogleAdsService::getReportOnDevice::success', report);
-      return resolve(report);
-    });
-  });
+	logger.info('GoogleAdsService::getReportOfOneCampaign', adwordId);
+	return new Promise((resolve, reject) => {
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const report = new AdwordsReport(authConfig);
+		const params = {
+			reportName   : 'Custom Adgroup Performance Report',
+			reportType   : 'CAMPAIGN_PERFORMANCE_REPORT',
+			fields,
+			filters      : [
+				{ field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED'] },
+				{ field: 'CampaignId', operator: 'IN', values: campaignIds }
+			],
+			dateRangeType: 'CUSTOM_DATE',
+			startDate,
+			endDate,
+			format       : 'CSV'
+		};
+
+		report.getReport(adwordConfig.version, params, (error, report) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: '',
+					authConfig,
+					functionName  : 'GoogleAdsService::getReportOnDevice',
+					error         : JSON.parse(JSON.stringify(error)),
+					params,
+					moduleName    : 'AdwordsReport'
+				});
+				logger.error('GoogleAdsService::getReportOnDevice::error', error);
+				return reject(error);
+			}
+			logger.info('GoogleAdsService::getReportOnDevice::success', report);
+			return resolve(report);
+		});
+	});
 };
 
 const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier) => {
-  const info = { adwordId, campaignId, criterionId, bidModifier }
-  logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
-  return new Promise((resolve, reject) => {
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
-    const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
-    const operation = {
-      operator: 'SET',
-      operand: {
-        campaignId: campaignId,
-        criterion: {
-          id: criterionId,
-          type: 'INTERACTION_TYPE',
-        },
-        bidModifier
-      }
-    };
+	const info = { adwordId, campaignId, criterionId, bidModifier }
+	logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
+	return new Promise((resolve, reject) => {
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const user = new AdwordsUser(authConfig);
+		const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+		const operation = {
+			operator: 'SET',
+			operand : {
+				campaignId: campaignId,
+				criterion : {
+					id  : criterionId,
+					type: 'INTERACTION_TYPE',
+				},
+				bidModifier
+			}
+		};
+		const params = { operations: [operation] };
 
-    CampaignCriterionService.mutate({ operations: [operation] }, (error, result) => {
-      if (error) {
-        logger.error('GoogleAdsService::enabledOrPauseTheCampaignByDevice::error', error);
-        return reject(error);
-      }
-      logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice::success', result);
-      return resolve(result);
-    });
-  });
+		CampaignCriterionService.mutate(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::enabledOrPauseTheCampaignByDevice',
+					error         : JSON.parse(JSON.stringify(error)),
+					params,
+					serviceName   : 'CampaignCriterionService',
+					moduleName    : 'AdwordsUser'
+				});
+				logger.error('GoogleAdsService::enabledOrPauseTheCampaignByDevice::error', error);
+				return reject(error);
+			}
+			logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice::success', result);
+			return resolve(result);
+		});
+	});
 };
 
 const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
-  const info = {adwordId, campaignIds}
-  logger.info('GoogleAdsService::getIpBlockOfCampaign', info);
-  return new Promise((resolve, reject) => {
-    const user = new AdwordsUser({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
-      clientCustomerId: adwordId,
-    });
+	const info = { adwordId, campaignIds }
+	logger.info('GoogleAdsService::getIpBlockOfCampaign', info);
+	return new Promise((resolve, reject) => {
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const user = new AdwordsUser(authConfig);
+		const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+		const selector = {
+			fields    : ['IpAddress'],
+			predicates: [{ field: 'CampaignId', operator: 'IN', values: campaignIds }],
+		};
+		const params = { serviceSelector: selector };
 
-    const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
-    const selector = {
-      fields: ['IpAddress'],
-      predicates: [{ field: 'CampaignId', operator: 'IN', values: campaignIds }],
-    };
 
-    CampaignCriterionService.get({ serviceSelector: selector }, (error, result) => {
-      if (error) {
-        logger.error('GoogleAdsService::getIpBlockOfCampaign::error', error);
-        return reject(error);
-      }
+		CampaignCriterionService.get(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::getIpBlockOfCampaign',
+					error         : JSON.parse(JSON.stringify(error)),
+					params,
+					serviceName   : 'CampaignCriterionService',
+					moduleName    : 'AdwordsUser'
+				});
+				logger.error('GoogleAdsService::getIpBlockOfCampaign::error', error);
+				return reject(error);
+			}
 
-      logger.info('GoogleAdsService::getIpBlockOfCampaign::success', result);
-      if (result.entries) {
-        return resolve(result.entries);
-      }
+			logger.info('GoogleAdsService::getIpBlockOfCampaign::success', result);
+			if (result.entries) {
+				return resolve(result.entries);
+			}
 
-      return resolve([]);
-    });
-  });
+			return resolve([]);
+		});
+	});
 };
 
 const getListGoogleAdsAccount = (accessToken, refreshToken) => {
-  return new Promise((resolve, reject) => {
-    // const googleAdAccount = config.get('google-ads');
-    const authConfig = {
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: refreshToken,
-      access_token: accessToken
-    };
+	return new Promise((resolve, reject) => {
+		// const googleAdAccount = config.get('google-ads');
+		const authConfig = {
+			developerToken: adwordConfig.developerToken,
+			userAgent     : adwordConfig.userAgent,
+			client_id     : adwordConfig.client_id,
+			client_secret : adwordConfig.client_secret,
+			refresh_token : refreshToken,
+			access_token  : accessToken
+		};
 
-    const user = new AdwordsUser(authConfig);
-    let customerService = user.getService('CustomerService', 'v201809');
+		const user = new AdwordsUser(authConfig);
+		let customerService = user.getService('CustomerService', 'v201809');
 
-    customerService.getCustomers({}, (error, result) => {
-      if (error) {
-        return reject(error);
-      } else {
-        return resolve(result);
-      }
-    });
-  })
+		customerService.getCustomers({}, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::getListGoogleAdsAccount',
+					error         : JSON.parse(JSON.stringify(error)),
+					params        : {},
+					serviceName   : 'CustomerService',
+					moduleName    : 'AdwordsUser'
+				});
+				return reject(error);
+			}
+
+			return resolve(result);
+		});
+	})
 };
 
 module.exports = {
-  sendManagerRequest,
-  getListCampaigns,
-  getListGoogleAdsAccount,
-  addIpBlackList,
-  removeIpBlackList,
-  getPendingInvitations,
-  mapManageCustomerErrorMessage,
-  getAccountHierachy,
-  getErrorCode,
-  getReportOnDevice,
-  enabledOrPauseTheCampaignByDevice,
-  getCampaignsName,
-  getIpBlockOfCampaigns
+	sendManagerRequest,
+	getListCampaigns,
+	getListGoogleAdsAccount,
+	addIpBlackList,
+	removeIpBlackList,
+	getPendingInvitations,
+	mapManageCustomerErrorMessage,
+	getAccountHierachy,
+	getErrorCode,
+	getReportOnDevice,
+	enabledOrPauseTheCampaignByDevice,
+	getCampaignsName,
+	getIpBlockOfCampaigns
 };
