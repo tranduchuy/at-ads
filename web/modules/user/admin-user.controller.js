@@ -106,7 +106,7 @@ const getUsersListForAdminPage = async (req, res, next) => {
     let limit = parseInt(req.query.limit || Paging.LIMIT);
     let page = parseInt(req.query.page || Paging.PAGE);
 
-    const data = await AdminUserService.getListUserForAdminPage(email, name, page, limit);
+    const data = await AdminUserService.getUsersListForAdminPage(email, name, page, limit);
     let entries = [];
     let totalItems = 0;
     if(data[0].entries.length > 0)
