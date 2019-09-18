@@ -6,10 +6,11 @@ const GoogleAdsErrorModel = require('./google-ads-error.model');
  * @return {Promise<*>}
  */
 const createLogError = async (data) => {
+	console.log(data);
 	const newError = new GoogleAdsErrorModel({
 		authConfig: data.authConfig,
 		params: data.params,
-		error: data.error,
+		error: JSON.stringify(data.error),
 		functionName: data.functionName,
 		serviceVersion: data.serviceVersion,
 		serviceName: data.serviceName || '',
