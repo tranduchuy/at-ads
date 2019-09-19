@@ -8,7 +8,8 @@ router.get('/list', AdminUserController.list);
 router.post('/update/:id', AdminUserController.update);
 router.post('/login', AdminUserController.login);
 router.get('/', CheckTokenMidlewares, CheckAdminMidlewares, AdminUserController.getUsersListForAdminPage);
-router.get('/account', CheckTokenMidlewares, CheckAdminMidlewares, AdminUserController.getAccountsListForAdminPage);
+router.get('/accounts', CheckTokenMidlewares, CheckAdminMidlewares, AdminUserController.getAccountsListForAdminPage);
 router.get('/error-google-ads', CheckTokenMidlewares, CheckAdminMidlewares, AdminUserController.getErrorListForAdminPage);
+router.get('/websites', CheckTokenMidlewares, CheckAdminMidlewares, AdminUserController.getWebsitesListForAdminPage);
 
 module.exports = router;

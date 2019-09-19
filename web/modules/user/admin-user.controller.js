@@ -16,6 +16,7 @@ const AdminUserService = require('./admin-user.service');
 const { getUsersListForAdminPageValidationSchema } = require('./validations/get-user-list-for-admin-page.schema');
 const { getAccountsListForAdminPageValidationSchema } = require('./validations/get-accounts-list-for-admin-page.schema');
 const { getErrorListForAdminPageValidationSchema } = require('./validations/get-error-list-for-admin-page.schema');
+const { getWebsiteListForAdminPageValidationSchema } = require('./validations/get-website-for-admin-page.schema');
 
 const list = async (req, res, next) => {
   logger.info('UserController::list::called');
@@ -204,13 +205,52 @@ const getErrorListForAdminPage = async (req, res, next) => {
   }
 };
 
+const getWebsitesListForAdminPage = async (req, res, next) => {
+  logger.info('Admin/UserController::getWebsiteListForAdminPage::is Called', { id: req.user._id });
+  try{
+    const { error } = Joi.validate(req.query, getWebsiteListForAdminPageValidationSchema);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+    }
+    
+    const { userId, accountId } = req.query;
+
+    let limit = parseInt(req.query.limit || Paging.LIMIT);
+    let page = parseInt(req.query.page || Paging.PAGE);
+
+    const data = await AdminUserService.getWebsitesForAdminPage(userId, accountId, page, limit);
+    let entries = [];
+    let totalItems = 0;
+
+    if(data[0].entries.length > 0)
+    {
+      entries = data[0].entries;
+      totalItems = data[0].meta[0].totalItems
+    }
+
+    logger.info('Admin/UserController::getWebsiteListForAdminPage::success\n');
+    res.status(HttpStatus.OK).json({
+      messages: ['Lấy dữ liệu thành công.'],
+      data: {
+        entries,
+        totalItems
+      }
+    })
+  }catch(e){
+    logger.error('Admin/UserController::getWebsiteListForAdminPage::error\n', e);
+    return next(e);
+  }
+};
+
 const AdminUserController = {
   list,
   update,
   login,
   getUsersListForAdminPage,
   getAccountsListForAdminPage,
-  getErrorListForAdminPage
+  getErrorListForAdminPage,
+  getWebsitesListForAdminPage
 };
 
 module.exports = AdminUserController;
