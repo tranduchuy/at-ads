@@ -570,7 +570,8 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
             ip: 1,
             keyword: 1,
             location: 1,
-            isPrivateBrowsing: 1
+            isPrivateBrowsing: 1,
+            reason: 1
           }
       };
 
@@ -709,7 +710,8 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
               "networkCompany": "$networkCompany",
               "browser": "$browser",
               "createdAt": "$createdAt",
-              "isPrivateBrowsing": "$isPrivateBrowsing"
+              "isPrivateBrowsing": "$isPrivateBrowsing",
+              "reason": "$reason"
             }
           ]
         }
@@ -1007,7 +1009,8 @@ const getIpHistory = (ip, limit, page) => {
           session: 1,
           isSpam: 1,
           isPrivateBrowsing: 1,
-          type: 1
+          type: 1,
+          reason: 1
         }
       };
 
@@ -1050,7 +1053,8 @@ const getIpHistory = (ip, limit, page) => {
         createdAt: 1,
         session: 1,
         isSpam: 1,
-        isPrivateBrowsing: 1
+        isPrivateBrowsing: 1,
+        reason: 1
       };
 
       console.log('=======');

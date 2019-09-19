@@ -101,6 +101,7 @@ buildStageStatisticUser = (queryCondition) => {
       "uuid": "$info.uuid",
       "isPrivateBrowsing": "$info.isPrivateBrowsing",
       "isSpam": "$info.isSpam",
+      "reason": "$info.reason",
       "accountKey": "$info.accountKey",
       "type": "$info.type",
       "networkCompany": "$info.networkCompany",
