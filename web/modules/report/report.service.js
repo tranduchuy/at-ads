@@ -20,6 +20,7 @@ buildStageGetIPClicks = (queryCondition, page, limit) => {
 				browser          : 1,
 				device           : 1,
 				isSpam           : 1,
+				reason           : 1,
 				href             : 1,
 				networkCompany   : 1,
 				location         : 1,
