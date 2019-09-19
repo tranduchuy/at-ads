@@ -233,7 +233,8 @@ const MESSAGE = {
   ipNumberLessThanMaxClick: 'Số lượng click của ip nhỏ hơn giới hạn click cho phép || không có gclib',
   blockIpByNetworkCompany: 'Ip bị chặn theo thiết lập chặn theo nhà mạng',
   errorGoogle: 'Lỗi trong lúc xử lý',
-  privateBrowser: 'Ip bị chặn, do thiết lập chặn vào trang bằng trình ẩn danh'
+  privateBrowser: 'Ip bị chặn, do thiết lập chặn vào trang bằng trình ẩn danh',
+  accountNotFound: 'không tìm thấy website || không tìm thấy account || website không thuộc quyền quản lý của account này'
 }
 
 module.exports = {

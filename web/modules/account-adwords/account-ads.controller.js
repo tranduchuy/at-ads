@@ -419,7 +419,7 @@ const autoBlockIp = (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		let { maxClick, autoRemove, autoBlockWithAiAndBigData } = req.body;
+		let { maxClick, autoRemove, autoBlockWithAiAndBigData, countMaxClickInHours } = req.body;
 		maxClick = Number(maxClick);
 
 		if (maxClick == 0 || maxClick == -1) {
@@ -431,6 +431,7 @@ const autoBlockIp = (req, res, next) => {
 		}
 
 		req.adsAccount.setting.autoBlockWithAiAndBigData = autoBlockWithAiAndBigData;
+		req.adsAccount.setting.countMaxClickInHours = countMaxClickInHours;
 
 		req.adsAccount.save(async (err) => {
 			if (err) {
@@ -442,11 +443,12 @@ const autoBlockIp = (req, res, next) => {
 
 			// log action history
 			const actionMessage = autoRemove ? "Tự động" : "Không tự động";
+			const actionAutoBlockWithAiAndBigData = autoBlockWithAiAndBigData ? "Tự động" : "Không tự động";
 
 			const actionHistory = {
 				userId : req.user._id,
-				content: `Cập nhật cấu hình chặn tự động ip: ${maxClick > 0 ? "maxclick = " + maxClick + ". " : ""} ${actionMessage} xóa ip hằng ngày.`,
-				param  : { autoRemove, maxClick }
+				content: `Cập nhật cấu hình chặn tự động ip: ${maxClick > 0 ? "maxclick = " + maxClick + ". " : ""} ${actionMessage} xóa ip hằng ngày. ${actionAutoBlockWithAiAndBigData} tự động chặn ip sử dụng AI và Big Data. Chặn ip đang click trong vòng ${countMaxClickInHours} giờ`,
+				param  : { autoRemove, maxClick, autoBlockWithAiAndBigData, countMaxClickInHours }
 			};
 
 			await userActionHistoryService.createUserActionHistory(actionHistory);

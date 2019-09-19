@@ -32,16 +32,9 @@ const logTrackingBehavior = async (req, res, next) => {
     const accountOfKey = await AdAccountModel.findOne({key}).lean();
 
     const website = await WebsiteService.getWebsiteByDomain(hrefOrigin);
-    if (!website) {
-      return res.json({});
-    }
 
-    if (website.accountAd.toString() !== accountOfKey._id.toString()) {
-      return res.json({});
-    }
-
-    if(!accountOfKey) {
-      key = '';
+    if (!website || !accountOfKey || website.accountAd.toString() !== accountOfKey._id.toString()) {
+      key = 'empty';
     }
 
     const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
@@ -60,11 +53,12 @@ const logTrackingBehavior = async (req, res, next) => {
     const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer} = req.body;
     const referrerURL = new Url(referrer);
     let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
-    if(googleUrls.includes(referrerURL.hostname.replace('www.', ''))){
-      type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
-    }
 
     const hrefQuery = queryString.parse(hrefURL.query);
+    
+    if(googleUrls.includes(referrerURL.hostname.replace('www.', '')) || !googleUrls.includes(referrerURL.hostname.replace('www.', '')) && hrefQuery.gclid){
+      type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
+    }
 
     const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
 
@@ -101,9 +95,20 @@ const logTrackingBehavior = async (req, res, next) => {
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {
-      RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
-      const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
-      await UserBehaviorLogService.sendMessageForFireBase(sendData);
+      if(website && accountOfKey && website.accountAd.toString() === accountOfKey._id.toString())
+      {
+        RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+        const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
+        await UserBehaviorLogService.sendMessageForFireBase(sendData);
+      }
+      else
+      {
+        log.reason = { 
+          message: UserBehaviorLogConstant.MESSAGE.accountNotFound
+         };
+  
+         await log.save();
+      }   
     }
 
     return res.json({

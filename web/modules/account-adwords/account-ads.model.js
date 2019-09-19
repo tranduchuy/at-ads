@@ -12,6 +12,7 @@ const accountAdsSchema = new Schema({
     isDeleted: {type: Boolean, default: false},
     setting: {
         maxIps: { type: Number, default: AccountAdsConstant.setting.maxIps },
+        countMaxClickInHours: {type: Number, default: AccountAdsConstant.setting.countMaxClickInHours},
         autoBlockByMaxClick: { type: Number, default: AccountAdsConstant.setting.autoBlockByMaxClick },
         autoBlockWithAiAndBigData: {type: Boolean, default: AccountAdsConstant.setting.autoBlockWithAiAndBigData},
         autoRemoveBlocking: { type: Boolean, default: AccountAdsConstant.setting.autoRemoveBlocking },

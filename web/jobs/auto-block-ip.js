@@ -64,18 +64,18 @@ const checkNetWorkCompany = (log, accountAds) => {
     return 0;
 };
 
-const countClickInLogs = async (ip, accountKey) => {
+const countClickInLogs = async (ip, accountKey, countMaxClickInHours) => {
     try {
-        const now = moment().startOf('day');
-        const tomorrow = moment(now).endOf('day');
+        const timeSet = moment().subtract(countMaxClickInHours, 'hour');
+        const now = moment();
 
         const countQuery = {
             ip,
             accountKey,
             type: LOGGING_TYPES.CLICK,
             createdAt: {
-                $gte: new Date(now),
-                $lt: new Date(tomorrow)
+                $gte: new Date(timeSet),
+                $lt: new Date(now)
             }
         };
 
@@ -135,6 +135,9 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, 
                         switch (GoogleAdsService.getErrorCode(err)) {
                             case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
                                 logger.info('AccountAdsController::autoBlockIp::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
+                                return callback();
+                            case 'INVALID_IP_ADDRESS':
+                                logger.info('AccountAdsController::autoBlockIp::INVALID_IP_ADDRESS', {campaignId});
                                 return callback();
                             default:
                                 const message = GoogleAdsService.getErrorCode(err);
@@ -304,13 +307,17 @@ module.exports = async (channel, msg) => {
                 message = MESSAGE.blockIpByNetworkCompany;
 
                 if (flag === 0) {
-                    const countClick = await countClickInLogs(ip, key);
+                    const countMaxClickInHours = parseInt(accountAds.setting.countMaxClickInHours || AccountAdsConstant.setting.countMaxClickInHours);
+                    const countClick = await countClickInLogs(ip, key, countMaxClickInHours);
                     const maxClick = accountAds.setting.autoBlockByMaxClick;
 
                     if (maxClick === -1 || countClick < maxClick || !log.gclid) {
                         logger.info('jobs::autoBlockIp::success.', { id });
                         log.reason = {
-                            message: MESSAGE.ipNumberLessThanMaxClick
+                            message: MESSAGE.ipNumberLessThanMaxClick,
+                            clickNumber: countClick,
+                            countMaxClickInHours,
+                            gclid: log.gclid
                         }
                         await log.save();
                         channel.ack(msg);
