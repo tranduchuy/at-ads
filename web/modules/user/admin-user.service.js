@@ -3,6 +3,7 @@ const UserModel = require('../user/user.model');
 const GlobalConstant = require('../../constants/global.constant');
 const logger = log4js.getLogger(GlobalConstant.LoggerTargets.Service);
 const AccountAdsModel = require('../account-adwords/account-ads.model');
+const GoogleAdsErrorModel = require('../google-ads-error/google-ads-error.model');
 const Mongoose = require('mongoose');
 
 const getUsersListForAdminPage = (email, name, page, limit) => {
@@ -90,9 +91,42 @@ const getAccountsListForAdminPage = (userId, page, limit) => {
             return rej(e);
         }
     });
-}
+};
+
+const getErrorListForAdminPage = (page, limit) => {
+    return new Promise( async (res, rej) => {
+        logger.info('Admin/UserService::getErrorListForAdminPage::is Called', { page, limit });
+        try
+        {
+            const facetStage = {
+                $facet:
+                    {
+                        entries: [
+                            { $skip: (page - 1) * limit },
+                            { $limit: limit }
+                        ],
+                        meta   : [
+                            { $group: { _id: null, totalItems: { $sum: 1 } } },
+                        ],
+                    }
+            };
+        
+            const query = [facetStage];
+
+            const errorList = await GoogleAdsErrorModel.aggregate(query);
+
+            logger.info('Admin/UserService::getErrorListForAdminPage::query\n', JSON.stringify(query));
+
+            return res(errorList);
+        }catch(e){
+            logger.error('Admin/UserService::getErrorListForAdminPage::error\n', e);
+            return rej(e);
+        }
+    });
+};
 
 module.exports = {
     getUsersListForAdminPage,
-    getAccountsListForAdminPage
+    getAccountsListForAdminPage,
+    getErrorListForAdminPage
 };

@@ -9,4 +9,6 @@ router.post('/update/:id', AdminUserController.update);
 router.post('/login', AdminUserController.login);
 router.get('/', CheckTokenMidlewares, CheckAdminMidlewares, AdminUserController.getUsersListForAdminPage);
 router.get('/account', CheckTokenMidlewares, CheckAdminMidlewares, AdminUserController.getAccountsListForAdminPage);
+router.get('/error-google-ads', CheckTokenMidlewares, CheckAdminMidlewares, AdminUserController.getErrorListForAdminPage);
+
 module.exports = router;
