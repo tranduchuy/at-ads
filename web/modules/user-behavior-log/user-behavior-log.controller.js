@@ -25,7 +25,7 @@ const logTrackingBehavior = async (req, res, next) => {
   try {
     const href = req.body.href;
     let { key, uuid} = req.cookies;
-key = '8mAtTX9fq';
+
     const hrefURL = new Url(href);
     const hrefOrigin = hrefURL.origin;
 
