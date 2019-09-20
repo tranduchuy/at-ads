@@ -55,8 +55,8 @@ const logTrackingBehavior = async (req, res, next) => {
     let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
 
     const hrefQuery = queryString.parse(hrefURL.query);
-    
-    if(googleUrls.includes(referrerURL.hostname.replace('www.', '')) && hrefQuery.gclid || !googleUrls.includes(referrerURL.hostname.replace('www.', '')) && hrefQuery.gclid){
+  
+    if(googleUrls.includes(referrerURL.hostname.replace('www.', '')) && hrefQuery.gclid || !referrerURL.hostname && hrefQuery.gclid){
       type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
     }
 
