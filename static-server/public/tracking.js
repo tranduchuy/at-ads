@@ -137,3 +137,5 @@ init = async () => {
 };
 
 init();
+
+console.log('...');
