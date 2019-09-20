@@ -311,13 +311,12 @@ module.exports = async (channel, msg) => {
                     const countClick = await countClickInLogs(ip, key, countMaxClickInHours);
                     const maxClick = accountAds.setting.autoBlockByMaxClick;
 
-                    if (maxClick === -1 || countClick < maxClick || !log.gclid) {
+                    if (maxClick === -1 || countClick < maxClick) {
                         logger.info('jobs::autoBlockIp::success.', { id });
                         log.reason = {
                             message: MESSAGE.ipNumberLessThanMaxClick,
                             clickNumber: countClick,
-                            countMaxClickInHours,
-                            gclid: log.gclid
+                            countMaxClickInHours
                         }
                         await log.save();
                         channel.ack(msg);

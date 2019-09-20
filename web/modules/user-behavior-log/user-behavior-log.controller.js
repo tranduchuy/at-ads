@@ -25,7 +25,7 @@ const logTrackingBehavior = async (req, res, next) => {
   try {
     const href = req.body.href;
     let { key, uuid} = req.cookies;
-
+    
     const hrefURL = new Url(href);
     const hrefOrigin = hrefURL.origin;
 
@@ -34,7 +34,7 @@ const logTrackingBehavior = async (req, res, next) => {
     const website = await WebsiteService.getWebsiteByDomain(hrefOrigin);
 
     if (!website || !accountOfKey || website.accountAd.toString() !== accountOfKey._id.toString()) {
-      key = 'empty';
+      key = '';
     }
 
     const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
@@ -95,20 +95,29 @@ const logTrackingBehavior = async (req, res, next) => {
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {
-      if(website && accountOfKey && website.accountAd.toString() === accountOfKey._id.toString())
+      if(hrefQuery.gclid)
       {
-        RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
-        const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
-        await UserBehaviorLogService.sendMessageForFireBase(sendData);
+        if(website && accountOfKey && website.accountAd.toString() === accountOfKey._id.toString())
+        {
+          RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+          const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
+          await UserBehaviorLogService.sendMessageForFireBase(sendData);
+        }
+        else
+        {
+          log.reason = UserBehaviorLogService.filterReason(website, accountOfKey);
+    
+          await log.save();
+        }   
       }
       else
       {
         log.reason = { 
-          message: UserBehaviorLogConstant.MESSAGE.accountNotFound
-         };
+          message: UserBehaviorLogConstant.MESSAGE.gclidNotFound
+        };
   
-         await log.save();
-      }   
+        await log.save();
+      }
     }
 
     return res.json({
