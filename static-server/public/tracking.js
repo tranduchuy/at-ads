@@ -1,5 +1,5 @@
 const CONFIG = {
-  hostApi: 'https://api.staging.click.apte.asia'
+  hostApi: '{{hostApi}}'
 };
 
 function loadCDNFile(filename, filetype) {

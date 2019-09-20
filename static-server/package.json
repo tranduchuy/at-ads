@@ -12,6 +12,8 @@
     "cors": "^2.8.5",
     "eslint": "^5.14.1",
     "express": "^4.16.4",
+    "js-yaml": "^3.13.1",
+    "string-replace-middleware": "0.0.1",
     "url-parse": "^1.4.7",
     "uuid": "^3.3.2"
   },
