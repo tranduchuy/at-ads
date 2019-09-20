@@ -25,7 +25,7 @@ const logTrackingBehavior = async (req, res, next) => {
   try {
     const href = req.body.href;
     let { key, uuid} = req.cookies;
-
+key = '8mAtTX9fq';
     const hrefURL = new Url(href);
     const hrefOrigin = hrefURL.origin;
 
@@ -34,7 +34,7 @@ const logTrackingBehavior = async (req, res, next) => {
     const website = await WebsiteService.getWebsiteByDomain(hrefOrigin);
 
     if (!website || !accountOfKey || website.accountAd.toString() !== accountOfKey._id.toString()) {
-      key = 'empty';
+      key = '';
     }
 
     const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
@@ -105,9 +105,7 @@ const logTrackingBehavior = async (req, res, next) => {
         }
         else
         {
-          log.reason = { 
-            message: UserBehaviorLogConstant.MESSAGE.accountNotFound
-          };
+          log.reason = UserBehaviorLogService.filterReason(website, accountOfKey);
     
           await log.save();
         }   

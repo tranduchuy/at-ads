@@ -211,7 +211,7 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -407,7 +407,7 @@ const autoBlockIp = (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::autoBlockIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -475,7 +475,7 @@ const autoBlockingRangeIp = (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::autoBlockingRangeIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -535,7 +535,7 @@ const blockByPrivateBrowser = (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::blockByPrivateBrowser::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -594,7 +594,7 @@ const autoBlocking3g4g = (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::autoBlocking3g4g::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -658,7 +658,7 @@ const updateWhiteList = async (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::updateWhiteList::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -735,7 +735,7 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::addCampaignsForAAccountAds::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -918,7 +918,7 @@ const getReportOnDevice = async (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::getReportOnDevice::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -988,7 +988,7 @@ const setUpCampaignsByOneDevice = async (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::setUpCampaignsByOneDevice::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -1077,7 +1077,7 @@ const blockSampleIp = (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::blockSampleIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -1199,7 +1199,7 @@ const unblockSampleIp = (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::unblockSampleIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -1318,7 +1318,7 @@ const getCampaignsInDB = (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::getCampaignsInDB::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -1818,7 +1818,7 @@ const statisticUser = async (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('UserBehaviorLogController::statisticUser::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 
@@ -1902,7 +1902,7 @@ const detailUser = async (req, res, next) => {
 	if (!req.adsAccount.isConnected) {
 		logger.info('UserBehaviorLogController::detailUser::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
-			messages: ['Tài khoản chưa được kết nối']
+			messages: ['Tài khoản chưa được kết nối với Google Ads']
 		});
 	}
 

@@ -384,7 +384,40 @@ const getDataForIntroPage = () => {
       return rej(e)
     }
   });
-}
+};
+
+const filterReason = (website, accountOfKey) => {
+  let reason = {};
+
+  if(!website)
+  {
+    reason = { 
+      message: UserBehaviorLogConstant.MESSAGE.websiteNotFound
+    };
+  }
+  else if(!accountOfKey)
+  {
+    reason = { 
+      message: UserBehaviorLogConstant.MESSAGE.accountNotFound
+    };
+  }
+  else if(website.accountAd.toString() !== accountOfKey._id.toString())
+  {
+    reason = { 
+      message: UserBehaviorLogConstant.MESSAGE.userIdOfWebsiteNotMatchUserIdOfaccount,
+      websiteId: website._id,
+      accountAdId: accountOfKey._id
+    };
+  }
+  else
+  {
+    reason = {
+      message: UserBehaviorLogConstant.MESSAGE.unKnow
+    };
+  }
+
+  return reason;
+};
 
 module.exports = {
   createUserBehaviorLog,
@@ -393,5 +426,6 @@ module.exports = {
   buildStageDetailUser,
   sendMessageForFireBase,
   getInfoSend,
-  getDataForIntroPage
+  getDataForIntroPage,
+  filterReason
 };

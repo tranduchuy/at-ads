@@ -234,8 +234,11 @@ const MESSAGE = {
   blockIpByNetworkCompany: 'Ip bị chặn theo thiết lập chặn theo nhà mạng.',
   errorGoogle: 'Lỗi trong lúc xử lý.',
   privateBrowser: 'Ip bị chặn, do thiết lập chặn vào trang bằng trình ẩn danh.',
-  accountNotFound: 'không tìm thấy website || không tìm thấy account || website không thuộc quyền quản lý của account này.',
-  gclidNotFound: 'Không tìm thấy gclid.'
+  accountNotFound: 'Không tìm thấy account.',
+  gclidNotFound: 'Không tìm thấy gclid.',
+  websiteNotFound: 'Không tìm thấy website',
+  userIdOfWebsiteNotMatchUserIdOfaccount: 'Website không thuộc quyền quản lý của account này.',
+  unKnow: 'Không xác định.'
 }
 
 module.exports = {
