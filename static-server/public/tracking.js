@@ -1,5 +1,5 @@
 const CONFIG = {
-  hostApi: '{{hostApi}}'
+  hostApi: '<%= hostApi %>'
 };
 
 function loadCDNFile(filename, filetype) {
@@ -137,5 +137,3 @@ init = async () => {
 };
 
 init();
-
-console.log('...');
