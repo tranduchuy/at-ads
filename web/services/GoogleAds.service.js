@@ -590,7 +590,7 @@ const getListGoogleAdsAccount = (accessToken, refreshToken) => {
 };
 
 const getClickReport = (adwordId, campaignIds, fields) => {
-  logger.info('GoogleAdsService::getClickReport', adwordId);
+  logger.info('GoogleAdsService::getClickReport', {adwordId, campaignIds, fields});
   return new Promise((resolve, reject) => {
     const report = new AdwordsReport({
       developerToken: adwordConfig.developerToken,
@@ -606,9 +606,9 @@ const getClickReport = (adwordId, campaignIds, fields) => {
       fields,
       filters: [
         { field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED'] },
-        { field: 'CampaignId', operator: 'IN', values: campaignIds }
+		{ field: 'CampaignId', operator: 'IN', values: campaignIds }
       ],
-      dateRangeType: 'TODAY',
+      dateRangeType: 'YESTERDAY',
       format: 'CSV',
       additionalHeaders: {
           skipReportHeader: true,
@@ -616,7 +616,16 @@ const getClickReport = (adwordId, campaignIds, fields) => {
       }
     }, (error, report) => {
       if (error) {
-        logger.error('GoogleAdsService::getClickReport::error', error);
+		logger.error('GoogleAdsService::getClickReport::error', error);
+		GoogleAdsErrorService.createLogError({
+			serviceVersion: adwordConfig.version,
+			report,
+			functionName  : 'GoogleAdsService::getClickReport',
+			error         : JSON.parse(JSON.stringify(error)),
+			params        : {adwordId, campaignIds, fields},
+			serviceName   : 'CLICK_PERFORMANCE_REPORT',
+			moduleName    : 'AdwordsReport'
+		});
         return reject(error);
       }
       logger.info('GoogleAdsService::getClickReport::success', report);
@@ -624,6 +633,51 @@ const getClickReport = (adwordId, campaignIds, fields) => {
     });
   });
 };
+
+const getKeywordsReport = (adwordId, campaignIds, fields) => {
+	logger.info('GoogleAdsService::getKeywordsReport', {adwordId, campaignIds, fields});
+	return new Promise((resolve, reject) => {
+	  const report = new AdwordsReport({
+		developerToken: adwordConfig.developerToken,
+		userAgent: adwordConfig.userAgent,
+		client_id: adwordConfig.client_id,
+		client_secret: adwordConfig.client_secret,
+		refresh_token: adwordConfig.refresh_token,
+		clientCustomerId: adwordId,
+	  });
+	  report.getReport(adwordConfig.version, {
+		reportName: 'Keywords Performace report',
+		reportType: 'KEYWORDS_PERFORMANCE_REPORT',
+		fields,
+		filters: [
+		  { field: 'CampaignStatus', operator: 'IN', values: ['ENABLED', 'PAUSED'] },
+		  { field: 'CampaignId', operator: 'IN', values: campaignIds }
+		],
+		dateRangeType: 'YESTERDAY',
+		format: 'CSV',
+		additionalHeaders: {
+			skipReportHeader: true,
+			skipReportSummary: true
+		}
+	  }, (error, report) => {
+		if (error) {
+		  logger.error('GoogleAdsService::getKeywordsReport::error', error);
+		  GoogleAdsErrorService.createLogError({
+			serviceVersion: adwordConfig.version,
+			report,
+			functionName  : 'GoogleAdsService::getKeywordsReport',
+			error         : JSON.parse(JSON.stringify(error)),
+			params        : {adwordId, campaignIds, fields},
+			serviceName   : 'KEYWORDS_PERFORMANCE_REPORT',
+			moduleName    : 'AdwordsReport'
+		  });
+		  return reject(error);
+		}
+		logger.info('GoogleAdsService::getKeywordsReport::success', report);
+		return resolve(report);
+	  });
+	});
+  };
 
 module.exports = {
   sendManagerRequest,
@@ -639,5 +693,6 @@ module.exports = {
   enabledOrPauseTheCampaignByDevice,
   getCampaignsName,
   getIpBlockOfCampaigns,
-  getClickReport
+  getClickReport,
+  getKeywordsReport
 };
