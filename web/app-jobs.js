@@ -16,6 +16,7 @@ const queues = Object.values(rabbitChannels);
 // Job functions
 const autoBlockIpJobFn = require('./jobs/auto-block-ip');
 const detectSessionFn = require('./jobs/detect-session');
+const countRequestGoogle = require('./jobs/count-request-google');
 
 db(() => {
   console.log('Connect to mongodb successfully');
@@ -54,6 +55,9 @@ db(() => {
                   break;
                 case rabbitChannels.DETECT_SESSION:
                   await detectSessionFn(channel, msg);
+                  break;
+                case rabbitChannels.COUNT_REQUEST_GOOGLE:
+                  await countRequestGoogle(channel, msg);
                   break;
               }
             }, {

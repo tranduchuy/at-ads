@@ -7,14 +7,19 @@ const ManagerCustomerMsgs = require('../constants/ManagerCustomerMsgs');
 const AdwordsReport = require('node-adwords').AdwordsReport;
 const config = require('config');
 const GoogleAdsErrorService = require('../modules/google-ads-error/google-ads-error.service');
-
+const RabbitMQService = require('./rabbitmq.service');
+const { COUNT } = require('../modules/count-request-google/count-request-google.constant');
+const RabbitChannels = config.get('rabbitChannels');
 /**
  * Send request to manage an adword id
  * @param {string} accountAdsId
  * @return {Promise<any>}
  */
 const sendManagerRequest = function (accountAdsId) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+
 		logger.info('GoogleAdsService::sendManagerRequest', accountAdsId);
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
@@ -66,8 +71,10 @@ const sendManagerRequest = function (accountAdsId) {
  * @return {Promise<[{id: string, name: string}]>}
  */
 const getListCampaigns = function (adwordId) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::getListCampaigns', adwordId);
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
@@ -119,8 +126,10 @@ const getListCampaigns = function (adwordId) {
  * @return {Promise<[{id: string, name: string}]>}
  */
 const getCampaignsName = function (adwordId, campaignIds) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::getCampaignsName', adwordId);
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
@@ -170,8 +179,10 @@ const getCampaignsName = function (adwordId, campaignIds) {
  * @return {Promise<any>}
  */
 const addIpBlackList = function (adwordId, campaignId, ipAddress) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignId, ipAddress);
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
@@ -227,8 +238,10 @@ const addIpBlackList = function (adwordId, campaignId, ipAddress) {
  * @return {Promise<any>}
  */
 const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::removeIpBlackList', adwordId, campaignId, ipAddress);
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
@@ -322,7 +335,10 @@ const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion
  * @return {Promise<[InvitationPending]>}
  */
 const getPendingInvitations = () => {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+
 		const user = new AdwordsUser({
 			developerToken: adwordConfig.developerToken,
 			userAgent     : adwordConfig.userAgent,
@@ -371,8 +387,10 @@ const mapManageCustomerErrorMessage = (error) => {
  * @return {Promise<[{id: string, name: string}]>}
  */
 const getAccountHierachy = function (refreshToken, adwordId) {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::getAccountHierachy', adwordId);
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
 
 		// const adwordConfig = config.get('google-ads');
 		const authConfig = {
@@ -419,7 +437,10 @@ const getAccountHierachy = function (refreshToken, adwordId) {
 
 const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) => {
 	logger.info('GoogleAdsService::getReportOfOneCampaign', adwordId);
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
@@ -465,7 +486,10 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
 const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bidModifier) => {
 	const info = { adwordId, campaignId, criterionId, bidModifier }
 	logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
@@ -512,7 +536,10 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
 const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
 	const info = { adwordId, campaignIds }
 	logger.info('GoogleAdsService::getIpBlockOfCampaign', info);
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
@@ -556,7 +583,10 @@ const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
 };
 
 const getListGoogleAdsAccount = (accessToken, refreshToken) => {
-	return new Promise((resolve, reject) => {
+	return new Promise(async (resolve, reject) => {
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+
 		// const googleAdAccount = config.get('google-ads');
 		const authConfig = {
 			developerToken: adwordConfig.developerToken,
@@ -591,7 +621,10 @@ const getListGoogleAdsAccount = (accessToken, refreshToken) => {
 
 const getClickReport = (adwordId, campaignIds, fields) => {
   logger.info('GoogleAdsService::getClickReport', {adwordId, campaignIds, fields});
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+
+	await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+
     const report = new AdwordsReport({
       developerToken: adwordConfig.developerToken,
       userAgent: adwordConfig.userAgent,
@@ -636,16 +669,19 @@ const getClickReport = (adwordId, campaignIds, fields) => {
 
 const getKeywordsReport = (adwordId, campaignIds, fields) => {
 	logger.info('GoogleAdsService::getKeywordsReport', {adwordId, campaignIds, fields});
-	return new Promise((resolve, reject) => {
-	  const report = new AdwordsReport({
+	return new Promise(async (resolve, reject) => {
+
+	await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+
+	const report = new AdwordsReport({
 		developerToken: adwordConfig.developerToken,
 		userAgent: adwordConfig.userAgent,
 		client_id: adwordConfig.client_id,
 		client_secret: adwordConfig.client_secret,
 		refresh_token: adwordConfig.refresh_token,
 		clientCustomerId: adwordId,
-	  });
-	  report.getReport(adwordConfig.version, {
+	});
+	report.getReport(adwordConfig.version, {
 		reportName: 'Keywords Performace report',
 		reportType: 'KEYWORDS_PERFORMANCE_REPORT',
 		fields,
@@ -659,7 +695,7 @@ const getKeywordsReport = (adwordId, campaignIds, fields) => {
 			skipReportHeader: true,
 			skipReportSummary: true
 		}
-	  }, (error, report) => {
+	}, (error, report) => {
 		if (error) {
 		  logger.error('GoogleAdsService::getKeywordsReport::error', error);
 		  GoogleAdsErrorService.createLogError({
@@ -677,7 +713,7 @@ const getKeywordsReport = (adwordId, campaignIds, fields) => {
 		return resolve(report);
 	  });
 	});
-  };
+};
 
 module.exports = {
   sendManagerRequest,
