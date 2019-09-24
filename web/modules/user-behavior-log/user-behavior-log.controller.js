@@ -25,7 +25,7 @@ const logTrackingBehavior = async (req, res, next) => {
   try {
     const href = req.body.href;
     let { key, uuid} = req.cookies;
-    
+  
     const hrefURL = new Url(href);
     const hrefOrigin = hrefURL.origin;
 
@@ -99,7 +99,7 @@ const logTrackingBehavior = async (req, res, next) => {
       {
         if(website && accountOfKey && website.accountAd.toString() === accountOfKey._id.toString())
         {
-          RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+          await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
           const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
           await UserBehaviorLogService.sendMessageForFireBase(sendData);
         }
