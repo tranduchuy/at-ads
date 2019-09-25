@@ -1,7 +1,6 @@
 const CONFIG = {
   hostApi      : '<%= hostApi %>',
   uuid         : '<%= uuid %>',
-  parentDomain : '<%= domain %>',
   key          : '<%= key %>'
 };
 
@@ -102,10 +101,23 @@ log = async() => {
 
     browserResolution.width = window.outerWidth;
     browserResolution.height = window.outerHeight;
+    let uuid = CONFIG.uuid;
+
+    if (typeof(Storage) !== "undefined") {
+      if(!localStorage.getItem("uuid"))
+      {
+        localStorage.setItem("uuid", uuid);
+      }
+      else
+      {
+        uuid = localStorage.getItem("uuid");
+      }
+    }
 
     const info = {
       ip,
       key: CONFIG.key,
+      uuid,
       href,
       location: userLocation,
       referrer,
@@ -143,17 +155,6 @@ init = async () => {
   setInterval(log, intervalTime);
 };
 
-checkCookies = () => {
-  if(!Cookies.get('uuid'))
-  {
-    Cookies.set('uuid', CONFIG.uuid, { domain: CONFIG.parentDomain });
-  }
-
+if(isValidToTracking) {
   init();
-};
-
-setTimeout( () => {
-  if(isValidToTracking) {
-    checkCookies();
-  }
-},400);
+}

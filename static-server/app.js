@@ -14,21 +14,13 @@ app.use(cors());
 app.use(cookieParser());
 
 // attach uuid
-app.use(attach_cookie('/static/tracking.js'));
+// app.use(attach_cookie('/static/tracking.js'));
 
 app.use('/static/tracking.js', function (req, res) {
-	let uuid = '';
-
-	if(!req.cookies.uuid)
-	{
-		uuid =  uuidv4();
-	}
-
 	let f = ejs.compile(fs.readFileSync('./public/tracking.js').toString('utf8'));
 	let fileContent = f({ 
 		hostApi: config.get('hostApi'),
-		uuid,
-		domain : config.get('parentDomain'),
+		uuid   : uuidv4(),
 		key    : req.query.key
 	});
 	res.setHeader('Content-Type', 'application/javascript');
