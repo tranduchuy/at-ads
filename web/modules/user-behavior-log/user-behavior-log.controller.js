@@ -24,8 +24,8 @@ const logTrackingBehavior = async (req, res, next) => {
   logger.info('UserBehaviorController::logTrackingBehavior::is called');
   try {
     const href = req.body.href;
-    let { key, uuid} = req.cookies;
-  
+    let { uuid} = req.cookies;
+    let { key } = req.body;
     const hrefURL = new Url(href);
     const hrefOrigin = hrefURL.origin;
 

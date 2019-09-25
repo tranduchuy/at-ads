@@ -1,6 +1,12 @@
 const CONFIG = {
-  hostApi: '<%= hostApi %>'
+  hostApi      : '<%= hostApi %>',
+  uuid         : '<%= uuid %>',
+  parentDomain : '<%= domain %>',
+  key          : '<%= key %>'
 };
+
+let countScriptTracking = document.querySelectorAll("script[src*='click.apte.asia/static/tracking.js']").length;
+let isValidToTracking = countScriptTracking === 1 ? true : false;
 
 function loadCDNFile(filename, filetype) {
   if (filetype == "js") {
@@ -99,6 +105,7 @@ log = async() => {
 
     const info = {
       ip,
+      key: CONFIG.key,
       href,
       location: userLocation,
       referrer,
@@ -136,4 +143,17 @@ init = async () => {
   setInterval(log, intervalTime);
 };
 
-init();
+checkCookies = () => {
+  if(!Cookies.get('uuid'))
+  {
+    Cookies.set('uuid', CONFIG.uuid, { domain: CONFIG.parentDomain });
+  }
+
+  init();
+};
+
+setTimeout( () => {
+  if(isValidToTracking) {
+    checkCookies();
+  }
+},400);
