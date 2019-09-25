@@ -14,7 +14,7 @@ app.use(cors());
 app.use(cookieParser());
 
 // attach uuid
-// app.use(attach_cookie('/static/tracking.js'));
+app.use(attach_cookie('/static/tracking.js'));
 
 app.use('/static/tracking.js', function (req, res) {
 	let f = ejs.compile(fs.readFileSync('./public/tracking.js').toString('utf8'));
