@@ -14,7 +14,7 @@ app.use(cors());
 app.use(cookieParser());
 
 // attach uuid
-// app.use(attach_cookie('/static/tracking.js'));
+app.use(attach_cookie('/static/tracking.js'));
 
 app.use('/static/tracking.js', function (req, res) {
 	let uuid = '';
@@ -37,6 +37,6 @@ app.use('/static/tracking.js', function (req, res) {
 });
 
 // Serving static files
-// app.use('/static', express.static(path.join(__dirname, 'public')));
+app.use('/static', express.static(path.join(__dirname, 'public')));
 
 module.exports = app;
