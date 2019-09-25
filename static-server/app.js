@@ -20,7 +20,7 @@ app.use('/static/tracking.js', function (req, res) {
 	let f = ejs.compile(fs.readFileSync('./public/tracking.js').toString('utf8'));
 	let fileContent = f({ 
 		hostApi: config.get('hostApi'),
-		uuid   : uuidv4(),
+		uuid   : req.cookies.uuid || uuidv4(),
 		key    : req.query.key
 	});
 	res.setHeader('Content-Type', 'application/javascript');
