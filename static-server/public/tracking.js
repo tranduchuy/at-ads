@@ -1,5 +1,8 @@
 const CONFIG = {
-  hostApi: '<%= hostApi %>'
+  hostApi      : '<%= hostApi %>',
+  uuid         : '<%= uuid %>',
+  parentDomain : '<%= domain %>',
+  key          : '<%= key %>'
 };
 
 function loadCDNFile(filename, filetype) {
@@ -99,6 +102,7 @@ log = async() => {
 
     const info = {
       ip,
+      key: CONFIG.key,
       href,
       location: userLocation,
       referrer,
@@ -107,6 +111,8 @@ log = async() => {
       browserResolution,
       screenResolution
     };
+
+    console.log(info);
 
     let json = JSON.stringify(info);
 
@@ -136,4 +142,15 @@ init = async () => {
   setInterval(log, intervalTime);
 };
 
-init();
+checkCookies = () => {
+  if(!Cookies.get('uuid'))
+  {
+    Cookies.set('uuid', CONFIG.uuid, { domain: CONFIG.parentDomain });
+  }
+
+  init();
+};
+
+setTimeout( () => {
+  checkCookies();
+},400);
