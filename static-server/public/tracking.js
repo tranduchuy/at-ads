@@ -149,11 +149,11 @@ checkCookies = () => {
     Cookies.set('uuid', CONFIG.uuid, { domain: CONFIG.parentDomain });
   }
 
-  if(isValidToTracking) {
-    init();
-  }
+  init();
 };
 
 setTimeout( () => {
-  checkCookies();
+  if(isValidToTracking) {
+    checkCookies();
+  }
 },400);
