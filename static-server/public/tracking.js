@@ -5,6 +5,9 @@ const CONFIG = {
   key          : '<%= key %>'
 };
 
+let countScriptTracking = document.querySelectorAll("script[src*='click.apte.asia/static/tracking.js']").length;
+let isValidToTracking = countScriptTracking === 1 ? true : false;
+
 function loadCDNFile(filename, filetype) {
   if (filetype == "js") {
     var cssNode = document.createElement('script');
@@ -112,8 +115,6 @@ log = async() => {
       screenResolution
     };
 
-    console.log(info);
-
     let json = JSON.stringify(info);
 
     const res = await fetch(logAPI, {
@@ -148,7 +149,9 @@ checkCookies = () => {
     Cookies.set('uuid', CONFIG.uuid, { domain: CONFIG.parentDomain });
   }
 
-  init();
+  if(isValidToTracking) {
+    init();
+  }
 };
 
 setTimeout( () => {
