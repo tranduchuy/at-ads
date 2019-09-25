@@ -37,6 +37,6 @@ app.use('/static/tracking.js', function (req, res) {
 });
 
 // Serving static files
-app.use('/static', express.static(path.join(__dirname, 'public')));
+// app.use('/static', express.static(path.join(__dirname, 'public')));
 
 module.exports = app;
