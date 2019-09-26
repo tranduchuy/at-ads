@@ -46,6 +46,8 @@
   "request": "^2.88.0",
   "shortid": "^2.2.14",
   "socket.io": "^2.2.0",
+  "swagger-jsdoc": "^3.4.0",
+  "swagger-ui-express": "^4.1.1",
   "ua-parser-js": "^0.7.20",
   "url-parse": "^1.4.7",
   "url-slug": "^2.0.0",

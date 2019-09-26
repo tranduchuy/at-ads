@@ -7,8 +7,31 @@ const CheckTokenMiddleware = require('../../middlewares/check-token');
 const CheckUserAdminMidddleware = require('../../middlewares/check-user-admin');
 const multer = require('multer');
 
+/**
+ * @swagger
+ * /users/check:
+ *    post:
+ *      description: Check weather email is valid or not
+*      tags: [Users]
+ */
 router.post('/check', UserController.check);
+
+/**
+ * @swagger
+ * /users/login:
+ *    post:
+ *      description: Login
+ *      tags: [Users]
+ */
 router.post('/login', UserController.login);
+
+/**
+ * @swagger
+ * /users/login-by-google:
+ *    post:
+ *      description: Login by google
+ *      tags: [UsersForAdmin]
+ */
 router.post('/login-by-google', UserController.loginByGoogle);
 router.post('/register', UserController.register);
 router.post('/confirm', UserController.confirm);
