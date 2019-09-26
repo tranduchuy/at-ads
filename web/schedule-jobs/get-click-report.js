@@ -7,6 +7,8 @@ const logger = log4js.getLogger('Tasks');
 const Async = require('async');
 const clickPerformanceReportConstant = require('../constants/clickPerformanceReport.constant');
 const ClickReportModel = require('../modules/click-report/click-report.model');
+const config = require('config');
+const timeGetClickReport = config.get('appScheduleJobs').timeGetClickReport;
 
 const getCampaignInAccount = (accountAds, cb) => {
     const info = {
@@ -102,7 +104,7 @@ const addDataIntoObj = (titleArr, data) => {
 };
 
 module.exports =  () => {
-    schedule.scheduleJob('0 0 2 * * *', async() => {
+    schedule.scheduleJob(timeGetClickReport, async() => {
         logger.info('scheduleJobs::getClickReport is called');
         try{
             const allAccountAds = await AccountAdsModel.find({isConnected : true, isDeleted: false});

@@ -1,10 +1,11 @@
 const CONFIG = {
-  hostApi      : '<%= hostApi %>',
-  uuid         : '<%= uuid %>',
-  key          : '<%= key %>'
+  hostApi       : '<%= hostApi %>',
+  uuid          : '<%= uuid %>',
+  key           : '<%= key %>',
+  scriptTracking: '<%= scriptTracking %>'
 };
 
-let countScriptTracking = document.querySelectorAll("script[src*='click.apte.asia/static/tracking.js']").length;
+let countScriptTracking = document.querySelectorAll(`script[src*='${ CONFIG.scriptTracking }']`).length;
 let isValidToTracking = countScriptTracking === 1 ? true : false;
 
 function loadCDNFile(filename, filetype) {
