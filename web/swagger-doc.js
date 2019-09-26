@@ -18,8 +18,10 @@ const options = {
 			},
 			schemes: 'http'
 		},
-		host: 'https://localhost:3000',
-		basePath: '/api'
+		produces: ['application/json'],
+		consumes: ['application/json'],
+		host: 'localhost:3000',
+		basePath: '/api/'
 	},
 	// List of files to be processes. You can also set globs './routes/*.js'
 	apis             : [
