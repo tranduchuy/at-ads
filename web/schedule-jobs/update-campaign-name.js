@@ -6,8 +6,8 @@ const GoolgeAdsService = require('../services/GoogleAds.service');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Tasks');
 const Async = require('async');
-// const config = require('config');
-// const timeDeleteIpInBlackList = config.get('appScheduleJobs').timeDeleteIpInBlackList;
+const config = require('config');
+const timeUpdateCampaignName = config.get('appScheduleJobs').timeUpdateCampaignName;
 
 const getCampaignInAccount = (accountAds, cb) => {
     const info = {
@@ -101,7 +101,7 @@ const updateCampaignNameForOneCampaign = (campaignInfo, cb) => {
 };
 
 module.exports =  () => {
-    schedule.scheduleJob('0 0 12 * * *', async() => {
+    schedule.scheduleJob(timeUpdateCampaignName, async() => {
         logger.info('scheduleJobs::updateCampaignName is called');
         try{
             const allAccountAds = await AccountAdsModel.find({isConnected : true});

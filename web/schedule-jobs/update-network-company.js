@@ -3,6 +3,8 @@ const schedule = require('node-schedule');
 const UserBehaviorLogModel = require('../modules/user-behavior-log/user-behavior-log.model');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
+const config = require('config');
+const timeUpdateNetWorkCompany = config.get('appScheduleJobs').timeUpdateNetWorkCompany;
 
 const IPLookupService = require('../services/ip-lookup.service');
 
@@ -30,7 +32,7 @@ const processUpdateLogNetworkCompany = async (logSchedules) => {
 const updateNetworkCompany = async () => {
   logger.info('WORKER::UpdateLogNetworkCompany::Init');
 
-  schedule.scheduleJob(`0 */5 * * * *`, async () => {
+  schedule.scheduleJob(timeUpdateNetWorkCompany, async () => {
     logger.info('WORKER::UpdateLogNetworkCompany::Start at', new Date());
     try {
       const logSchedules = await findLogScheduleNeedToBeUpdate();
