@@ -1,11 +1,11 @@
 const CONFIG = {
-  hostApi      : '<%= hostApi %>',
-  uuid         : '<%= uuid %>',
-  parentDomain : '<%= domain %>',
-  key          : '<%= key %>'
+  hostApi       : '<%= hostApi %>',
+  uuid          : '<%= uuid %>',
+  key           : '<%= key %>',
+  scriptTracking: '<%= scriptTracking %>'
 };
 
-let countScriptTracking = document.querySelectorAll("script[src*='click.apte.asia/static/tracking.js']").length;
+let countScriptTracking = document.querySelectorAll(`script[src*='${ CONFIG.scriptTracking }']`).length;
 let isValidToTracking = countScriptTracking === 1 ? true : false;
 
 function loadCDNFile(filename, filetype) {
@@ -102,10 +102,23 @@ log = async() => {
 
     browserResolution.width = window.outerWidth;
     browserResolution.height = window.outerHeight;
+    let uuid = CONFIG.uuid;
+
+    if (typeof(Storage) !== "undefined") {
+      if(!localStorage.getItem("uuid"))
+      {
+        localStorage.setItem("uuid", uuid);
+      }
+      else
+      {
+        uuid = localStorage.getItem("uuid");
+      }
+    }
 
     const info = {
       ip,
       key: CONFIG.key,
+      uuid,
       href,
       location: userLocation,
       referrer,
@@ -143,17 +156,6 @@ init = async () => {
   setInterval(log, intervalTime);
 };
 
-checkCookies = () => {
-  if(!Cookies.get('uuid'))
-  {
-    Cookies.set('uuid', CONFIG.uuid, { domain: CONFIG.parentDomain });
-  }
-
+if(isValidToTracking) {
   init();
-};
-
-setTimeout( () => {
-  if(isValidToTracking) {
-    checkCookies();
-  }
-},400);
+}

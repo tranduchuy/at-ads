@@ -14,22 +14,15 @@ app.use(cors());
 app.use(cookieParser());
 
 // attach uuid
-app.use(attach_cookie('/static/tracking.js'));
+// app.use(attach_cookie('/static/tracking.js'));
 
 app.use('/static/tracking.js', function (req, res) {
-	let uuid = '';
-
-	if(!req.cookies.uuid)
-	{
-		uuid =  uuidv4();
-	}
-
 	let f = ejs.compile(fs.readFileSync('./public/tracking.js').toString('utf8'));
 	let fileContent = f({ 
-		hostApi: config.get('hostApi'),
-		uuid,
-		domain : config.get('parentDomain'),
-		key    : req.query.key
+		hostApi        : config.get('hostApi'),
+		uuid           : req.cookies.uuid || uuidv4(),
+		key            : req.query.key,
+		scriptTracking : config.get('scriptTracking')
 	});
 	res.setHeader('Content-Type', 'application/javascript');
 	res.setHeader('Content-Length', fileContent.length);
@@ -37,6 +30,6 @@ app.use('/static/tracking.js', function (req, res) {
 });
 
 // Serving static files
-// app.use('/static', express.static(path.join(__dirname, 'public')));
+app.use('/static', express.static(path.join(__dirname, 'public')));
 
 module.exports = app;
