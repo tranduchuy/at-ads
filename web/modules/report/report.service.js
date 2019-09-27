@@ -1,6 +1,8 @@
 const UserBehaviorLogConstant = require('../user-behavior-log/user-behavior-log.constant');
-const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
+const UserBehaviorLogModel    = require('../user-behavior-log/user-behavior-log.model');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
+const GoogleAdsErrorModel     = require('../google-ads-error/google-ads-error.model');
+const CountRequestGoogleModel      = require('../count-request-google/count-request-google.model');
 const Async = require('async');
 
 const log4js = require('log4js');
@@ -469,6 +471,171 @@ const splitIp = (ip) => {
 	return ipClass;
 };
 
+const getStatisticOfGoogleAdsErrorsNumber = (from, to) => {
+	logger.info('AccountAdsService::getStatisticOfGoogleAdsErrorsNumber::is called\n', { from: from._d, to: to._d });
+	return new Promise(async (res, rej) => {
+		try {
+			const matchStage = {
+				$match: {
+					createdAt: {
+						$gte: new Date(from),
+						$lt : new Date(to)
+					}
+				}
+			};
+
+			const projectStage = {
+				$project: {
+					'date': { 
+						$dateToString: 
+						{ 
+							format: "%d-%m-%Y",
+							date: "$createdAt",
+							timezone: "+07:00" 
+						} 
+					}
+				}
+			};
+
+			const groupStage = {
+				$group: {
+					'_id': '$date',
+					'googleAdsErrorsNumber': {
+						$sum: 1
+					}
+				}
+			};
+
+			const sortStage = {
+				$sort: {
+					_id: -1
+				}
+			};
+
+			const query = [
+				matchStage,
+				projectStage,
+				groupStage,
+				sortStage
+			];
+
+			const queryInfo = JSON.stringify(query);
+			logger.info('ReportService::getStatisticOfGoogleAdsErrorsNumber::query\n', { from: from._d, to: to._d, queryInfo });
+
+			const result = await GoogleAdsErrorModel.aggregate(query);
+
+			logger.info('ReportService::getStatisticOfGoogleAdsErrorsNumber::success\n', { from: from._d, to: to._d });
+			return res(result);
+		} catch (e) {
+			logger.error('ReportService::getStatisticOfGoogleAdsErrorsNumber::error\n', e, { from: from._d, to: to._d });
+			return rej(e);
+		}
+	});
+};
+
+const getRequestsOfGoogleNumber = (from, to) => {
+	logger.info('AccountAdsService::getRequestsOfGoogleNumber::is called\n', { from: from._d, to: to._d });
+	return new Promise(async (res, rej) => {
+		try {
+			const matchStage = {
+				$match: {
+					createdAt: {
+						$gte: new Date(from),
+						$lt : new Date(to)
+					}
+				}
+			};
+
+			const projectStage = {
+				$project: {
+					'date': { 
+						$dateToString: 
+						{ 
+							format: "%d-%m-%Y",
+							date: "$createdAt",
+							timezone: "+07:00" 
+						} 
+					},
+					'count': 1,
+					'countReport': 1
+				}
+			};
+
+			const groupStage = {
+				$group: {
+					'_id': '$date',
+					'requestsNumber': {
+						$push: {
+							'count'       : '$count',
+							'countReport' : '$countReport'
+						}
+					}
+				}
+			};
+
+			const sortStage = {
+				$sort: {
+					_id: -1
+				}
+			};
+
+			const query = [
+				matchStage,
+				projectStage,
+				groupStage,
+				sortStage
+			];
+
+			const queryInfo = JSON.stringify(query);
+			logger.info('ReportService::getRequestsOfGoogleNumber::query\n', { from: from._d, to: to._d, queryInfo });
+
+			const result = await CountRequestGoogleModel.aggregate(query);
+
+			logger.info('ReportService::getRequestsOfGoogleNumber::success\n', { from: from._d, to: to._d });
+			return res(result);
+		} catch (e) {
+			logger.error('ReportService::getRequestsOfGoogleNumber::error\n', e, { from: from._d, to: to._d });
+			return rej(e);
+		}
+	});
+};
+
+const mapDateOfErrorGoogleAndDateOfRequest = (googleErrorList, requestList) => {
+	const dateOfGoogleErrorArr = googleErrorList.map(e => e._id);
+	const dateOfRequestArr     = requestList.map(e => e._id);
+	const dateArr = dateOfGoogleErrorArr.concat(dateOfRequestArr);
+	const uniqueDateArr = dateArr.filter(onlyUnique);
+	let result          = [];
+
+	uniqueDateArr.forEach(e => {
+		let log = {
+			date: e
+		};
+		
+		googleErrorList.forEach(googleErrorInfo => {
+			if(googleErrorInfo._id == e)
+			{
+				log.googleAdsErrorsNumber = googleErrorInfo.googleAdsErrorsNumber;
+			}
+		});
+
+		requestList.forEach(requestInfo => {
+			if(requestInfo._id == e)
+			{
+				log.requestsNumber = requestInfo.requestsNumber;
+			}
+		});
+
+		result.push(log);
+	});
+	
+	return result;
+};
+
+const onlyUnique = (value, index, self) => { 
+	return self.indexOf(value) === index;
+};
+
 module.exports = {
 	buildStageGetIPClicks,
 	buildStageGetDetailIPClick,
@@ -480,5 +647,8 @@ module.exports = {
 	getLogsOfIpsInAutoBlackList,
 	addLogInfoIntoIpInfo,
 	filterGroupIpAndSampleIp,
-	getInfoLogForGroupIp
+	getInfoLogForGroupIp,
+	getStatisticOfGoogleAdsErrorsNumber,
+	getRequestsOfGoogleNumber,
+	mapDateOfErrorGoogleAndDateOfRequest
 };
