@@ -38,9 +38,7 @@ const createDomain = async ({ domain, accountId }) => {
  */
 const getWebsitesByAccountId = async (accountId) => {
   const websites = await WebsiteModel.find({ accountAd: mongoose.Types.ObjectId(accountId) })
-    .select('domain code expiredAt status isTracking isValid')
     .sort({"expiredAt": -1})
-    .lean();
 
 	websites.forEach((website, index) => {
     websites[index].isExpired = isExpired(website);

@@ -10,6 +10,7 @@ const websiteSchema = new Schema({
   expiredAt: { type: Date, default: WebsiteConstant.expiredAt.doesNotExpire },
   isTracking: { type: Boolean, default: false },
   isValid: { type: Boolean, default: false },
+  isDuplicateScript: { type: Boolean, default: false },
   vipType: { type: Number, default: WebsiteConstant.vipType.notTheVip }
 }, { timestamps: true });
 

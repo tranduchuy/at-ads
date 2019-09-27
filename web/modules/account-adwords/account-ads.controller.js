@@ -16,7 +16,6 @@ const AccountAdsService = require("./account-ads.service");
 const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.service');
 const { checkWhiteListIpsExistsInBlackList } = require('../../services/check-ip-in-white-list.service');
 const requestUtil = require('../../utils/RequestUtil');
-const Request = require('../../utils/Request');
 
 const UserBehaviorLogService = require('../user-behavior-log/user-behavior-log.service');
 
@@ -381,9 +380,11 @@ const getAccountsAds = async (req, res, next) => {
 					accounts: accounts
 				}
 			};
+			logger.info('AccountAdsController::getAccountsAds::success');
 			return res.status(HttpStatus.OK).json(response);
 		}
 
+		logger.info('AccountAdsController::getAccountsAds::account not found');
 		const response = {
 			messages: [messages.ResponseMessages.AccountAds.ACCOUNT_NOT_FOUND],
 			data    : {}
@@ -1380,19 +1381,7 @@ const verifyAcctachedCodeDomains = async (req, res, next) => {
 		let websites = await WebsiteModel.find({
 			accountAd: accountId
 		});
-		websites = await Promise.all(websites.map(async (website) => {
-			const html = await Request.getHTML(website.domain);
-			if (html !== null) {
-				const script = AdAccountConstant.trackingScript.replace('{accountKey}', adsAccount.key);
-				website.isValid = true;
-				website.isTracking = html.indexOf(script) !== -1 ? true : false;
-			} else {
-				website.isValid = false;
-				website.isTracking = false;
-			}
-			;
-			return await website.save();
-		}));
+		websites = await AccountAdsService.checkDomainHasTracking(websites, adsAccount.key);
 		const result = {
 			messages: [messages.ResponseMessages.SUCCESS],
 			data    : {

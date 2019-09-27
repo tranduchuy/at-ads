@@ -10,6 +10,7 @@ const { getDetailIpClickValidationSchema } = require('./validations/get-detail-i
 const { getTrafficSourceStatisticByDayValidationSchema } = require('./validations/get-traffic-source-statistic-by-day.schema');
 const { getTrafficSourceLogsValidationSchema } = require('./validations/get-traffic-source-logs.schema');
 const { getIpsInAutoBlackListOfAccountValidationSchema } = require('./validations/get-ips-in-auto-black-list-of-account.schema');
+const { statisticsOfGoogleErrorsAndNumberOfRequestsSchemaValidation } = require('./validations/statistics-of-google-errors-and-number-of-requests.schema');
 
 const ReportService = require('./report.service');
 const requestUtil = require('../../utils/RequestUtil');
@@ -331,10 +332,56 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 	}
 };
 
+const statisticsOfGoogleErrorsAndNumberOfRequests = async (req, res, next) => {
+	const info = {
+		userId   : req.user._id,
+		from : req.query.from,
+		to   : req.query.to
+	};
+
+	logger.info('ReportController::statisticsOfGoogleErrorsAndNumberOfRequests is called\n', info);
+	try {
+		const { error } = Joi.validate(req.query, statisticsOfGoogleErrorsAndNumberOfRequestsSchemaValidation);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+		}
+
+		let { from, to } = req.query;
+		from = moment(from, 'DD-MM-YYYY');
+		to = moment(to, 'DD-MM-YYYY');
+
+		if (to.isBefore(from)) {
+			logger.info('AccountAdsController::statisticsOfGoogleErrorsAndNumberOfRequests::babRequest\n', info);
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.']
+			});
+		}
+
+		const endDateTime = moment(to).endOf('day');
+		let result = await ReportService.getStatisticOfGoogleAdsErrorsNumber(from, endDateTime);
+		let googleRequestNumber = await ReportService.getRequestsOfGoogleNumber(from, endDateTime);
+
+		result = ReportService.mapDateOfErrorGoogleAndDateOfRequest(result, googleRequestNumber);
+
+		logger.info('AccountAdsController::statisticsOfGoogleErrorsAndNumberOfRequests::success');
+		return res.status(HttpStatus.OK).json({
+			messages: ['Lấy dữ liệu thành công'],
+			data    : {
+				result
+			}
+		});
+	} catch (e) {
+		logger.error('ReportController::statisticsOfGoogleErrorsAndNumberOfRequests::error', e);
+		return next(e);
+	}
+};
+
 module.exports = {
 	getIPClicks,
 	getDetailIPClick,
 	getTrafficSourceStatisticByDay,
 	getTrafficSourceLogs,
-	getIpsInAutoBlackListOfAccount
+	getIpsInAutoBlackListOfAccount,
+	statisticsOfGoogleErrorsAndNumberOfRequests
 };

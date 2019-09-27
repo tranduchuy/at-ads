@@ -20,7 +20,10 @@ const moment = require('moment');
 const UserBehaviorLogsModel = require('../user-behavior-log/user-behavior-log.model');
 const { LOGGING_TYPES } = require('../user-behavior-log/user-behavior-log.constant');
 const { Paging } = require('./account-ads.constant');
-
+const AdAccountConstant = require('../account-adwords/account-ads.constant');
+const Request = require('../../utils/Request');
+const config = require('config');
+const trackingScript = config.get('trackingScript')
 /**
  *
  * @param {string} userId
@@ -115,7 +118,13 @@ const getAccountsAdsByUserId = async (userId) => {
   
   if (accountsAds.length !== 0) {
     const promises = accountsAds.map(async (account) => {
-      const websites = await WebsiteService.getWebsitesByAccountId(account._id);
+      let websites = await WebsiteService.getWebsitesByAccountId(account._id);
+
+      if(websites.length > 0)
+      {
+        websites = await checkDomainHasTracking(websites, account.key);
+      }
+
       const query = { 
         accountId: mongoose.Types.ObjectId(account._id),
         isDeleted: false
@@ -1515,6 +1524,29 @@ const getListGoogleAdsOfUser = (req) => {
   })
 };
 
+const checkDomainHasTracking = async(websites, key) => {
+  logger.info('AccountAdService::checkDomainHasTracking is called.', {websites, key});
+  try{
+    return await Promise.all(websites.map(async (website) => {
+      const html = await Request.getHTML(website.domain);
+      if (html !== null) {
+        const script = AdAccountConstant.trackingScript.replace('{accountKey}', key);
+        website.isValid = true;
+        website.isTracking = html.indexOf(script) !== -1 ? true : false;
+        const splitHtml = html.split('\n');
+        website.isDuplicateScript = (splitHtml.filter(e => e.indexOf(trackingScript)!== -1 )).length > 1 ? true : false;
+      } else {
+        website.isValid = false;
+        website.isTracking = false;
+        website.isDuplicateScript = false;
+      }
+      return await website.save();
+    }));
+  }catch(e){
+    throw e;
+  }
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1547,5 +1579,6 @@ module.exports = {
   getNoClickOfIps,
   retry,
   getListOriginalCampaigns,
-  getListGoogleAdsOfUser
+  getListGoogleAdsOfUser,
+  checkDomainHasTracking
 };

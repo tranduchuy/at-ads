@@ -1,3 +1,6 @@
+const config = require('config');
+const trackingScript = config.get('trackingScript')
+
 module.exports = {
   setting: {
     autoBlockByMaxClick: 2,
@@ -33,6 +36,6 @@ module.exports = {
     PAGE: 1,
     LIMIT: 10
   },
-  trackingScript: `<script type="text/javascript" src="https://static-click.appnet.edu.vn/static/tracking.js?key={accountKey}"></script>`,
+  trackingScript: `<script type="text/javascript" src="${trackingScript}?key={accountKey}"></script>`,
   retryCount:3
 };
