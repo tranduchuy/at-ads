@@ -556,8 +556,7 @@ const getRequestsOfGoogleNumber = (from, to) => {
 							timezone: "+07:00" 
 						} 
 					},
-					'count': 1,
-					'countReport': 1
+					'count': {$add: ['$count', '$countReport']}
 				}
 			};
 
@@ -566,8 +565,7 @@ const getRequestsOfGoogleNumber = (from, to) => {
 					'_id': '$date',
 					'requestsNumber': {
 						$push: {
-							'count'       : '$count',
-							'countReport' : '$countReport'
+							count: '$count'
 						}
 					}
 				}
@@ -613,16 +611,16 @@ const mapDateOfErrorGoogleAndDateOfRequest = (googleErrorList, requestList) => {
 		};
 		
 		googleErrorList.forEach(googleErrorInfo => {
-			if(googleErrorInfo._id == e)
+			if(googleErrorInfo._id === e)
 			{
 				log.googleAdsErrorsNumber = googleErrorInfo.googleAdsErrorsNumber;
 			}
 		});
 
 		requestList.forEach(requestInfo => {
-			if(requestInfo._id == e)
+			if(requestInfo._id === e)
 			{
-				log.requestsNumber = requestInfo.requestsNumber;
+				log.requestsNumber = requestInfo.requestsNumber.length !== 0 ? requestInfo.requestsNumber[0].count : 0;
 			}
 		});
 
