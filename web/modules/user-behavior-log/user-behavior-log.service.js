@@ -289,12 +289,6 @@ const sendMessageForFireBase = async (sendData) => {
 };
 
 const getInfoSend = (data, account, isPrivateBrowsing) => {
-  if(data.ip)
-  {
-    const splitIp = data.ip.split('.');
-    data.ip = '*.' + splitIp.slice(2,4).join('.');
-  }
-
   let isSpam = false;
 
   if(account)
@@ -329,6 +323,7 @@ const getDataForIntroPage = () => {
           createdAt: -1
         }
       };
+
       const projectStage = {
         $project: { 
           isSpam: 1,
@@ -338,31 +333,10 @@ const getDataForIntroPage = () => {
           device: 1,
           os: 1,
           browser: 1,
-          splitIp: { $split: ["$ip", "."]}}
+          ip: 1
+        }
       };
-      const projectStage1 = {
-        $project: {
-          isSpam: 1,
-          networkCompany: 1,
-          location: 1,
-          createdAt: 1,
-          device: 1,
-          os: 1,
-          browser: 1,
-          classC: {$arrayElemAt: ["$splitIp",2]},
-          classD: {$arrayElemAt: ["$splitIp",3]}}
-      }
-      const projectStage2 = {
-        $project: { 
-          isSpam: 1,
-          networkCompany: 1,
-          location: 1,
-          createdAt: 1,
-          device: 1,
-          os: 1,
-          browser: 1,
-          ip: { $concat: [ "*.", "*.", "$classC", ".", "$classD"]}}
-      }
+
       const limitStage = {
         $limit : 30  
       };
@@ -370,8 +344,6 @@ const getDataForIntroPage = () => {
       const query = [
         sortStage,
         projectStage,
-        projectStage1,
-        projectStage2,
         limitStage
       ];
 
