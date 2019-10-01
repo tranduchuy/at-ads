@@ -573,14 +573,15 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
 
       const projectStage = { 
           $project: {
-            uuid: 1,
-            createdAt: 1,
-            isSpam: 1,
-            ip: 1,
-            keyword: 1,
-            location: 1,
-            isPrivateBrowsing: 1,
-            reason: 1
+            uuid              : 1,
+            createdAt         : 1,
+            isSpam            : 1,
+            ip                : 1,
+            keyword           : 1,
+            location          : 1,
+            isPrivateBrowsing : 1,
+            reason            : 1,
+            gclid             : 1
           }
       };
 

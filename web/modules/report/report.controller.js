@@ -13,6 +13,7 @@ const { getIpsInAutoBlackListOfAccountValidationSchema } = require('./validation
 const { statisticsOfGoogleErrorsAndNumberOfRequestsSchemaValidation } = require('./validations/statistics-of-google-errors-and-number-of-requests.schema');
 
 const ReportService = require('./report.service');
+const ClickReportService = require('../click-report/click-report.service');
 const requestUtil = require('../../utils/RequestUtil');
 const messages = require("../../constants/messages");
 const { Paging } = require("../account-adwords/account-ads.constant");
@@ -315,6 +316,10 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 					entries = ReportService.addLogInfoIntoIpInfo(logsInfo, entries);
 				}
 			}
+
+			const gclidList = entries.map(log => log.gclid).filter(ReportService.onlyUnique);
+			const clickReport = await ClickReportService.getReportByGclId(gclidList);
+			entries = ClickReportService.mapCLickReportIntoUserLogs(clickReport, entries);
 		}
 
 		logger.info('ReportController::getIpsInAutoBlackListOfAccount::success\n', info);
