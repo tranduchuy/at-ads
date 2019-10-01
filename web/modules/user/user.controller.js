@@ -254,8 +254,12 @@ const loginByGoogle = async (request, res, next) => {
       }
       logger.info('UserController::loginByGoogle::success');
 
+
+      if(refreshToken)
+      {
+        user.googleRefreshToken = refreshToken;
+      }
       user.googleAccessToken = accessToken;
-      user.googleRefreshToken = refreshToken;
       await user.save();
       const result = await UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);
