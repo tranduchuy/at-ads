@@ -232,7 +232,7 @@ const loginByGoogle = async (request, res, next) => {
       if (!user) {
         user = await UserService.findByEmail(email);
         if (user) {
-          if(!refreshToken)
+          if(refreshToken)
           {
             user.googleRefreshToken = refreshToken;
           }
