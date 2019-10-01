@@ -100,6 +100,12 @@ const getErrorListForAdminPage = (page, limit) => {
         logger.info('Admin/UserService::getErrorListForAdminPage::is Called', { page, limit });
         try
         {
+            const sortStage = {
+                $sort: {
+                    createdAt: -1
+                }
+            };
+
             const facetStage = {
                 $facet:
                     {
@@ -113,7 +119,7 @@ const getErrorListForAdminPage = (page, limit) => {
                     }
             };
         
-            const query = [facetStage];
+            const query = [sortStage, facetStage];
 
             const errorList = await GoogleAdsErrorModel.aggregate(query);
 

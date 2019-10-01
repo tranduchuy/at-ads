@@ -9,7 +9,10 @@ const googleAdsErrorsSchema = new Schema({
 	authConfig: Object,
 	params: Object,
 	error: String,
-	functionName: String
+	functionName: String,
+	exceptionType: String,
+	errorString: String,
+	reason: String
 }, { timestamps: true });
 
 const googleAdsErrorsModel = mongoose.model('GoogleAdsErrors', googleAdsErrorsSchema, 'GoogleAdsErrors');
