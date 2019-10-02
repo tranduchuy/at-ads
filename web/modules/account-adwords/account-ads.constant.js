@@ -2,6 +2,10 @@ const config = require('config');
 const trackingScript = config.get('trackingScript')
 
 module.exports = {
+  connectType: {
+    byId: 'GOOGLE_ADS_ID',
+    byEmail: 'EMAIL'
+  },
   setting: {
     autoBlockByMaxClick: 2,
     countMaxClickInHours: 24,

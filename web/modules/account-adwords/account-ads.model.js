@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 const AccountAdsConstant = require('./account-ads.constant');
 const Schema = mongoose.Schema;
 const accountAdsSchema = new Schema({
+    connectType: {
+        type: String
+    },
     user: {
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'User'
