@@ -15,7 +15,6 @@ const AdminUserService = require('./admin-user.service');
 
 const { getUsersListForAdminPageValidationSchema } = require('./validations/get-user-list-for-admin-page.schema');
 const { getAccountsListForAdminPageValidationSchema } = require('./validations/get-accounts-list-for-admin-page.schema');
-const { getErrorListForAdminPageValidationSchema } = require('./validations/get-error-list-for-admin-page.schema');
 const { getWebsiteListForAdminPageValidationSchema } = require('./validations/get-website-for-admin-page.schema');
 
 const list = async (req, res, next) => {
@@ -169,42 +168,6 @@ const getAccountsListForAdminPage = async (req, res, next) => {
   }
 };
 
-const getErrorListForAdminPage = async (req, res, next) => {
-  logger.info('Admin/UserController::getErrorListForAdminPage::is called', {id: req.user._id});
-  try{
-    const { error } = Joi.validate(req.query, getErrorListForAdminPageValidationSchema);
-
-		if (error) {
-			return requestUtil.joiValidationResponse(error, res);
-    }
-
-    let limit = parseInt(req.query.limit || Paging.LIMIT);
-    let page = parseInt(req.query.page || Paging.PAGE);
-
-    const data = await AdminUserService.getErrorListForAdminPage(page, limit);
-    let entries = [];
-    let totalItems = 0;
-
-    if(data[0].entries.length > 0)
-    {
-      entries = data[0].entries;
-      totalItems = data[0].meta[0].totalItems
-    }
-
-    logger.info('Admin/UserController::getErrorListForAdminPage::success\n');
-    res.status(HttpStatus.OK).json({
-      messages: ['Lấy dữ liệu thành công.'],
-      data: {
-        entries,
-        totalItems
-      }
-    })
-  }catch(e){
-    logger.error('Admin/UserController::getErrorListForAdminPage::error\n', e);
-    return next(e);
-  }
-};
-
 const getWebsitesListForAdminPage = async (req, res, next) => {
   logger.info('Admin/UserController::getWebsiteListForAdminPage::is Called', { id: req.user._id });
   try{
@@ -249,7 +212,6 @@ const AdminUserController = {
   login,
   getUsersListForAdminPage,
   getAccountsListForAdminPage,
-  getErrorListForAdminPage,
   getWebsitesListForAdminPage
 };
 

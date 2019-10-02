@@ -9,5 +9,6 @@ router.use('/websites', require('../modules/website/website.route'));
 router.use('/fire-base-tokens', require('../modules/fire-base-tokens/fire-base-tokens.route'));
 router.use('/reports', require('../modules/report/report.route'));
 router.use('/packages', require('../modules/packages/packages.route'));
+router.use('/google-ad-errors', require('../modules/google-ads-error/google-ads-error.route'));
 
 module.exports = router;

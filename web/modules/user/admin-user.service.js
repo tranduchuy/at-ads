@@ -95,44 +95,6 @@ const getAccountsListForAdminPage = (userId, page, limit) => {
     });
 };
 
-const getErrorListForAdminPage = (page, limit) => {
-    return new Promise( async (res, rej) => {
-        logger.info('Admin/UserService::getErrorListForAdminPage::is Called', { page, limit });
-        try
-        {
-            const sortStage = {
-                $sort: {
-                    createdAt: -1
-                }
-            };
-
-            const facetStage = {
-                $facet:
-                    {
-                        entries: [
-                            { $skip: (page - 1) * limit },
-                            { $limit: limit }
-                        ],
-                        meta   : [
-                            { $group: { _id: null, totalItems: { $sum: 1 } } },
-                        ],
-                    }
-            };
-        
-            const query = [sortStage, facetStage];
-
-            const errorList = await GoogleAdsErrorModel.aggregate(query);
-
-            logger.info('Admin/UserService::getErrorListForAdminPage::query\n', JSON.stringify(query));
-
-            return res(errorList);
-        }catch(e){
-            logger.error('Admin/UserService::getErrorListForAdminPage::error\n', e);
-            return rej(e);
-        }
-    });
-};
-
 const getWebsitesForAdminPage = (userId, accountsId, page, limit) => {
     return new Promise( async (res, rej) => {
         logger.info('Admin/UserService::getWebsitesForAdminPage::is Called', { userId, accountsId, page, limit });
@@ -194,6 +156,5 @@ const getWebsitesForAdminPage = (userId, accountsId, page, limit) => {
 module.exports = {
     getUsersListForAdminPage,
     getAccountsListForAdminPage,
-    getErrorListForAdminPage,
     getWebsitesForAdminPage
 };
