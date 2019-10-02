@@ -2,7 +2,6 @@ const AccountAdsModel = require('./account-ads.model');
 const WebsiteModel = require('../website/website.model');
 const WebsiteService = require('../website/website.service');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
-const UserModel = require('../user/user.model');
 const mongoose = require('mongoose');
 const HttpStatus = require('http-status-codes');
 
@@ -1478,7 +1477,6 @@ const getListOriginalCampaigns = (req) => {
         data      : { campaignList: processCampaignList }
       });
     } catch (e) {
-      console.log(e)
       const message = GoogleAdwordsService.mapManageCustomerErrorMessage(e);
       logger.error('AccountAdService::getOriginalCampaigns::error', e, '\n', info);
       return reject(message);
