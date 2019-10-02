@@ -2029,6 +2029,32 @@ const getListGoogleAdsOfUser = async (req, res, next) => {
 	}
 };
 
+const ConnectGoogleAdsByEmail = async(req, res, next) => {
+	const info = {
+		id   : req.adsAccount._id,
+		adsId: req.adsAccount.adsId
+	}
+	logger.info('AccountAdsController::ConnectGoogleAdsByEmail::is called\n', info);
+	try{
+		if(!req.adsAccount.isConnected || req.adsAccount.isDeleted || req.user.googleRefreshToken == '' || !req.user.googleRefreshToken)
+		{
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ["Thao tác không hợp lệ"],
+			});
+		}
+
+		req.adsAccount.connectType = AdAccountConstant.connectType.byEmail;
+		await req.adsAccount.save();
+
+		return res.status(HttpStatus.OK).json({
+			messages: ["Thiết lập thành công"]
+		});
+	}catch(e){
+		logger.error('AccountAdsController::ConnectGoogleAdsByEmail::is called\n', info);
+		return next(e);
+	}
+};
+
 module.exports = {
 	addAccountAds,
 	handleManipulationGoogleAds,
@@ -2060,6 +2086,7 @@ module.exports = {
 	statisticUser,
 	getReportStatistic,
 	detailUser,
-	getListGoogleAdsOfUser
+	getListGoogleAdsOfUser,
+	ConnectGoogleAdsByEmail
 };
 
