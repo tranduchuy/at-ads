@@ -37,6 +37,7 @@ const { getIpsInfoInClassDValidationSchema } = require('./validations/get-ips-in
 const { removeIpInAutoBlackListValidationSchema } = require('./validations/remove-Ip-In-Auto-Black-List-Ip.schema');
 const { getIpHistoryValidationSchema } = require('./validations/get-ip-history.schema');
 const { getReportStatisticValidationSchema } = require('./validations/get-report-Statistic.schema');
+const { connectGoogleAdsByEmailValidationSchema } = require('./validations/connect-google-ads-by-email.schema');
 
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
@@ -2029,6 +2030,57 @@ const getListGoogleAdsOfUser = async (req, res, next) => {
 	}
 };
 
+const connectGoogleAdsByEmail = async(req, res, next) => {
+	const info = {
+		id   : req.user._id,
+		adsId: req.user.adsId
+	}
+	logger.info('AccountAdsController::ConnectGoogleAdsByEmail::is called\n', info);
+	try{
+		const { error } = Joi.validate(req.body, connectGoogleAdsByEmailValidationSchema);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+		}
+
+		if(req.user.googleRefreshToken == '' || !req.user.googleRefreshToken)
+		{
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ["Thao tác không hợp lệ"],
+			});
+		}
+
+		const { adWordId } = req.body;
+		const adWord = await AccountAdsModel.findOne({adsId: adWordId});
+
+		if(adWord)
+		{
+		    if (adWorld.user.toString() !== req.user._id.toString()) {
+		        return res.status(HttpStatus.BAD_REQUEST).json({
+    				messages: ["Tài khoản đã được quản lý bởi tài khoản khác."],
+    			});
+		    }
+		    
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ["Bạn đã kết nói GoogleAds này: " + adWordId],
+			});
+		}
+
+		const userId      = req.user._id;
+		const connectType = AdAccountConstant.connectType.byEmail; 
+		const isConnected = true;
+
+		await AccountAdsService.createAccountAdsHaveIsConnectedStatusAndConnectType({userId, adWordId, isConnected, connectType})
+
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ["Kết nối tài khoản thành công."],
+		});
+	}catch(e){
+		logger.error('AccountAdsController::ConnectGoogleAdsByEmail::is called\n', info);
+		return next(e);
+	}
+};
+
 module.exports = {
 	addAccountAds,
 	handleManipulationGoogleAds,
@@ -2060,6 +2112,7 @@ module.exports = {
 	statisticUser,
 	getReportStatistic,
 	detailUser,
-	getListGoogleAdsOfUser
+	getListGoogleAdsOfUser,
+	ConnectGoogleAdsByEmail: connectGoogleAdsByEmail
 };
 
