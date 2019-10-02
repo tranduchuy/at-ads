@@ -351,8 +351,9 @@ const getLogsOfIpsInAutoBlackList = (accountKey, ipsArr) => {
 			const projectStage1 = {
 				$project: {
 					_id              : 1,
-					network          : "$log.networkCompany.name",
-					isPrivateBrowsing: '$log.isPrivateBrowsing'
+					network          : '$log.networkCompany.name',
+					isPrivateBrowsing: '$log.isPrivateBrowsing',
+					gclid            : '$log.gclid'
 				}
 			};
 
@@ -382,8 +383,9 @@ const addLogInfoIntoIpInfo = (logsInfo, ipsInfo) => {
 	ipsInfo.forEach(ipInfo => {
 		logsInfo.forEach(logInfo => {
 			if (ipInfo._id === logInfo._id) {
-				ipInfo.network = logInfo.network;
+				ipInfo.network           = logInfo.network;
 				ipInfo.isPrivateBrowsing = logInfo.isPrivateBrowsing;
+				ipInfo.gclid             = logInfo.gclid;
 			}
 		});
 	});
@@ -428,7 +430,8 @@ const getInfoLogForGroupIp = async (groupIps, ipsInfo) => {
 							const data = {
 								_id              : ip,
 								network          : result[0].networkCompany.name,
-								isPrivateBrowsing: result[0].isPrivateBrowsing
+								isPrivateBrowsing: result[0].isPrivateBrowsing,
+								gclid            : result[0].gclid
 							}
 
 							logsArr.push(data);
@@ -648,5 +651,6 @@ module.exports = {
 	getInfoLogForGroupIp,
 	getStatisticOfGoogleAdsErrorsNumber,
 	getRequestsOfGoogleNumber,
-	mapDateOfErrorGoogleAndDateOfRequest
+	mapDateOfErrorGoogleAndDateOfRequest,
+	onlyUnique
 };
