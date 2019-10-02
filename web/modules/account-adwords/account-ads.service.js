@@ -1563,31 +1563,6 @@ const checkDomainHasTracking = async(websites, key) => {
   }
 };
 
-const getRefreshToken = async (adwordId) => {
-	logger.info('AccountAdService::getRefreshToken is called.', {adwordId});
-	try{
-    const adsAccount = await AccountAdsModel.findOne({adsId: adwordId});
-
-    if( !adsAccount || !adsAccount.connectType || adsAccount.connectType == AdAccountConstant.connectType.byId )
-    {
-      return null;
-    }
-
-    const user = await UserModel.findOne({_id: adsAccount.user});
-
-    if( !user || user.googleRefreshToken == '' || !user.googleRefreshToken )
-    {
-      return null;
-    }
-
-    return user.googleRefreshToken;
-	}catch(e){
-    console.log(e);
-    logger.error('AccountAdService::getRefreshToken error.', e, {adwordId});
-		throw e;
-	}
-};
-
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1622,6 +1597,5 @@ module.exports = {
   getListOriginalCampaigns,
   getListGoogleAdsOfUser,
   checkDomainHasTracking,
-  createAccountAdsHaveIsConnectedStatusAndConnectType,
-  getRefreshToken
+  createAccountAdsHaveIsConnectedStatusAndConnectType
 };
