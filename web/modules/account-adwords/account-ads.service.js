@@ -53,6 +53,19 @@ const createAccountAdsHaveIsConnectedStatus = async ({ userId, adsId }, isConnec
   return await newAccountAds.save();
 };
 
+const createAccountAdsHaveIsConnectedStatusAndConnectType = async ({ userId, adWordId, isConnected, connectType}) => {
+  const key = shortid();
+  const newAccountAds = new AccountAdsModel({
+    user  : userId,
+    adsId : adWordId,  
+    isConnected,
+    key,
+    connectType,
+  });
+
+  return await newAccountAds.save();
+};
+
 
 const checkIpIsBlackListed = (blackList, ips, ipInSampleBlockIp, autoBlackListIp) => {
     if(ipInSampleBlockIp)
@@ -1581,5 +1594,6 @@ module.exports = {
   retry,
   getListOriginalCampaigns,
   getListGoogleAdsOfUser,
-  checkDomainHasTracking
+  checkDomainHasTracking,
+  createAccountAdsHaveIsConnectedStatusAndConnectType
 };

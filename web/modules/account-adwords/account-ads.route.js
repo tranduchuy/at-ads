@@ -36,6 +36,6 @@ router.delete('/:accountId', CheckTokenMiddleware, CheckAccountIdMiddleWare, Acc
 router.get('/:accountId/ip-history', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.getIpHistory);
 router.get('/:accountId/statistic-user', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.statisticUser);
 router.get('/:accountId/detail-user/:id', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.detailUser);
-router.put('/:accountId/connect-google-ads-by-email', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.ConnectGoogleAdsByEmail);
+router.post('/connect-google-ads-by-email', CheckTokenMiddleware, AccountAdsController.ConnectGoogleAdsByEmail);
 
 module.exports = router;
