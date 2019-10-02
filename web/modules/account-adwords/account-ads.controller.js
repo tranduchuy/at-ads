@@ -2030,7 +2030,7 @@ const getListGoogleAdsOfUser = async (req, res, next) => {
 	}
 };
 
-const ConnectGoogleAdsByEmail = async(req, res, next) => {
+const connectGoogleAdsByEmail = async(req, res, next) => {
 	const info = {
 		id   : req.user._id,
 		adsId: req.user.adsId
@@ -2055,8 +2055,14 @@ const ConnectGoogleAdsByEmail = async(req, res, next) => {
 
 		if(adWord)
 		{
+		    if (adWorld.user.toString() !== req.user._id.toString()) {
+		        return res.status(HttpStatus.BAD_REQUEST).json({
+    				messages: ["Tài khoản đã được quản lý bởi tài khoản khác."],
+    			});
+		    }
+		    
 			return res.status(HttpStatus.BAD_REQUEST).json({
-				messages: ["Tài khoản đã được quản lý bởi tài khoản khác."],
+				messages: ["Bạn đã kết nói GoogleAds này: " + adWordId],
 			});
 		}
 
@@ -2107,6 +2113,6 @@ module.exports = {
 	getReportStatistic,
 	detailUser,
 	getListGoogleAdsOfUser,
-	ConnectGoogleAdsByEmail
+	ConnectGoogleAdsByEmail: connectGoogleAdsByEmail
 };
 
