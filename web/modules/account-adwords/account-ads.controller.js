@@ -18,6 +18,7 @@ const { checkWhiteListIpsExistsInBlackList } = require('../../services/check-ip-
 const requestUtil = require('../../utils/RequestUtil');
 
 const UserBehaviorLogService = require('../user-behavior-log/user-behavior-log.service');
+const ClickReportService = require('../click-report/click-report.service');
 
 const { BlockByPrivateBrowserValidationSchema } = require('./validations/block-by-private-browser.schema');
 const { AddAccountAdsValidationSchema } = require('./validations/add-account-ads.schema');
@@ -1447,6 +1448,9 @@ const getReportForAccount = async (req, res, next) => {
 		if (result[0].entries.length !== 0) {
 			logs = result[0].entries;
 			totalItems = !isConnected ? logs.length : result[0].meta[0].totalItems
+			const gclidList = logs.map(log => log.gclid).filter(AccountAdsService.onlyUnique);
+			const clickReport = await ClickReportService.getReportByGclId(gclidList);
+			logs = ClickReportService.mapCLickReportIntoUserLogs(clickReport, logs);
 		}
 
 		const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, from._d, endDateTime._d);
