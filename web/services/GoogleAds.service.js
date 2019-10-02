@@ -10,6 +10,11 @@ const GoogleAdsErrorService = require('../modules/google-ads-error/google-ads-er
 const RabbitMQService = require('./rabbitmq.service');
 const { COUNT } = require('../modules/count-request-google/count-request-google.constant');
 const RabbitChannels = config.get('rabbitChannels');
+const AccountAdsService = require('../modules/account-adwords/account-ads.service');
+
+console.log('====');
+console.log(AccountAdsService);
+
 /**
  * Send request to manage an adword id
  * @param {string} accountAdsId
@@ -75,13 +80,15 @@ const getListCampaigns = function (adwordId) {
 		logger.info('GoogleAdsService::getListCampaigns', adwordId);
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		console.log(AccountAdsService);
+		const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : adwordConfig.refresh_token,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 			clientCustomerId: adwordId,
 		};
 		const user = new AdwordsUser(authConfig);
@@ -130,13 +137,14 @@ const getCampaignsName = function (adwordId, campaignIds) {
 		logger.info('GoogleAdsService::getCampaignsName', adwordId);
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : adwordConfig.refresh_token,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 			clientCustomerId: adwordId,
 		};
 		const user = new AdwordsUser(authConfig);
@@ -183,13 +191,14 @@ const addIpBlackList = function (adwordId, campaignId, ipAddress) {
 		logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignId, ipAddress);
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : adwordConfig.refresh_token,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 			clientCustomerId: adwordId,
 		};
 		const user = new AdwordsUser(authConfig);
@@ -242,13 +251,14 @@ const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion
 		logger.info('GoogleAdsService::removeIpBlackList', adwordId, campaignId, ipAddress);
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : adwordConfig.refresh_token,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 			clientCustomerId: adwordId,
 		};
 		const user = new AdwordsUser(authConfig);
@@ -391,6 +401,7 @@ const getAccountHierachy = function (refreshToken, adwordId) {
 		logger.info('GoogleAdsService::getAccountHierachy', adwordId);
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 		// const adwordConfig = config.get('google-ads');
 		const authConfig = {
@@ -398,7 +409,7 @@ const getAccountHierachy = function (refreshToken, adwordId) {
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : refreshToken,
+			refresh_token   : googleRefreshToken || refreshToken,
 			clientCustomerId: adwordId
 		};
 		const user = new AdwordsUser(authConfig);
@@ -440,13 +451,14 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
 	return new Promise(async (resolve, reject) => {
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+		const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : adwordConfig.refresh_token,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 			clientCustomerId: adwordId,
 		};
 		const report = new AdwordsReport(authConfig);
@@ -489,13 +501,14 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
 	return new Promise(async (resolve, reject) => {
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : adwordConfig.refresh_token,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 			clientCustomerId: adwordId,
 		};
 		const user = new AdwordsUser(authConfig);
@@ -539,13 +552,14 @@ const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
 	return new Promise(async (resolve, reject) => {
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 		const authConfig = {
 			developerToken  : adwordConfig.developerToken,
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : adwordConfig.refresh_token,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 			clientCustomerId: adwordId,
 		};
 		const user = new AdwordsUser(authConfig);
@@ -624,13 +638,14 @@ const getClickReport = (adwordId, campaignIds, fields) => {
   return new Promise(async (resolve, reject) => {
 
 	await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+	const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
     const report = new AdwordsReport({
-      developerToken: adwordConfig.developerToken,
-      userAgent: adwordConfig.userAgent,
-      client_id: adwordConfig.client_id,
-      client_secret: adwordConfig.client_secret,
-      refresh_token: adwordConfig.refresh_token,
+      developerToken  : adwordConfig.developerToken,
+      userAgent       : adwordConfig.userAgent,
+      client_id       : adwordConfig.client_id,
+      client_secret   : adwordConfig.client_secret,
+      refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
       clientCustomerId: adwordId,
     });
     report.getReport(adwordConfig.version, {
@@ -672,13 +687,14 @@ const getKeywordsReport = (adwordId, campaignIds, fields) => {
 	return new Promise(async (resolve, reject) => {
 
 	await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+	const googleRefreshToken = await AccountAdsService.getRefreshToken(adwordId);
 
 	const report = new AdwordsReport({
-		developerToken: adwordConfig.developerToken,
-		userAgent: adwordConfig.userAgent,
-		client_id: adwordConfig.client_id,
-		client_secret: adwordConfig.client_secret,
-		refresh_token: adwordConfig.refresh_token,
+		developerToken  : adwordConfig.developerToken,
+		userAgent       : adwordConfig.userAgent,
+		client_id       : adwordConfig.client_id,
+		client_secret   : adwordConfig.client_secret,
+		refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 		clientCustomerId: adwordId,
 	});
 	report.getReport(adwordConfig.version, {
