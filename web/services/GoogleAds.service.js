@@ -422,7 +422,6 @@ const getAccountHierachy = function (refreshToken, adwordId) {
 		logger.info('GoogleAdsService::getAccountHierachy', adwordId);
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
-		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		// const adwordConfig = config.get('google-ads');
 		const authConfig = {
@@ -430,7 +429,7 @@ const getAccountHierachy = function (refreshToken, adwordId) {
 			userAgent       : adwordConfig.userAgent,
 			client_id       : adwordConfig.client_id,
 			client_secret   : adwordConfig.client_secret,
-			refresh_token   : googleRefreshToken || refreshToken,
+			refresh_token   : refreshToken,
 			clientCustomerId: adwordId
 		};
 		const user = new AdwordsUser(authConfig);
