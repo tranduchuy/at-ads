@@ -26,6 +26,7 @@ const userSchema = new Schema({
     default: ''
   },
   avatar: String,
+  expiryDateOfAccesstoken: {type: Date, default: null},
   phone: {type: String, default:null}
 }, {timestamps: true});
 

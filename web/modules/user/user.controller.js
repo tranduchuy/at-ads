@@ -22,6 +22,7 @@ const messages = require("../../constants/messages");
 const requestUtil = require('../../utils/RequestUtil');
 const Request = require('request');
 const userActionHistoryService = require('../user-action-history/user-action-history.service');
+const moment = require('moment');
 
 const forgetPassword = async (request, res, next) => {
   logger.info('UserController::forgetPassword is called');
@@ -227,6 +228,7 @@ const loginByGoogle = async (request, res, next) => {
       const name = data.displayName;
       const googleId = data.id;
       const image = data.image.url;
+      const timeAfterOneHour = moment().add('1', 'hours');
 
       let user = await UserService.findByGoogleId(googleId);
       if (!user) {
@@ -239,6 +241,7 @@ const loginByGoogle = async (request, res, next) => {
           user.googleAccessToken = accessToken;
           user.googleId = googleId;
           user.avatar = user.avatar || image;
+          user.expiryDateOfAccesstoken = new Date(timeAfterOneHour);
           await user.save();
         } else {
           const newUser = {
@@ -247,7 +250,8 @@ const loginByGoogle = async (request, res, next) => {
             googleId,
             image,
             accessToken,
-            refreshToken
+            refreshToken,
+            expiryDateOfAccesstoken: new Date(timeAfterOneHour)
           };
           user = await UserService.createUserByGoogle(newUser);
         }
@@ -260,6 +264,7 @@ const loginByGoogle = async (request, res, next) => {
         user.googleRefreshToken = refreshToken;
       }
       user.googleAccessToken = accessToken;
+      user.expiryDateOfAccesstoken = new Date(timeAfterOneHour);
       await user.save();
       const result = await UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);

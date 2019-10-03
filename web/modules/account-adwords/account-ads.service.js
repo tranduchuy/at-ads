@@ -4,6 +4,7 @@ const WebsiteService = require('../website/website.service');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const mongoose = require('mongoose');
 const HttpStatus = require('http-status-codes');
+const request = require('request');
 
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
@@ -23,7 +24,8 @@ const { Paging } = require('./account-ads.constant');
 const AdAccountConstant = require('../account-adwords/account-ads.constant');
 const Request = require('../../utils/Request');
 const config = require('config');
-const trackingScript = config.get('trackingScript')
+const trackingScript = config.get('trackingScript');
+const adwordConfig = config.get('google-ads');
 /**
  *
  * @param {string} userId
@@ -1561,6 +1563,31 @@ const checkDomainHasTracking = async(websites, key) => {
   }
 };
 
+const getAccessTokenFromGoogle = (refreshToken) => {
+  logger.info('AccountAdService::getAccessTokenFromGoogle is called.', {refreshToken});
+  return new Promise((resolve, reject) => {
+    try{
+      const body = {
+        client_id    : adwordConfig.client_id,
+        client_secret: adwordConfig.client_secret,
+        refresh_token: refreshToken,
+        grant_type   : 'refresh_token'
+      };
+  
+      request.post({url:'https://www.googleapis.com/oauth2/v4/token', formData: body}, (err, httpResponse, body) => {
+        if (err) {
+          logger.error('AccountAdService::getAccessTokenFromGoogle::Error ', err);
+          return reject(err);
+        }
+        return resolve(JSON.parse(body));
+      });
+    }catch(e){
+      logger.error('AccountAdService::getAccessTokenFromGoogle::Error ', e);
+      return reject(e);
+    }
+  });
+};
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1595,5 +1622,6 @@ module.exports = {
   getListOriginalCampaigns,
   getListGoogleAdsOfUser,
   checkDomainHasTracking,
-  createAccountAdsHaveIsConnectedStatusAndConnectType
+  createAccountAdsHaveIsConnectedStatusAndConnectType,
+  getAccessTokenFromGoogle
 };
