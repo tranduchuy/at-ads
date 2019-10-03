@@ -29,7 +29,6 @@ const { AutoBlockingRangeIpValidationSchema } = require('./validations/auto-bloc
 const { AddCampaingsValidationSchema } = require('./validations/add-campaings-account-ads.chema');
 const { sampleBlockingIpValidationSchema } = require('./validations/sample-blocking-ip.schema');
 const { CheckDate } = require('./validations/check-date.schema');
-const { getListGoogleAdsOfUserValidationSchema } = require('./validations/get-list-google-ads-of-user.schema');
 const { setUpCampaignsByOneDeviceValidationSchema } = require('./validations/set-up-campaign-by-one-device.schema');
 const { getReportForAccountValidationSchema } = require('./validations/get-report-for-account.schema');
 const { getDailyClickingValidationSchema } = require('./validations/get-daily-clicking.shema');
@@ -2006,16 +2005,24 @@ const getReportStatistic = async (req, res, next) => {
 const getListGoogleAdsOfUser = async (req, res, next) => {
 	logger.info('AccountAdsController::getListGoogleAdsOfUser is called. Get list google ads of google id', req.user.googleId);
 	try {
-		const { error } = Joi.validate(req.query, getListGoogleAdsOfUserValidationSchema);
-
-		if (error) {
-			return requestUtil.joiValidationResponse(error, res);
-		}
-
-		const { accessToken, refreshToken } = req.query;
-
 		if (!req.user.googleId) {
 			return next(new Error('Chỉ dành cho tài khoản đăng nhập bằng google'));
+		}
+
+		let   accessToken = req.user.googleAccessToken;
+		const refreshToken = req.user.googleRefreshToken;
+		const now = moment();
+		const tokenExpiresAt = moment(req.user.expiryDateOfAccesstoken);
+		
+		if(!req.user.expiryDateOfAccesstoken || now.isAfter(tokenExpiresAt))
+		{
+			const timeAfterOneHour = moment().add('1', 'hours');
+			const result = await AccountAdsService.getAccessTokenFromGoogle(refreshToken);
+			accessToken = result.access_token;
+			req.user.googleAccessToken = accessToken;
+			req.user.expiryDateOfAccesstoken = new Date(timeAfterOneHour);
+
+			await req.user.save();
 		}
 
 		req.accessToken  = accessToken;
