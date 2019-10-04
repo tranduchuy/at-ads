@@ -15,6 +15,8 @@ const { ForgetPasswordValidationSchema } = require('./validations/forget-passwor
 const LoginGoogleValidationSchema = require('./validations/login-google.schema');
 const { CheckValidationSchema } = require("./validations/check.schema");
 const { UpdateValidationSchema } = require("./validations/update.schema");
+const { updateRefreshTokenAndAccessTokenValidationSchema } = require("./validations/update-refresh-token-and-access-token.schema");
+
 const HttpStatus = require("http-status-codes");
 const UserService = require('./user.service');
 const UserModel = require('./user.model');
@@ -229,6 +231,7 @@ const loginByGoogle = async (request, res, next) => {
       const googleId = data.id;
       const image = data.image.url;
       const timeAfterOneHour = moment().add('1', 'hours');
+      const timeAfterTwoMonth = moment().add(2, 'M');
 
       let user = await UserService.findByGoogleId(googleId);
       if (!user) {
@@ -237,6 +240,7 @@ const loginByGoogle = async (request, res, next) => {
           if(refreshToken)
           {
             user.googleRefreshToken = refreshToken;
+            user.expiryDateOfRefreshToken = new Date(timeAfterTwoMonth);
           }
           user.googleAccessToken = accessToken;
           user.googleId = googleId;
@@ -251,7 +255,8 @@ const loginByGoogle = async (request, res, next) => {
             image,
             accessToken,
             refreshToken,
-            expiryDateOfAccesstoken: new Date(timeAfterOneHour)
+            expiryDateOfAccesstoken: new Date(timeAfterOneHour),
+            expiryDateOfRefreshToken: new Date(timeAfterTwoMonth)
           };
           user = await UserService.createUserByGoogle(newUser);
         }
@@ -262,6 +267,7 @@ const loginByGoogle = async (request, res, next) => {
       if(refreshToken)
       {
         user.googleRefreshToken = refreshToken;
+        user.expiryDateOfRefreshToken = new Date(timeAfterTwoMonth);
       }
       user.googleAccessToken = accessToken;
       user.expiryDateOfAccesstoken = new Date(timeAfterOneHour);
@@ -557,6 +563,66 @@ const getLoggedInInfo = async (req, res, next) => {
   }
 };
 
+const checkRefreshToken = (req, res, next) => {
+	const info = {
+		id : req.user._id
+	}
+	logger.info('UserController::checkRefreshToken::is called\n', info);
+	try{
+		const tokenExpiresAt = req.user.expiryDateOfRefreshToken;
+    const refreshToken   = req.user.googleRefreshToken;
+    const now            = moment();
+
+    if(refreshToken == '' || !refreshToken || !tokenExpiresAt || now.isAfter(moment(tokenExpiresAt)))
+    {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages             : ["Refresh token hết hạn"],
+        refreshTokenExpires  : true
+			});
+    }
+
+    return res.status(HttpStatus.OK).json({
+      messages             : ["Refresh token vẫn còn hạn"],
+      refreshTokenExpires  : false
+    });
+	}catch(e){
+		logger.error('UserController::checkRefreshToken::error', e);
+		return next(e);
+	}
+};
+
+const updateRefreshTokenAndAccessToken = async (req, res, next) => {
+  const info = {
+		id : req.user._id
+	}
+	logger.info('UserController::updateRefreshTokenAndAccessToken::is called\n', info);
+  try{
+    const { error } = Joi.validate(req.body, updateRefreshTokenAndAccessTokenValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { accessToken, refreshToken } = req.body;
+    const timeAfterTwoMonth             = moment().add(2, 'M');
+    const timeAfterOneHour              = moment().add(1, 'hours');
+    req.user.googleRefreshToken         = refreshToken;
+    req.user.expiryDateOfRefreshToken   = new Date(timeAfterTwoMonth);
+    req.user.googleAccessToken          = accessToken;
+    req.user.expiryDateOfAccesstoken    = new Date(timeAfterOneHour);
+
+    await req.user.save();
+
+    return res.status(HttpStatus.OK).json({
+      messages : ["Cập nhật thành công"],
+      data     : req.user
+    });
+  }catch(e){
+    logger.error('UserController::updateRefreshTokenAndAccessToken::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   login,
   confirm,
@@ -567,5 +633,7 @@ module.exports = {
   check,
   resendConfirm,
   update,
-  loginByGoogle
+  loginByGoogle,
+  checkRefreshToken,
+  updateRefreshTokenAndAccessToken
 };

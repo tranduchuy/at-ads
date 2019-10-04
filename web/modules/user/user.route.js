@@ -20,5 +20,7 @@ router.post('/reset-password', UserController.resetPassword);
 router.get('/info', CheckTokenMiddleware, UserController.getLoggedInInfo);
 router.get('/actions-history', CheckTokenMiddleware, UserActionHistoryController.getActionsHistory);
 router.put('/website', CheckTokenMiddleware, CheckUserAdminMidddleware, websiteController.updateDomainToVip);
+router.get('/check-refresh-token', CheckTokenMiddleware, UserController.checkRefreshToken);
+router.put('/refresh-token-access-token', CheckTokenMiddleware, UserController.updateRefreshTokenAndAccessToken);
 
 module.exports = router;
