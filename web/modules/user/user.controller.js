@@ -625,7 +625,7 @@ const updateRefreshTokenAndAccessToken = (req, res, next) => {
       if(email != req.user.email)
       {
         return res.status(HttpStatus.CONFLICT).json({
-          messages : ["Email không khớp."],
+          messages : ["Thao tác không hợp lệ. Bạn đã đăng nhập bằng email: " + req.user.email],
         });
       }
 
