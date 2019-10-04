@@ -2039,8 +2039,7 @@ const getListGoogleAdsOfUser = async (req, res, next) => {
 
 const connectGoogleAdsByEmail = async(req, res, next) => {
 	const info = {
-		id   : req.user._id,
-		adsId: req.user.adsId
+		id   : req.user._id
 	}
 	logger.info('AccountAdsController::ConnectGoogleAdsByEmail::is called\n', info);
 	try{
