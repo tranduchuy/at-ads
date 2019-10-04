@@ -591,7 +591,7 @@ const checkRefreshToken = (req, res, next) => {
 	}
 };
 
-const updateRefreshTokenAndAccessToken = async (req, res, next) => {
+const updateRefreshTokenAndAccessToken = (req, res, next) => {
   const info = {
 		id : req.user._id
 	}
@@ -604,18 +604,44 @@ const updateRefreshTokenAndAccessToken = async (req, res, next) => {
     }
 
     const { accessToken, refreshToken } = req.body;
-    const timeAfterTwoMonth             = moment().add(2, 'M');
-    const timeAfterOneHour              = moment().add(1, 'hours');
-    req.user.googleRefreshToken         = refreshToken;
-    req.user.expiryDateOfRefreshToken   = new Date(timeAfterTwoMonth);
-    req.user.googleAccessToken          = accessToken;
-    req.user.expiryDateOfAccesstoken    = new Date(timeAfterOneHour);
+    const googleConnectionString = "https://www.googleapis.com/plus/v1/people/me?access_token=" + accessToken;
 
-    await req.user.save();
+    Request(googleConnectionString, async (error, response, body) => {
+      if (error) {
+        logger.error('UserController::updateRefreshTokenAndAccessToken::error', error);
+        return next(error);
+      }
 
-    return res.status(HttpStatus.OK).json({
-      messages : ["Cập nhật thành công"],
-      data     : req.user
+      if (response.statusCode !== HttpStatus.OK) {
+        logger.error('UserController::updateRefreshTokenAndAccessToken::error', response);
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          messages: ["Lỗi không xác định."]
+        });
+      }
+
+      const data = JSON.parse(body);
+      const email = data.emails[0].value;
+
+      if(email != req.user.email)
+      {
+        return res.status(HttpStatus.CONFLICT).json({
+          messages : ["Email không khớp."],
+        });
+      }
+
+      const timeAfterTwoMonth             = moment().add(2, 'M');
+      const timeAfterOneHour              = moment().add(1, 'hours');
+      req.user.googleRefreshToken         = refreshToken;
+      req.user.expiryDateOfRefreshToken   = new Date(timeAfterTwoMonth);
+      req.user.googleAccessToken          = accessToken;
+      req.user.expiryDateOfAccesstoken    = new Date(timeAfterOneHour);
+
+      await req.user.save();
+
+      return res.status(HttpStatus.OK).json({
+        messages : ["Cập nhật thành công"],
+        data     : req.user
+      });
     });
   }catch(e){
     logger.error('UserController::updateRefreshTokenAndAccessToken::error', e);
