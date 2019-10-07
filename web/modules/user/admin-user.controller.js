@@ -7,11 +7,14 @@ const logger = log4js.getLogger('Controllers');
 const {convertObjectToQueryString} = require('../../utils/RequestUtil');
 const requestUtil = require('../../utils/RequestUtil');
 const UserModel = require('./user.model');
+const WebsiteModel = require('../website/website.model');
 const UserService = require('./user.service');
 const UserConstants = require('./user.constant');
 const UserTokenService = require('../userToken/userToken.service');
 const { Paging } = require('../account-adwords/account-ads.constant');
 const AdminUserService = require('./admin-user.service');
+
+const Mongoose = require('mongoose');
 
 const { getUsersListForAdminPageValidationSchema } = require('./validations/get-user-list-for-admin-page.schema');
 const { getAccountsListForAdminPageValidationSchema } = require('./validations/get-accounts-list-for-admin-page.schema');
@@ -140,18 +143,57 @@ const getAccountsListForAdminPage = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
     }
     
-    const { userId } = req.query;
+    const { email } = req.query;
 
     let limit = parseInt(req.query.limit || Paging.LIMIT);
-    let page = parseInt(req.query.page || Paging.PAGE);
+    let page  = parseInt(req.query.page || Paging.PAGE);
 
-    const data = await AdminUserService.getAccountsListForAdminPage(userId, page, limit);
-    let entries = [];
+    let entries    = [];
     let totalItems = 0;
-    if(data[0].entries.length > 0)
+
+    if(email)
     {
-      entries = data[0].entries;
-      totalItems = data[0].meta[0].totalItems
+      const userList = await UserModel.find({email: {$regex: email, $options: 'g' }});
+
+      if(userList.length > 0)
+      {
+        entries           = userList;
+        totalItems        = userList.length;
+        const userIds     = entries.map(user => user._id);
+        const adsList     = await AdminUserService.getAccountsListForAdminPage(userIds, page, limit);
+        const accountList = adsList[0].entries;
+        if(accountList.length < 0)
+        {
+          entries    = [];
+          totalItems = 0;
+        }
+        else
+        {
+          let accountId     = adsList[0].entries.map(ads => ads.user.toString()).filter(AdminUserService.onlyUnique);
+          accountId         = accountId.map(ads => new Mongoose.Types.ObjectId(ads));
+          entries           = AdminUserService.mapAdsAccountWithUserAccount(accountList, entries);
+          const adsIds      = accountList.map(ads => ads._id);
+          const websiteList = await WebsiteModel.find({accountAd: {$in: adsIds}});
+          entries           = AdminUserService.mapAdsAccountWithWebsiteList(entries, websiteList);
+        }
+      }
+    }
+    else
+    {
+      const data = await AdminUserService.getAccountsListForAdminPage([], page, limit);
+
+      if(data[0].entries.length > 0)
+      {
+        entries           = data[0].entries;
+        totalItems        = data[0].meta[0].totalItems;
+        const adsIds      = entries.map(ads => ads._id);
+        let userList      = entries.map(ads => ads.user.toString()).filter(AdminUserService.onlyUnique);
+        userList          = userList.map(ads => new Mongoose.Types.ObjectId(ads));
+        const usersInfo   = await UserModel.find({_id: {$in : userList}});
+        const websiteList = await WebsiteModel.find({accountAd: {$in: adsIds}});
+        entries           = AdminUserService.mapAdsAccountWithUserAccount(entries, usersInfo);
+        entries           = AdminUserService.mapAdsAccountWithWebsiteList(entries, websiteList);
+      }
     }
 
     logger.info('Admin/UserController::getAccountsListForAdminPage::success\n');

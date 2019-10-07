@@ -56,15 +56,16 @@ const getUsersListForAdminPage = (email, name, page, limit) => {
     });
 };
 
-const getAccountsListForAdminPage = (userId, page, limit) => {
+const getAccountsListForAdminPage = (userIds, page, limit) => {
     return new Promise( async (res, rej) => {
-        logger.info('Admin/UserService::getAccountsListForAdminPage::is Called', { userId, page, limit });
+        logger.info('Admin/UserService::getAccountsListForAdminPage::is Called', { userIds, page, limit });
         try
         {
-            const user = new Mongoose.Types.ObjectId(userId);
             const matchStage = { 
                 $match: {
-                    user
+                    user: {
+                        $in: userIds
+                    }
                 }
             };
         
@@ -81,7 +82,7 @@ const getAccountsListForAdminPage = (userId, page, limit) => {
                     }
             };
         
-            const query = userId ? [matchStage, facetStage] : [facetStage];
+            const query = userIds.length > 0 ? [matchStage, facetStage] : [facetStage];
 
             const accountsList = await AccountAdsModel.aggregate(query);
 
@@ -153,8 +154,47 @@ const getWebsitesForAdminPage = (userId, accountsId, page, limit) => {
     });
 };
 
+const onlyUnique = (value, index, self) => {
+    return self.indexOf(value) == index;
+};
+
+const mapAdsAccountWithUserAccount = (adsAccount ,userAccount) => {
+    adsAccount.forEach(ads => {
+        userAccount.forEach(user => {
+            if(ads.user.toString() == user._id.toString())
+            {
+                ads.userInfo = user;
+            }
+        });
+    });
+
+    return adsAccount;
+}
+
+const mapAdsAccountWithWebsiteList = (adsAccount, websiteList) => {
+    adsAccount.forEach(ads => {
+        let websiteArr = []
+        websiteList.forEach(website => {
+            if(ads._id.toString() == website.accountAd.toString())
+            {
+                websiteArr.push(website)
+            }
+        });
+
+        if(websiteArr.length > 0)
+        {
+            ads.websiteInfo = websiteArr;
+        }
+    });
+
+    return adsAccount;
+}
+
 module.exports = {
     getUsersListForAdminPage,
     getAccountsListForAdminPage,
-    getWebsitesForAdminPage
+    getWebsitesForAdminPage,
+    onlyUnique,
+    mapAdsAccountWithUserAccount,
+    mapAdsAccountWithWebsiteList
 };
