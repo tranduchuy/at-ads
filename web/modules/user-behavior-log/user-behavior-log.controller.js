@@ -11,6 +11,7 @@ const Url = require('url-parse');
 const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
+const SocketService = require('../../services/socket.service');
 
 const AdAccountModel = require('../account-adwords/account-ads.model');
 
@@ -101,11 +102,11 @@ const logTrackingBehavior = async (req, res, next) => {
           await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
           const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
           await UserBehaviorLogService.sendMessageForFireBase(sendData);
+          SocketService.sendDashboardLog(sendData);
         }
         else
         {
           log.reason = UserBehaviorLogService.filterReason(website, accountOfKey);
-    
           await log.save();
         }   
       }
