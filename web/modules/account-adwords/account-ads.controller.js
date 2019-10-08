@@ -857,6 +857,15 @@ const connectionConfirmation = async (req, res, next) => {
 			});
 		}
 
+		if (account.connectType === AdAccountConstant.connectType.byEmail) {
+			return res.status(HttpStatus.OK).json({
+				messages: [''],
+				data    : {
+					isConnected: true
+				}
+			});
+		}
+
 		GoogleAdwordsService.sendManagerRequest(adWordId)
 			.then(result => {
 				account.isConnected = false;
@@ -2061,7 +2070,7 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 
 		if(adWord)
 		{
-		    if (adWorld.user.toString() !== req.user._id.toString()) {
+		    if (adWord.user.toString() !== req.user._id.toString()) {
 		        return res.status(HttpStatus.BAD_REQUEST).json({
     				messages: ["Tài khoản đã được quản lý bởi tài khoản khác."],
     			});
@@ -2073,13 +2082,15 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 		}
 
 		const userId      = req.user._id;
-		const connectType = AdAccountConstant.connectType.byEmail; 
-		const isConnected = true;
+		const connectType = AdAccountConstant.connectType.byEmail;
 
-		await AccountAdsService.createAccountAdsHaveIsConnectedStatusAndConnectType({userId, adWordId, isConnected, connectType})
+		const account = await AccountAdsService.createAccountAdsHaveIsConnectedStatusAndConnectType({userId, adWordId, connectType})
 
 		return res.status(HttpStatus.OK).json({
 			messages: ["Kết nối tài khoản thành công."],
+			data: {
+				account
+			}
 		});
 	}catch(e){
 		logger.error('AccountAdsController::ConnectGoogleAdsByEmail::is called\n', info);
