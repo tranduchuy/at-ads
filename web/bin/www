@@ -12,6 +12,9 @@ app.set('port', port);
 const server = http.createServer(app);
 server.on('listening', onListening);
 
+const io = require('socket.io')(server);
+require('../services/socket.service').init(io);
+
 db(() => {
   console.log('Connect to mongodb successfully');
   server.listen(port);
