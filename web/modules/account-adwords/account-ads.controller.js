@@ -2078,7 +2078,7 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 
 		await AccountAdsService.createAccountAdsHaveIsConnectedStatusAndConnectType({userId, adWordId, isConnected, connectType})
 
-		return res.status(HttpStatus.BAD_REQUEST).json({
+		return res.status(HttpStatus.OK).json({
 			messages: ["Kết nối tài khoản thành công."],
 		});
 	}catch(e){

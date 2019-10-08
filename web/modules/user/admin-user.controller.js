@@ -7,11 +7,15 @@ const logger = log4js.getLogger('Controllers');
 const {convertObjectToQueryString} = require('../../utils/RequestUtil');
 const requestUtil = require('../../utils/RequestUtil');
 const UserModel = require('./user.model');
+const AdsAccountModel = require('../account-adwords/account-ads.model');
+const WebsiteModel = require('../website/website.model');
 const UserService = require('./user.service');
 const UserConstants = require('./user.constant');
 const UserTokenService = require('../userToken/userToken.service');
 const { Paging } = require('../account-adwords/account-ads.constant');
 const AdminUserService = require('./admin-user.service');
+
+const Mongoose = require('mongoose');
 
 const { getUsersListForAdminPageValidationSchema } = require('./validations/get-user-list-for-admin-page.schema');
 const { getAccountsListForAdminPageValidationSchema } = require('./validations/get-accounts-list-for-admin-page.schema');
@@ -140,26 +144,17 @@ const getAccountsListForAdminPage = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
     }
     
-    const { userId } = req.query;
-
-    let limit = parseInt(req.query.limit || Paging.LIMIT);
-    let page = parseInt(req.query.page || Paging.PAGE);
-
-    const data = await AdminUserService.getAccountsListForAdminPage(userId, page, limit);
-    let entries = [];
-    let totalItems = 0;
-    if(data[0].entries.length > 0)
-    {
-      entries = data[0].entries;
-      totalItems = data[0].meta[0].totalItems
-    }
+    const { email } = req.query;
+    let limit       = parseInt(req.query.limit || Paging.LIMIT);
+    let page        = parseInt(req.query.page || Paging.PAGE);
+    const result    = await AdminUserService.getAccountInfoforAdminPage(email, page, limit); 
 
     logger.info('Admin/UserController::getAccountsListForAdminPage::success\n');
     res.status(HttpStatus.OK).json({
       messages: ['Lấy dữ liệu thành công.'],
       data: {
-        entries,
-        totalItems
+        entries    : result.entries,
+        totalItems : result.totalItems
       }
     })
   }catch(e){
@@ -177,27 +172,17 @@ const getWebsitesListForAdminPage = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
     }
     
-    const { userId, accountId } = req.query;
-
-    let limit = parseInt(req.query.limit || Paging.LIMIT);
-    let page = parseInt(req.query.page || Paging.PAGE);
-
-    const data = await AdminUserService.getWebsitesForAdminPage(userId, accountId, page, limit);
-    let entries = [];
-    let totalItems = 0;
-
-    if(data[0].entries.length > 0)
-    {
-      entries = data[0].entries;
-      totalItems = data[0].meta[0].totalItems
-    }
+    const { adsId, email } = req.query;
+    let limit       = parseInt(req.query.limit || Paging.LIMIT);
+    let page        = parseInt(req.query.page || Paging.PAGE);
+    const result    = await AdminUserService.getWebsiteInfoforAdminPage(adsId, email, page, limit);
 
     logger.info('Admin/UserController::getWebsiteListForAdminPage::success\n');
     res.status(HttpStatus.OK).json({
       messages: ['Lấy dữ liệu thành công.'],
       data: {
-        entries,
-        totalItems
+        entries   : result.entries,
+        totalItems: result.totalItems
       }
     })
   }catch(e){
