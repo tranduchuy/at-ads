@@ -1,4 +1,4 @@
-const detectLog = () => {
+(() => {
   const CONFIG = {
     hostApi       : '<%= hostApi %>',
     uuid          : '<%= uuid %>',
@@ -132,6 +132,4 @@ const detectLog = () => {
   if(isValidToTracking) {
     init();
   }
-};
-
-detectLog();
+})();
