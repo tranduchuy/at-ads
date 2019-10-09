@@ -1,4 +1,5 @@
 (() => {
+  'use strict';
   const CONFIG = {
     hostApi       : '<%= hostApi %>',
     uuid          : '<%= uuid %>',
