@@ -5,6 +5,7 @@ const randomString = require('randomstring');
 const Joi = require('@hapi/joi');
 const { RegisterValidationSchema } = require('./validations/register.schema');
 const UserTokenService = require('../userToken/userToken.service');
+const AdsAccountService = require('../account-adwords/account-ads.service');
 
 const UserConstant = require('./user.constant');
 const { Status } = require('../../constants/status');
@@ -241,6 +242,7 @@ const loginByGoogle = async (request, res, next) => {
           {
             user.googleRefreshToken = refreshToken;
             user.expiryDateOfRefreshToken = new Date(timeAfterTwoMonth);
+            user.isRefreshTokenValid = true;
           }
           user.googleAccessToken = accessToken;
           user.googleId = googleId;
@@ -256,7 +258,8 @@ const loginByGoogle = async (request, res, next) => {
             accessToken,
             refreshToken,
             expiryDateOfAccesstoken: new Date(timeAfterOneHour),
-            expiryDateOfRefreshToken: new Date(timeAfterTwoMonth)
+            expiryDateOfRefreshToken: new Date(timeAfterTwoMonth),
+            isRefreshTokenValid : ! refreshToken ? false : true 
           };
           user = await UserService.createUserByGoogle(newUser);
         }
@@ -268,6 +271,7 @@ const loginByGoogle = async (request, res, next) => {
       {
         user.googleRefreshToken = refreshToken;
         user.expiryDateOfRefreshToken = new Date(timeAfterTwoMonth);
+        user.isRefreshTokenValid = true;
       }
       user.googleAccessToken = accessToken;
       user.expiryDateOfAccesstoken = new Date(timeAfterOneHour);
@@ -563,7 +567,7 @@ const getLoggedInInfo = async (req, res, next) => {
   }
 };
 
-const checkRefreshToken = (req, res, next) => {
+const checkRefreshToken = async (req, res, next) => {
 	const info = {
 		id : req.user._id
 	}
@@ -573,18 +577,38 @@ const checkRefreshToken = (req, res, next) => {
     const refreshToken   = req.user.googleRefreshToken;
     const now            = moment();
 
-    if(refreshToken == '' || !refreshToken || !tokenExpiresAt || now.isAfter(moment(tokenExpiresAt)))
+    if(refreshToken == '' || !refreshToken || !tokenExpiresAt || now.isAfter(moment(tokenExpiresAt)) || !req.user.isRefreshTokenValid)
     {
+      req.user.isRefreshTokenValid = false;
+      await req.user.save();
+
       return res.status(HttpStatus.BAD_REQUEST).json({
         messages             : ["Refresh token hết hạn"],
         refreshTokenExpires  : true
-			});
+      });
     }
 
-    return res.status(HttpStatus.OK).json({
-      messages             : ["Refresh token vẫn còn hạn"],
-      refreshTokenExpires  : false
+    AdsAccountService.getAccessTokenFromGoogle(refreshToken)
+    .then(async result => {
+
+      req.user.googleAccessToken = result.access_token;
+      await req.user.save();
+
+      return res.status(HttpStatus.OK).json({
+        messages             : ["Refresh token vẫn còn hạn"],
+        refreshTokenExpires  : false
+      });
+    }).catch(async error => {
+      logger.error('UserController::checkRefreshToken::error', error);
+      req.user.isRefreshTokenValid = false;
+      await req.user.save();
+
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages             : ["Refresh token hết hạn"],
+        refreshTokenExpires  : true
+      });
     });
+
 	}catch(e){
 		logger.error('UserController::checkRefreshToken::error', e);
 		return next(e);

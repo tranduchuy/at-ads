@@ -120,7 +120,7 @@ const updateGoogleId = async (user, googleId) => {
  * @return {Promise<*>}
  */
 const createUserByGoogle = async (userData) => {
-  const {email, name, googleId, image, accessToken, refreshToken, expiryDateOfAccesstoken, expiryDateOfRefreshToken} = userData;
+  const {email, name, googleId, image, accessToken, refreshToken, expiryDateOfAccesstoken, expiryDateOfRefreshToken, isRefreshTokenValid} = userData;
   const newUser = new UserModel({
     email,
     passwordHash: null,
@@ -135,7 +135,8 @@ const createUserByGoogle = async (userData) => {
     googleAccessToken: accessToken,
     googleRefreshToken: refreshToken,
     expiryDateOfAccesstoken,
-    expiryDateOfRefreshToken
+    expiryDateOfRefreshToken,
+    isRefreshTokenValid
   });
 
   return await newUser.save();
