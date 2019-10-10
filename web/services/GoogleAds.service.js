@@ -13,6 +13,7 @@ const RabbitChannels = config.get('rabbitChannels');
 const AccountAdsModel = require('../modules/account-adwords/account-ads.model');
 const UserModel = require('../modules/user/user.model');
 const AdAccountConstant = require('../modules/account-adwords/account-ads.constant');
+const moment = require('moment');
 
 const getRefreshToken = async (adwordId) => {
 	logger.info('GoogleAdsService::getRefreshToken is called.', {adwordId});
@@ -26,12 +27,21 @@ const getRefreshToken = async (adwordId) => {
 
     const user = await UserModel.findOne({_id: adsAccount.user});
 
-    if( !user || user.googleRefreshToken == '' || !user.googleRefreshToken )
+	if(!user)
+	{
+		return null;
+	}
+
+	const now  = moment();
+	const tokenExpiresAt = user.expiryDateOfRefreshToken;
+
+    if(user.googleRefreshToken == '' || !user.googleRefreshToken || !tokenExpiresAt || now.isAfter(moment(tokenExpiresAt)) || !user.isRefreshTokenValid)
     {
       return null;
     }
 
-    return user.googleRefreshToken;
+	return user.googleRefreshToken;
+	
 	}catch(e){
     logger.error('GoogleAdsService::getRefreshToken error.', e, {adwordId});
 		throw e;

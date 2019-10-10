@@ -28,7 +28,8 @@ const userSchema = new Schema({
   avatar: String,
   expiryDateOfAccesstoken: {type: Date, default: null},
   expiryDateOfRefreshToken: {type: Date, default: null},
-  phone: {type: String, default:null}
+  phone: {type: String, default:null},
+  isRefreshTokenValid: { type: Boolean }
 }, {timestamps: true});
 
 const UserModel = mongoose.model('User', userSchema, 'Users');

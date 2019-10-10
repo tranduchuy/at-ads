@@ -1584,6 +1584,12 @@ const getAccessTokenFromGoogle = (refreshToken) => {
           logger.error('AccountAdService::getAccessTokenFromGoogle::Error ', err);
           return reject(err);
         }
+
+        if (httpResponse.statusCode !== HttpStatus.OK) {
+          logger.error('UserController::getAccessTokenFromGoogle::error', httpResponse);
+          return reject(JSON.parse(httpResponse.body));
+        }
+
         return resolve(JSON.parse(body));
       });
     }catch(e){
