@@ -653,12 +653,13 @@ const updateRefreshTokenAndAccessToken = (req, res, next) => {
         });
       }
 
-      const timeAfterTwoMonth             = moment().add(2, 'M');
-      const timeAfterOneHour              = moment().add(1, 'hours');
-      req.user.googleRefreshToken         = refreshToken;
-      req.user.expiryDateOfRefreshToken   = new Date(timeAfterTwoMonth);
-      req.user.googleAccessToken          = accessToken;
-      req.user.expiryDateOfAccesstoken    = new Date(timeAfterOneHour);
+      const timeAfterTwoMonth           = moment().add(2, 'M');
+      const timeAfterOneHour            = moment().add(1, 'hours');
+      req.user.googleRefreshToken       = refreshToken;
+      req.user.expiryDateOfRefreshToken = new Date(timeAfterTwoMonth);
+      req.user.googleAccessToken        = accessToken;
+      req.user.expiryDateOfAccesstoken  = new Date(timeAfterOneHour);
+      req.user.isRefreshTokenValid      = true;
 
       await req.user.save();
 

@@ -5,6 +5,7 @@ const db = require('./database/db');
 const removeIp = require('./schedule-jobs/remove-ip-in-auto-blackList');
 const updateCampaignName = require('./schedule-jobs/update-campaign-name');
 const getClickReport = require('./schedule-jobs/get-click-report');
+const checkRefreshToken = require('./schedule-jobs/check-refresh-token');
 const {updateNetworkCompany} = require('./schedule-jobs/update-network-company');
 
 // config log4js
@@ -23,5 +24,6 @@ db(() => {
     updateCampaignName();
     updateNetworkCompany();
     getClickReport();
+    checkRefreshToken();
   });
 });
