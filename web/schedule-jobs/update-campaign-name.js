@@ -25,7 +25,7 @@ const getCampaignInAccount = (accountAds, cb) => {
       BlockingCriterionsModel.find(query).exec(async (err, campaigns) => {
           if(err)
           {
-              return cb(err);
+              return cb();
           }
 
           if(campaigns.length === 0)
@@ -55,7 +55,7 @@ const getCampaignInAccount = (accountAds, cb) => {
               if(err)
               {
                 logger.error('scheduleJobs::getCampaignInAccount::error.', error, info);
-                return cb(error);
+                return cb();
               }
 
                 logger.info('scheduleJobs::getCampaignInAccount::success.', info);
@@ -64,7 +64,7 @@ const getCampaignInAccount = (accountAds, cb) => {
       });
     }catch(e){
         logger.error('scheduleJobs::getCampaignInAccount::error.', e, info);
-        return cb(e);
+        return cb();
     }
 };
 
@@ -93,7 +93,7 @@ const updateCampaignNameForOneCampaign = (campaignInfo, cb) => {
         if(err)
         {
             logger.error('scheduleJobs::updateCampaignNameForOneCampaign::error.\n', err, campaignInfo);
-            return cb(err);
+            return cb();
         }
         logger.info('scheduleJobs::updateCampaignNameForOneCampaign::success.\n', campaignInfo);
         return cb();
