@@ -27,7 +27,8 @@ const getCampaignInAccount = (accountAds, cb) => {
       BlockingCriterionsModel.find(query).exec(async (err, campaigns) => {
           if(err)
           {
-              return cb(err);
+            logger.error('scheduleJobs::getCampaignInAccount::error.', err, info);
+            return cb();
           }
 
           if(campaigns.length === 0)
@@ -63,7 +64,7 @@ const getCampaignInAccount = (accountAds, cb) => {
     }catch(e){
         logger.error('scheduleJobs::getCampaignInAccount::error.', e, info);
         console.log(e);
-        return cb(e);
+        return cb();
     }
 };
 

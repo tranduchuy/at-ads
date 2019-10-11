@@ -32,7 +32,7 @@ const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
       BlockingCriterionsModel.find(query).exec((err, campaigns) => {
           if(err)
           {
-              return cb(err);
+              return cb();
           }
 
           if(campaigns.length === 0)
@@ -59,10 +59,10 @@ const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
 
             deleteIpInAutoBlackListOfCampaign(campaignInfo, callback);
           }, error => {
-              if(err)
+              if(error)
               {
                 logger.error('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::error.', error, info);
-                return cb(error);
+                return cb();
               }
 
               const queryUpdate = {key, adsId};
@@ -72,7 +72,7 @@ const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
                   if(error)
                   {
                     logger.error('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::error.', error, info);
-                    return cb(error);
+                    return cb();
                   }
                   logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::success.', info);
                   return cb();
@@ -81,7 +81,7 @@ const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
       });
     }catch(e){
         logger.error('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::error.', e, info);
-        return cb(e);
+        return cb();
     }
 };
 /**
@@ -140,7 +140,7 @@ const deleteIpInAutoBlackListOfCampaign = (campaignInfo, cb) => {
                         default:
                           const message = GoogleAdsService.getErrorCode(error);
                           logger.error('scheduleJobsService::deleteIpInAutoBlackListOfCampaign::error', message);
-                          return callback(message);
+                          return callback();
                       }
                 });
             });
@@ -148,14 +148,14 @@ const deleteIpInAutoBlackListOfCampaign = (campaignInfo, cb) => {
             if(err)
             {
                 logger.error('scheduleJobsService::deleteIpInAutoBlackListOfCampaign::error.', err, campaignInfo);
-                return cb(err);
+                return cb();
             }
             logger.info('scheduleJobsService::deleteIpInAutoBlackListOfCampaign::success.', campaignInfo);
             return cb();
         });
     }catch(e){
         logger.error('scheduleJobsService::deleteIpInAutoBlackListOfCampaign::error.', e, campaignInfo);
-        return cb(e);
+        return cb();
     }
 };
 

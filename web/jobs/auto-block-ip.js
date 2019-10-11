@@ -142,7 +142,7 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, 
                             default:
                                 const message = GoogleAdsService.getErrorCode(err);
                                 logger.error('AccountAdsController::autoBlockIp::error', message);
-                                return callback(err);
+                                return callback();
                         }
                     });
             }, async error => {
