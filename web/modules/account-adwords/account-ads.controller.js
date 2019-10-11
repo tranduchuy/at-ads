@@ -208,7 +208,7 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 		ips   : req.body.ips
 	}
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -406,7 +406,7 @@ const autoBlockIp = (req, res, next) => {
 		autoRemove: req.body.autoRemove
 	}
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::autoBlockIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -474,7 +474,7 @@ const autoBlockingRangeIp = (req, res, next) => {
 		classD: req.body.classD
 	}
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::autoBlockingRangeIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -534,7 +534,7 @@ const blockByPrivateBrowser = (req, res, next) => {
 		blockByPrivate: req.body.blockByPrivate
 	};
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::blockByPrivateBrowser::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -593,7 +593,7 @@ const autoBlocking3g4g = (req, res, next) => {
 		fpt          : req.body.fpt
 	}
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::autoBlocking3g4g::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -657,7 +657,7 @@ const updateWhiteList = async (req, res, next) => {
 		ips  : req.body.ips
 	};
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::updateWhiteList::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -734,7 +734,7 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 		campaignIds: req.body.campaigns
 	}
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::addCampaignsForAAccountAds::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -937,7 +937,7 @@ const getReportOnDevice = async (req, res, next) => {
 		adsId: req.adsAccount.adsId
 	}
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::getReportOnDevice::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -1007,7 +1007,7 @@ const setUpCampaignsByOneDevice = async (req, res, next) => {
 		isEnabled: req.body.isEnabled
 	};
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::setUpCampaignsByOneDevice::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -1096,7 +1096,7 @@ const blockSampleIp = (req, res, next) => {
 		ip    : req.body.ip
 	};
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::blockSampleIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -1218,7 +1218,7 @@ const unblockSampleIp = (req, res, next) => {
 		ip    : req.body.ip
 	};
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::unblockSampleIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -1337,7 +1337,7 @@ const getCampaignsInDB = (req, res, next) => {
 		adsId: req.adsAccount.adsId
 	}
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('AccountAdsController::getCampaignsInDB::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -1828,7 +1828,7 @@ const statisticUser = async (req, res, next) => {
 		adsId: req.adsAccount.adsId
 	};
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('UserBehaviorLogController::statisticUser::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
@@ -1912,7 +1912,7 @@ const detailUser = async (req, res, next) => {
 		adsId: req.adsAccount.adsId
 	};
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('UserBehaviorLogController::detailUser::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']

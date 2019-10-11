@@ -17,6 +17,7 @@ const ClickReportService = require('../click-report/click-report.service');
 const requestUtil = require('../../utils/RequestUtil');
 const messages = require("../../constants/messages");
 const { Paging } = require("../account-adwords/account-ads.constant");
+const AdAccountConstant = require('../account-adwords/account-ads.constant');
 
 const getIPClicks = async (req, res, next) => {
 	const info = {
@@ -272,7 +273,7 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 		adsId: req.adsAccount.adsId
 	}
 
-	if (!req.adsAccount.isConnected) {
+	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
 		logger.info('ReportController::getIpsInAutoBlackListOfAccount::success\n', info);
 		return res.status(HttpStatus.OK).json({
 			messages: ['Lấy dữ liệu thành công.'],
