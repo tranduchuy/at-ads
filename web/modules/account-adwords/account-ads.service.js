@@ -175,24 +175,25 @@ const isFreeAccount = async (account) => {
   return !flagNotFree;
 };
 
-const createCampaign = (accountId, campaignId) => {
+const createCampaign = (accountId, campaign) => {
   const newCampaign = new BlockingCriterionsModel({
-    accountId: accountId,
-    campaignId: campaignId.toString()
+    accountId   : accountId,
+    campaignId  : campaign.campaignId.toString(),
+    campaignName: campaign.campaignName
   })
   return newCampaign;
 };
 
-const createdCampaignArr = (accountId, campaignIds) =>
+const createdCampaignArr = (accountId, campaigns) =>
 {
-   let campaignIdsArr = [];
+   let campaignsArr = [];
 
-   campaignIds.forEach((campaign) => {
+   campaigns.forEach((campaign) => {
     const newcampaign = createCampaign(accountId, campaign);
-    campaignIdsArr.push(newcampaign);
+    campaignsArr.push(newcampaign);
    });
 
-   return campaignIdsArr;
+   return campaignsArr;
 };
 
 const filterTheCampaignInfoInTheCampaignList = (result) => {
@@ -534,22 +535,62 @@ const addIpAndCriterionIdForSampleBlockingIp = (accountInfo, callback) => {
     });
 };
 
-const updateIsDeletedStatus = async (accountId, campaignId, isDeleted) => {
-  const updateQuery = {
-    accountId: accountId,
-    campaignId: { 
-      $in: campaignId 
+const updateIsDeletedStatus = async (accountId, campaignId, isDeleted, campaignsWhenSend) => {
+  try{
+    if(isDeleted)
+    {
+      const updateQuery = {
+        accountId: accountId,
+        campaignId: { 
+          $in: campaignId 
+        }
+      };
+    
+      const dataUpdate = {
+        $set: {
+          isDeleted
+        }
+      };
+    
+      return await BlockingCriterionsModel
+       .updateMany(updateQuery, dataUpdate);
     }
-  };
 
-  const dataUpdate = {
-    $set: {
-      isDeleted
-    }
-  };
+    const filterCampaign = campaignsWhenSend.filter( cp => { 
+			return campaignId.some( f => {
+			  return cp.campaignId == f;
+			})
+    });
 
-  return await BlockingCriterionsModel
-   .updateMany(updateQuery, dataUpdate);
+    Async.eachSeries(filterCampaign, (campaign, callback) => {
+      const queryUpdate = {
+        accountId : accountId,
+        campaignId: campaign.campaignId 
+      };
+
+      const updateData = {
+        $set: {
+          isDeleted,
+          campaignName: campaign.campaignName
+        }
+      }
+
+      BlockingCriterionsModel.updateOne(queryUpdate, updateData)
+        .then(result => {
+          return callback();
+        }).catch(error => {
+          return callback(error);
+        });
+
+    }, (err, res) => {
+      if(err){
+        throw err;
+      }
+      return res;
+    });
+  }catch(e){
+    throw e;
+  }
 };
 
 const saveSetUpCampaignsByOneDevice = async(accountAds, device, isEnabled) => {

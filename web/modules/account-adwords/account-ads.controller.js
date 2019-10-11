@@ -731,7 +731,7 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 	const info = {
 		_id        : req.adsAccount._id,
 		adsId      : req.adsAccount.adsId,
-		campaignIds: req.body.campaignIds
+		campaignIds: req.body.campaigns
 	}
 
 	if (!req.adsAccount.isConnected) {
@@ -749,9 +749,14 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		let { campaignIds } = req.body;
-		campaignIds = campaignIds.map(String);
-		const campaignIdsAfterRemoveIdenticalElement = campaignIds.filter(AccountAdsService.onlyUnique);
+		let campaignsWhenSend = req.body.campaigns;
+		
+		if(campaignsWhenSend.length > 0)
+		{
+			campaignsWhenSend = AccountAdsService.getUnique(campaignsWhenSend, 'campaignId');
+		}
+
+		const campaignIdsAfterRemoveIdenticalElement = campaignsWhenSend.map(campaign => campaign.campaignId).map(String);
 		const accountId = req.adsAccount._id;
 		const query = {
 			accountId: accountId,
@@ -772,11 +777,11 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 			const campaignIdHasDeletedStatusIsFalseAndExistsInDB = _.intersection(campaignIdHasDeletedStatusIsFalse, campainInDBAndNotInThePostingCampaign);
 
 			if (campaignIdHasDeletedStatusIsTrueAndExistsInDB.length !== 0) {
-				const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsTrueAndExistsInDB, false);
+				const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsTrueAndExistsInDB, false, campaignsWhenSend);
 			}
 
-			if (campaignIdHasDeletedStatusIsFalseAndExistsInDB !== 0) {
-				const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsFalseAndExistsInDB, true);
+			if (campaignIdHasDeletedStatusIsFalseAndExistsInDB.length !== 0 ) {
+				const resultQuery = await AccountAdsService.updateIsDeletedStatus(accountId, campaignIdHasDeletedStatusIsFalseAndExistsInDB, true, campaignsWhenSend);
 			}
 		}
 
@@ -792,6 +797,12 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 				messages: ["Thêm chiến dịch thành công"]
 			});
 		}
+
+		campaignsNotInExistsInDB = campaignsWhenSend.filter( cp => { 
+			return campaignsNotInExistsInDB.some( f => {
+			  return cp.campaignId == f;
+			})
+		});
 
 		const campaignsArr = AccountAdsService.createdCampaignArr(req.adsAccount._id, campaignsNotInExistsInDB);
 
