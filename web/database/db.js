@@ -13,7 +13,7 @@ module.exports = (callback) => {
         error  : err
       };
 
-      await SendGrid.sendErrorMessage(SendGridConfig.FROM, title, 'hello', info);
+      await SendGrid.sendErrorMessage(SendGridConfig.TO, title, 'hello', info);
       throw err;
     } else {
       callback();
