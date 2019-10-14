@@ -1469,14 +1469,14 @@ const getReportForAccount = async (req, res, next) => {
 			logs = result[0].entries;
 			totalItems = !isConnected ? logs.length : result[0].meta[0].totalItems
 			const gclidList = logs.map(log => log.gclid).filter(AccountAdsService.onlyUnique);
+			const ips = logs.map(log => log.ip);
 			const clickReport = await ClickReportService.getReportByGclId(gclidList);
 			logs = ClickReportService.mapCLickReportIntoUserLogs(clickReport, logs);
+			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, from._d, endDateTime._d, ips);
+			logs.forEach((item, index) => {
+				logs[index].click = clickInDaysOfAccountKey[item.ip] || 0;
+			});
 		}
-
-		const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, from._d, endDateTime._d);
-		logs.forEach((item, index) => {
-			logs[index].click = clickInDaysOfAccountKey[item.ip] || 0;
-		});
 
 		logger.info('AccountAdsController::getReportForAccount::success\n', info);
 		return res.status(HttpStatus.OK).json({
@@ -1546,15 +1546,15 @@ const getDailyClicking = async (req, res, next) => {
 		if (result[0].entries.length !== 0) {
 			entries = result[0].entries;
 			totalItems = !isConnected ? entries.length : result[0].meta[0].totalItems;
+			// get number click in a day
+			const now = moment().startOf('day')._d;
+			const tomorrow = moment(now).endOf('day')._d;
+			const ips = entries.map(log => log._id);
+			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, now, tomorrow, ips);
+			entries.forEach((item, index) => {
+				entries[index].click = clickInDaysOfAccountKey[item._id];
+			});
 		}
-
-		// get number click in a day
-		const now = moment().startOf('day')._d;
-		const tomorrow = moment(now).endOf('day')._d;
-		const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, now, tomorrow);
-		entries.forEach((item, index) => {
-			entries[index].click = clickInDaysOfAccountKey[item._id];
-		});
 
 		logger.info('AccountAdsController::getDailyClicking::success\n', info);
 		return res.status(HttpStatus.OK).json({
