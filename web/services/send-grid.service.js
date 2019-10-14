@@ -12,7 +12,7 @@ const sendErrorMessage = (email, title, content, html) => {
             const msg = {
                 from    : {
                    name : 'Công cụ chống click tặc',
-                   email: SendGridConfig.TO
+                   email: SendGridConfig.FROM
                 },
                 to      : email,
                 subject : title,
