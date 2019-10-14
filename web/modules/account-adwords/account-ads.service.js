@@ -612,7 +612,7 @@ const saveSetUpCampaignsByOneDevice = async(accountAds, device, isEnabled) => {
 };
 
 const getReportForAccount = (accountKey, from, to, page, limit) => {
-  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from, to});
+  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from: from._d, to: to._d, page, limit});
   return new Promise(async (res, rej) => {
     try{
       const matchStage =  {
@@ -673,17 +673,17 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
 
       const result = await UserBehaviorLogsModel.aggregate(query);
       
-      logger.info('AccountAdsService::getReportForAccount::success ', {accountKey, from, to});
+      logger.info('AccountAdsService::getReportForAccount::success ', {accountKey, from: from._d, to: to._d, page, limit});
       return res(result);
     }catch(e){
-      logger.error('AccountAdsService::getReportForAccount::error ', e, {accountKey, from, to});
+      logger.error('AccountAdsService::getReportForAccount::error ', e, {accountKey, from: from._d, to: to._d, page, limit});
       return rej(e);
     }
   });
 };
 
 const getReportStatistic = (accountKey, from, to) => {
-  logger.info('AccountAdsService::getReportStatistic::is called ', {accountKey, from, to});
+  logger.info('AccountAdsService::getReportStatistic::is called ', {accountKey, from: from._d, to: to._d});
   return new Promise(async (res, rej) => {
     try{
       const matchStage =  {
@@ -734,10 +734,10 @@ const getReportStatistic = (accountKey, from, to) => {
 
       const result = await UserBehaviorLogsModel.aggregate(query);
       
-      logger.info('AccountAdsService::getReportStatistic::success ', {accountKey, from, to});
+      logger.info('AccountAdsService::getReportStatistic::success ', {accountKey, from: from._d, to: to._d});
       return res(result);
     }catch(e){
-      logger.error('AccountAdsService::getReportStatistic::error ', e, {accountKey, from, to});
+      logger.error('AccountAdsService::getReportStatistic::error ', e, {accountKey, from: from._d, to: to._d});
       return rej(e);
     }
   });
@@ -1440,36 +1440,42 @@ const getUnique = (arr, comp) => {
  * @param {Date} endTime
  * @return {Promise<void>}
  */
-const getNoClickOfIps = async (accountKey, startTime, endTime) => {
-  const stages = [
-    {
-      $match: {
-        accountKey,
-        createdAt: {
-          $gt: startTime,
-          $lt: endTime
-        },
-        type: LOGGING_TYPES.CLICK
-      }
-    },
-    {
-      $group: {
-        _id: "$ip",
-        count: {$sum: 1},
-        logs: {
-          $push: "$$ROOT"
+const getNoClickOfIps = async (accountKey, startTime, endTime, ips) => {
+  logger.info('AccountAdService::getNoClickOfIps: is called\n', {accountKey, startTime, endTime, ips});
+  try{
+    const stages = [
+      {
+        $match: {
+          accountKey,
+          ip: {
+            $in: ips
+          },
+          createdAt: {
+            $gt: startTime,
+            $lt: endTime
+          },
+          type: LOGGING_TYPES.CLICK
+        }
+      },
+      {
+        $group: {
+          _id: "$ip",
+          count: {$sum: 1}
         }
       }
-    }
-  ];
-  console.log('AccountAdService::getNoClickOfIps::stages', JSON.stringify(stages));
-  const results = await UserBehaviorLogsModel.aggregate(stages);
-  const noClickOfIpsObj = {};
-  results.forEach(r => {
-    noClickOfIpsObj[r._id] = r.count;
-  });
-
-  return noClickOfIpsObj
+    ];
+    logger.info('AccountAdService::getNoClickOfIps::stages', JSON.stringify(stages));
+    const results = await UserBehaviorLogsModel.aggregate(stages);
+    const noClickOfIpsObj = {};
+    results.forEach(r => {
+      noClickOfIpsObj[r._id] = r.count;
+    });
+  
+    return noClickOfIpsObj;
+  }catch(e){
+    logger.error('AccountAdService::getNoClickOfIps::error', e);
+    throw e;
+  }
 };
 
 const retry = async (req, retryCount, handleFn) => {

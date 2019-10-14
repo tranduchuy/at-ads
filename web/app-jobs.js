@@ -39,7 +39,7 @@ db(() => {
             error  : error
           };
 
-          await SendGrid.sendErrorMessage(SendGridConfig.FROM, title, 'hello', info);
+          await SendGrid.sendErrorMessage(SendGridConfig.TO, title, 'hello', info);
           console.log(error);
           return;
         }
