@@ -18,6 +18,10 @@ const autoBlockIpJobFn = require('./jobs/auto-block-ip');
 const detectSessionFn = require('./jobs/detect-session');
 const countRequestGoogle = require('./jobs/count-request-google');
 
+// sendGrid
+const SendGrid = require('./services/send-grid.service');
+const SendGridConfig = config.get('SENDGRID');
+
 db(() => {
   console.log('Connect to mongodb successfully');
   const port = config.get('appJob').port;
@@ -27,8 +31,15 @@ db(() => {
 
       console.log(`Server is listening on port ${port}`);
 
-      amqp.connect(rabbitMQConfig.uri, (error, connection) => {
+      amqp.connect(rabbitMQConfig.uri, async (error, connection) => {
         if (error) {
+          const title = 'Phần mềm của bạn đang gặp vấn đề.';
+          const info  = {
+            service: 'RabbitMQ ERROR',
+            error  : error
+          };
+
+          await SendGrid.sendErrorMessage(SendGridConfig.FROM, title, 'hello', info);
           console.log(error);
           return;
         }

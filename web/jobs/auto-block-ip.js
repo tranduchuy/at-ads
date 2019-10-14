@@ -197,7 +197,7 @@ const removeIps = (accountAds, campaignIds, ip, cb) => {
         if(err)
         {
             logger.error('jobs::removeIps::error', err);
-            return cb(err);
+            return cb();
         }
 
         const ipsInAutoBlackListAfterRemove = accountAds.setting.autoBlackListIp.splice(1);
@@ -207,7 +207,7 @@ const removeIps = (accountAds, campaignIds, ip, cb) => {
             if(e)
             {
                 logger.error('jobs::removeIps::error', e);
-                return cb(e);
+                return cb();
             }
 
             return cb();
