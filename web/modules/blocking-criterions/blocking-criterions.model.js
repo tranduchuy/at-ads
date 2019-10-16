@@ -8,7 +8,8 @@ const blockingCriterionsSchema = new Schema({
     isDeleted: {type: Boolean, default: false},
     sampleBlockingIp: {type: Object, default: null},
     customBlackList: {type: Array, default: []},
-    autoBlackListIp: {type: Array, default: []}
+    autoBlackListIp: {type: Array, default: []},
+    isOriginalDeleted : {type: Boolean, default: false}
 }, { timestamps: true });
 
 const BlockingCriterionsModel = mongoose.model('BlockingCriterions', blockingCriterionsSchema, 'BlockingCriterions');
