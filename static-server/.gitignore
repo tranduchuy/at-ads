@@ -1,9 +1,0 @@
-node_modules/
-.vscode
-logs
-.vscode
-.idea
-public/files/selectors/
-.idea/
-package-lock.json
-config/*.yaml
