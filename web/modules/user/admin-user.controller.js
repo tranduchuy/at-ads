@@ -19,7 +19,6 @@ const Mongoose = require('mongoose');
 
 const { getUsersListForAdminPageValidationSchema } = require('./validations/get-user-list-for-admin-page.schema');
 const { getAccountsListForAdminPageValidationSchema } = require('./validations/get-accounts-list-for-admin-page.schema');
-const { getWebsiteListForAdminPageValidationSchema } = require('./validations/get-website-for-admin-page.schema');
 
 const list = async (req, res, next) => {
   logger.info('UserController::list::called');
