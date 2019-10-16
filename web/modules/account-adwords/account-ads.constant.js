@@ -34,7 +34,10 @@ module.exports = {
   ipsNumberForAutoBlackList: 100, 
   googleCampaignStatus: {
     ENABLED: 'ENABLED',
-    isTargetGoogleSearch: true
+    IS_DISPLAY: 'DISPLAY',
+    IS_SEARCH: 'SEARCH',
+    IS_DISPLAY_SMART_CAMPAIGN: 'DISPLAY_SMART_CAMPAIGN',
+    IS_SHOPPING: 'SHOPPING'
   },
   Paging: {
     PAGE: 1,

@@ -211,7 +211,7 @@ const createdCampaignArr = (accountId, campaigns) =>
 
 const filterTheCampaignInfoInTheCampaignList = (result) => {
     return result
-      .filter(campaign => campaign.networkSetting.targetGoogleSearch === googleCampaignStatus.isTargetGoogleSearch)
+      .filter(campaign => campaign.advertisingChannelType == googleCampaignStatus.IS_SEARCH || campaign.advertisingChannelType == googleCampaignStatus.IS_DISPLAY && campaign.advertisingChannelSubType != googleCampaignStatus.IS_DISPLAY_SMART_CAMPAIGN || campaign.advertisingChannelType == googleCampaignStatus.IS_SHOPPING && !campaign.advertisingChannelSubType)
       .map(c => {
         if(c.status === googleCampaignStatus.ENABLED)
         {
@@ -1533,7 +1533,6 @@ const getListOriginalCampaigns = (req) => {
     logger.info('AccountAdService::getListOriginalCampaigns is called\n', info);
     try {
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
-  
       const processCampaignList = filterTheCampaignInfoInTheCampaignList(result);
   
       logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
