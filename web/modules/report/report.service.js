@@ -248,7 +248,8 @@ const getInfoOfIpInAutoBlackList = (accountId, page, limit) => {
 		try {
 			const matchStage = {
 				$match: {
-					accountId
+					accountId,
+					isDeleted: false
 				}
 			};
 
