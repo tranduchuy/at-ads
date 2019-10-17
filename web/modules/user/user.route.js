@@ -5,7 +5,7 @@ const UserActionHistoryController = require('../user-action-history/user-action-
 const websiteController = require('../website/website.controller');
 const CheckTokenMiddleware = require('../../middlewares/check-token');
 const CheckUserAdminMidddleware = require('../../middlewares/check-user-admin');
-const multer = require('multer');
+// const multer = require('multer');
 
 router.post('/check', UserController.check);
 router.post('/login', UserController.login);
