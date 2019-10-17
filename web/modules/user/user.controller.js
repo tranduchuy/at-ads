@@ -554,10 +554,18 @@ const getLoggedInInfo = async (req, res, next) => {
       usePassword: !!req.user.passwordHash || !!req.user.passwordSalt
     };
 
+    const standByInfo = {};
+    if (req.standBy) {
+      standByInfo._id = req.standBy._id;
+      standByInfo.email = req.standBy.email;
+      standByInfo.name = req.standBy.name;
+    }
+
     const result = {
       messages: [messages.ResponseMessages.SUCCESS],
       data: {
-        user: userInfoResponse
+        user: userInfoResponse,
+        standBy: req.standBy ? standByInfo : null
       }
     };
     return res.status(HttpStatus.OK).json(result);
