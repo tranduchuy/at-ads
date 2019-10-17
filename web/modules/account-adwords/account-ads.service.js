@@ -211,7 +211,7 @@ const createdCampaignArr = (accountId, campaigns) =>
 
 const filterTheCampaignInfoInTheCampaignList = (result) => {
     return result
-      .filter(campaign => campaign.advertisingChannelType == googleCampaignStatus.IS_SEARCH || campaign.advertisingChannelType == googleCampaignStatus.IS_DISPLAY && campaign.advertisingChannelSubType != googleCampaignStatus.IS_DISPLAY_SMART_CAMPAIGN || campaign.advertisingChannelType == googleCampaignStatus.IS_SHOPPING && !campaign.advertisingChannelSubType)
+      .filter(filterCampaignType)
       .map(c => {
         if(c.status === googleCampaignStatus.ENABLED)
         {
@@ -220,6 +220,10 @@ const filterTheCampaignInfoInTheCampaignList = (result) => {
         return {id: c.id, name: c.name, status: campaignStatus[c.status], isEnabled: campaignStatus.ISDISABLED}
     });
 };
+
+const filterCampaignType = (campaign) => {
+  return campaign.advertisingChannelType == googleCampaignStatus.IS_SEARCH || campaign.advertisingChannelType == googleCampaignStatus.IS_DISPLAY && campaign.advertisingChannelSubType != googleCampaignStatus.IS_DISPLAY_SMART_CAMPAIGN || campaign.advertisingChannelType == googleCampaignStatus.IS_SHOPPING && !campaign.advertisingChannelSubType
+}
 
 const onlyUnique = (value, index, self) => { 
   return self.indexOf(value) === index;
