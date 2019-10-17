@@ -44,7 +44,7 @@ const getCampaignInAccount = (accountAds, cb) => {
 
           GoolgeAdsService.getClickReport(adsId, campaignIds, fields)
           .then(async clickReport => {
-            const result = convertClickReportCSVFileToJSON(clickReport);
+            const result = convertClickReportTSVFileToJSON(clickReport);
 
             if(result.length === 0)
             {
@@ -68,21 +68,21 @@ const getCampaignInAccount = (accountAds, cb) => {
     }
 };
 
-const convertClickReportCSVFileToJSON = (report) => {
-  logger.info('scheduleJobs::convertClickReportCSVFileToJSON::is called.\n');
-  let CSV = report.split('\n');
+const convertClickReportTSVFileToJSON = (report) => {
+  logger.info('scheduleJobs::convertClickReportTSVFileToJSON::is called.\n');
+  let TSV = report.split('\n');
 
-  if(CSV.length < 3){
-    logger.info('scheduleJobs::convertClickReportCSVFileToJSON::No reports found.\n');
+  if(TSV.length < 3){
+    logger.info('scheduleJobs::convertClickReportTSVFileToJSON::No reports found.\n');
     return [];
   }
 
-  const fieldsName = CSV[0].split(',');
-  CSV = CSV.slice(1);
+  const fieldsName = TSV[0].split('\t');
+  TSV = TSV.slice(1);
   const jsonArr = [];
 
-  CSV.forEach(ele => {
-    const temp = ele.split(',');
+  TSV.forEach(ele => {
+    const temp = ele.split('\t');
     temp[0] = clickPerformanceReportConstant.KeyWordMatchType[temp[0]];
     temp[1] = clickPerformanceReportConstant.Device[temp[1]];
     temp[2] = new Date(temp[2]);
@@ -91,7 +91,7 @@ const convertClickReportCSVFileToJSON = (report) => {
   });
 
   jsonArr.pop();
-  logger.info('scheduleJobs::convertClickReportCSVFileToJSON::success.\n');
+  logger.info('scheduleJobs::convertClickReportTSVFileToJSON::success.\n');
   return jsonArr;
 };
 

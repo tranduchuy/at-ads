@@ -95,7 +95,7 @@ const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, ca
         switch (GoogleAdwordsService.getErrorCode(err)) {
           case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
             logger.info('AccountAdsController::addIpsToBlackListOfOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-            return cb();
+            return updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, cb);
           default:
             const message = GoogleAdwordsService.getErrorCode(err);
             logger.error('AccountAdsController::addIpsToBlackListOfOneCampaign::error', message);
@@ -104,6 +104,19 @@ const addIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr, ca
       });
   }, callback);
 };
+
+const updateIsDeletedStatusIsTrueForCampaign = (accountId, campaignId, cb) => {
+  logger.info('AccountAdsService::updateIsDeletedStatusIsTrueForCampaign: ', {accountId, campaignId});
+  BlockingCriterionsModel.updateOne({accountId, campaignId},{$set: {isDeleted: true, isOriginalDeleted: true}}).exec(err => {
+    if(err)
+    {
+      logger.error('AccountAdsService::updateIsDeletedStatusIsTrueForCampaign:error ', err);
+      return cb(err);
+    }
+
+    cb();
+  });
+}
 
 const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaignId, adsId, ip, cb) => {
   if(!result)
@@ -115,7 +128,7 @@ const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaig
   BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBlackList: infoCampaign}}).exec(err=>{
     if(err)
     {
-      logger.info('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', err);
+      logger.error('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', err);
       return cb(err);
     }
     const logData = {adsId, campaignId, ip};
@@ -243,7 +256,7 @@ const removeIpsToBlackListOfOneCampaign = (accountId, adsId, campaignId, ipsArr,
                 return removeIpAndCriterionIdToTheBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
               case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
                 logger.info('AccountAdsController::RemoveIpsToBlackListOfOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-                return removeIpAndCriterionIdToTheBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
+                return updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, cb);
               default:
                 const message = GoogleAdwordsService.getErrorCode(err);
                 logger.error('AccountAdsController::RemoveIpsToBlackListOfOneCampaign::error', message);
@@ -421,8 +434,7 @@ const removeSampleBlockingIp = (adsId, accountId, campaignIds) => {
                 return removeIpAndCriterionsIdForSampleBlockingIp(accountInfo, callback);
               case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
                 logger.info('AccountAdsController::removeSampleBlockingIp::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-                const account = {accountId, campaignId, adsId};
-                return removeIpAndCriterionsIdForSampleBlockingIp(account, callback);
+                return updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, callback);
               default:
                 const message = GoogleAdwordsService.getErrorCode(error);
                 logger.error('AccountAdsController::removeSampleBlockingIp::error', message);
@@ -483,7 +495,7 @@ const addSampleBlockingIp = (adsId, accountId, campaignIds, ip) => {
             switch (GoogleAdwordsService.getErrorCode(err)) {
               case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
                 logger.info('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-                return callback();
+                return updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, cb);
               default:
                 const message = GoogleAdwordsService.getErrorCode(err);
                 logger.error('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::error', message);
@@ -1019,7 +1031,7 @@ const removeIpsToAutoBlackListOfOneCampaign = (accountId, adsId, campaignId, ips
                 return removeIpAndCriterionIdToTheAutoBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
               case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
                 logger.info('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-                return removeIpAndCriterionIdToTheAutoBlacklistOfACampaign(accountId, campaignId, adsId, ip, cb);
+                return updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, cb);
               default:
                 const message = GoogleAdwordsService.getErrorCode(err);
                 logger.error('AccountAdsController::removeIpsToAutoBlackListOfOneCampaign::error', message);
@@ -1238,7 +1250,7 @@ const blockSampleIpForOneCampaign = (accountId, adsId, campaignId, ip, callback)
     switch (GoogleAdwordsService.getErrorCode(err)) {
       case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
         logger.info('AccountAdsController::blockSampleIpForOneCampaign::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-        return callback();
+        return updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, callback);
       default:
         const message = GoogleAdwordsService.getErrorCode(err);
         logger.error('AccountAdsController::blockSampleIpForOneCampaign::error', message);
@@ -1259,7 +1271,7 @@ const blockIpsInAutoBlackList = (accountId, adsId, campaignId, ipsArr, callback)
         switch (GoogleAdwordsService.getErrorCode(err)) {
           case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
             logger.info('AccountAdsController::blockIpsInAutoBlackList::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-            return cb();
+            return updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, cb);
           default:
             const message = GoogleAdwordsService.getErrorCode(err);
             logger.error('AccountAdsController::blockIpsInAutoBlackList::error', message);
@@ -1681,5 +1693,6 @@ module.exports = {
   getListGoogleAdsOfUser,
   checkDomainHasTracking,
   createAccountAdsHaveIsConnectedStatusAndConnectType,
-  getAccessTokenFromGoogle
+  getAccessTokenFromGoogle,
+  updateIsDeletedStatusIsTrueForCampaign
 };

@@ -8,6 +8,7 @@ const logger = log4js.getLogger('Tasks');
 const Async = require('async');
 const config = require('config');
 const timeUpdateCampaignName = config.get('appScheduleJobs').timeUpdateCampaignName;
+const _ = require('lodash');
 
 const getCampaignInAccount = (accountAds, cb) => {
     const info = {
@@ -19,7 +20,8 @@ const getCampaignInAccount = (accountAds, cb) => {
     try{
         const accountId = accountAds._id;
         const query = {
-            accountId
+            accountId,
+            isDeleted: false
         };
     
       BlockingCriterionsModel.find(query).exec(async (err, campaigns) => {
@@ -38,11 +40,18 @@ const getCampaignInAccount = (accountAds, cb) => {
           const adsId = accountAds.adsId;
 
           const campaignsOnGoogleAds = await GoolgeAdsService.getCampaignsName(adsId, campaignIds);
+          const campaignIdOnGoogleAds = campaignsOnGoogleAds.map(campaign => campaign.id);
 
           if(campaignsOnGoogleAds.length === 0)
           {
             logger.info('scheduleJobs::getCampaignInAccount::accountAdsWithoutCampaign.\n', info);
             return cb(null);
+          }
+
+          const campaignIdDeleted = _.difference(campaignIds, campaignIdOnGoogleAds); 
+          if(campaignIdDeleted.length > 0)
+          {
+              await BlockingCriterionsModel.updateMany({accountId, campaignId: {$in: campaignIdDeleted}},{$set: {isDeleted: true, isOriginalDeleted: true}});
           }
 
           Async.eachSeries(campaignsOnGoogleAds, (campaign, callback) => {
@@ -104,7 +113,7 @@ module.exports =  () => {
     schedule.scheduleJob(timeUpdateCampaignName, async() => {
         logger.info('scheduleJobs::updateCampaignName is called');
         try{
-            const allAccountAds = await AccountAdsModel.find({isConnected : true});
+            const allAccountAds = await AccountAdsModel.find({isConnected : true, isDeleted: false});
 
             if(allAccountAds.length === 0)
             {

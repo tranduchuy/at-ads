@@ -135,7 +135,7 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, 
                         switch (GoogleAdsService.getErrorCode(err)) {
                             case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
                                 logger.info('AccountAdsController::autoBlockIp::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-                                return callback();
+                                return AccountAdsService.updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, callback);
                             case 'INVALID_IP_ADDRESS':
                                 logger.info('AccountAdsController::autoBlockIp::INVALID_IP_ADDRESS', {campaignId});
                                 return callback();

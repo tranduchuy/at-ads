@@ -687,7 +687,7 @@ const getClickReport = (adwordId, campaignIds, fields) => {
 		{ field: 'CampaignId', operator: 'IN', values: campaignIds }
       ],
       dateRangeType: 'YESTERDAY',
-      format: 'CSV',
+      format: 'TSV',
       additionalHeaders: {
           skipReportHeader: true,
           skipReportSummary: true
