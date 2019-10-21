@@ -122,7 +122,9 @@ const logTrackingBehavior = async (req, res, next) => {
 
     return res.json({
       status: HttpStatus.OK,
-      data: {},
+      data: {
+        logId: log._id.toString()
+      },
       messages: [messages.ResponseMessages.SUCCESS]
     });
   } catch (e) {
@@ -160,8 +162,34 @@ const getLogForIntroPage = async (req, res, next) => {
   }
 };
 
+const updateTimeOutOfPage = async (req, res, next) => {
+  const logId = req.params.id;
+  const timeMillisecond = req.body.time;
+  logger.info('UserBehaviorController::updateTimeOutOfPage::called', {logId, timeMillisecond});
+  try {
+    const log = await UserBehaviorLogModel.findOne({_id: logId});
+    if (!log) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Not found log']
+      });
+    }
+
+    log.timeUnLoad = new Date(parseInt(timeMillisecond));
+    log.timeOnPage = timeMillisecond - log.createdAt.getTime();
+    await log.save();
+
+    return res.status(HttpStatus.OK).json({
+      messages: ['Success']
+    });
+  } catch (e) {
+    logger.error('UserBehaviorController::updateTimeOutOfPage::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   logTrackingBehavior,
   getlogTrackingBehavior,
-  getLogForIntroPage
+  getLogForIntroPage,
+  updateTimeOutOfPage
 };
