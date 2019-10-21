@@ -50,7 +50,7 @@ const logTrackingBehavior = async (req, res, next) => {
     }
     const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
 
-    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer} = req.body;
+    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer, createdAt} = req.body;
     const referrerURL = new Url(referrer);
     let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
 
@@ -84,6 +84,7 @@ const logTrackingBehavior = async (req, res, next) => {
       utmSource: hrefQuery.utm_source || null,
       keyword: hrefQuery.keyword || null,
       trafficSource,
+      createdAt: new Date(parseInt(createdAt)),
       ...ua
     };
 
