@@ -10,7 +10,8 @@ const LogTrackingBehaviorValidationSchema = Joi.object().keys({
   isPrivateBrowsing: Joi.boolean().required(),
   location: Joi.object(),
   screenResolution: Joi.object(),
-  browserResolution: Joi.object()
+  browserResolution: Joi.object(),
+  createdAt: Joi.number().required()
   }
 );
 
