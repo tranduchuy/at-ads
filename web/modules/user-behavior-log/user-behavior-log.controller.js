@@ -188,9 +188,35 @@ const updateTimeOutOfPage = async (req, res, next) => {
   }
 };
 
+const scrollPercentage = async (req, res, next) => {
+  const logId = req.params.id;
+  const scroll = req.body.scroll;
+  logger.info('UserBehaviorController::scrollPercentage::called', {logId, scroll});
+  try {
+    const log = await UserBehaviorLogModel.findOne({_id: logId});
+    if (!log) {
+      logger.info('UserBehaviorController::scrollPercentage::LOG_NOT_FOUND')
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Not found log']
+      });
+    }
+
+    log.scrollPercentage = scroll;
+    await log.save();
+
+    return res.status(HttpStatus.OK).json({
+      messages: ['Success']
+    });
+  } catch (e) {
+    logger.error('UserBehaviorController::scrollPercentage::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   logTrackingBehavior,
   getlogTrackingBehavior,
   getLogForIntroPage,
-  updateTimeOutOfPage
+  updateTimeOutOfPage,
+  scrollPercentage,
 };
