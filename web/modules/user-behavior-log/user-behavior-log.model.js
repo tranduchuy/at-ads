@@ -53,7 +53,8 @@ const userBehaviorLogSchema = new Schema({
   timeOnPage: {
     type: Number,
     default: null
-  } // in milliseconds
+  }, // in milliseconds
+  scrollPercentage: {type: Number, default: 0}
 }, { timestamps: true });
 
 const UserBehaviorLogSchema = mongoose.model('UserBehaviorLog', userBehaviorLogSchema, 'UserBehaviorLogs');
