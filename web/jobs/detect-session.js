@@ -27,16 +27,17 @@ const createSession = async ({
     }
 };
 
-const checkSessionExpiration = (session, log) => {
+/**
+ * Return true when now time is in 30 minutes before of log AND not pass new day
+ * @param session
+ * @param log
+ * @return {boolean}
+ */
+const isLogTimeValidInOldSession = (session, log) => {
     const searchDate = moment(log.createdAt).subtract(30, 'minutes');
+    const endOfDate = moment(session.createdAt).endOf('date');
 
-    let inDate = moment(session.createdAt);
-    inDate = inDate.set('hour', 23);
-    inDate = inDate.set('minute', 59);
-    inDate = inDate.set('second', 59);
-    inDate = inDate.set('millisecond', 999);
-
-    return searchDate.isBefore(session.lastHitAt) && inDate.isAfter(session.lastHitAt);
+    return searchDate.isBefore(session.lastHitAt) && endOfDate.isAfter(session.lastHitAt);
 };
 
 const detectSession = async (channel, data, msg) => {
@@ -57,7 +58,7 @@ const detectSession = async (channel, data, msg) => {
 
         // check session existed
         if(session.length > 0){
-          if(checkSessionExpiration(session[0], log)){
+          if(isLogTimeValidInOldSession(session[0], log)){
             session[0].lastHitAt = log.createdAt;
             log.session = session[0]._id;
             await log.save();
