@@ -206,7 +206,7 @@ const mapAdsAccountWithWebsiteList = (adsAccount, websiteList) => {
 const getUserLicences = async(userIds) => {
     try{
         logger.info('Admin/UserService::getUserLicences::is called');
-        return await UserLicencesModel.find( { userId: { $in: userIds } } );
+        return await UserLicencesModel.find( { userId: { $in: userIds } } ).populate('packageId');
     }catch(e){
         logger.error('Admin/UserService::getUserLicences::error', e);
         throw e;
