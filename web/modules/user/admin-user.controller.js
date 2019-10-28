@@ -118,6 +118,14 @@ const getUsersListForAdminPage = async (req, res, next) => {
     {
       entries = data[0].entries;
       totalItems = data[0].meta[0].totalItems
+
+      const userIds = entries.map(user => user._id);
+      const userLicences = await AdminUserService.getUserLicences(userIds);
+      entries = entries.map(user => {
+        const userLicence = userLicences.filter(userLicence => { return user._id.toString() == userLicence.userId.toString()} );
+        user['licence'] = userLicence.length > 0 ? userLicence[0] : {};
+        return user;
+      })
     }
 
     logger.info('Admin/UserController::getUsersListForAdminPage::success\n');

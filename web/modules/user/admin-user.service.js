@@ -4,6 +4,7 @@ const GlobalConstant = require('../../constants/global.constant');
 const logger = log4js.getLogger(GlobalConstant.LoggerTargets.Service);
 const AccountAdsModel = require('../account-adwords/account-ads.model');
 const GoogleAdsErrorModel = require('../google-ads-error/google-ads-error.model');
+const UserLicencesModel = require('../user-licences/user-licences.model');
 const WebsiteModel = require('../website/website.model');
 
 const Mongoose = require('mongoose');
@@ -200,12 +201,23 @@ const mapAdsAccountWithWebsiteList = (adsAccount, websiteList) => {
     });
   
     return adsAccount;
-  };
+};
+
+const getUserLicences = async(userIds) => {
+    try{
+        logger.info('Admin/UserService::getUserLicences::is called');
+        return await UserLicencesModel.find( { userId: { $in: userIds } } );
+    }catch(e){
+        logger.error('Admin/UserService::getUserLicences::error', e);
+        throw e;
+    }
+};
 
 module.exports = {
     getUsersListForAdminPage,
     getAccountsListForAdminPage,
     onlyUnique,
     mapAdsAccountWithUserAccount,
-    getAccountInfoforAdminPage
+    getAccountInfoforAdminPage,
+    getUserLicences
 };
