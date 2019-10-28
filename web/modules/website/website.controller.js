@@ -49,7 +49,7 @@ const addDomainForAccountAds = async (req, res, next) => {
       return res.status(HttpStatus.NOT_FOUND).json(result);
     }
 
-    const limitWebSite = accountAds.setting.limitWebsite || 2;
+    const limitWebSite = accountAds.setting.limitWebsite;
     const websitesOfAccount = await WebsiteService.getWebsitesByAccountId(accountId);
     if (websitesOfAccount.length >= limitWebSite) {
       return res.status(HttpStatus.BAD_REQUEST).json({
