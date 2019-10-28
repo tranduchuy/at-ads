@@ -10,7 +10,7 @@ const packagesSchema = new Schema({
 
 const packagesModel = mongoose.model('Package', packagesSchema, 'Packages');
 
-packagesService.checkPackegesTableAndInsertData(packagesModel);
+// packagesService.checkPackegesTableAndInsertData(packagesModel);
 
 module.exports = packagesModel;
 module.exports.Model = packagesSchema;
