@@ -193,7 +193,12 @@ const getAccountInfo = async (user ,message) => {
     registerBy: user.registerBy,
     googleId: user.googleId,
     usePassword: !!user.passwordHash || !!user.passwordSalt,
-    avatar: user.avatar || ''
+    avatar: user.avatar || '',
+    licence: {
+      type: 'FREE', // TODO: should query from UserLicences
+      name: 'Miễn phí',
+      expiredAt: new Date()
+    }
   };
   const userToken = await UserTokenService.createUserToken(user._id);
 

@@ -330,7 +330,12 @@ const login = async (request, res, next) => {
       phone: user.phone,
       avatar: user.avatar,
       registerBy: user.registerBy,
-      usePassword: !!user.passwordHash || !!user.passwordSalt
+      usePassword: !!user.passwordHash || !!user.passwordSalt,
+      licence: {
+        type: 'FREE', // TODO: should query from UserLicences
+        name: 'Miễn phí',
+        expiredAt: new Date()
+      }
     };
 
     const userToken = await UserTokenService.createUserToken(user._id);
@@ -551,7 +556,12 @@ const getLoggedInInfo = async (req, res, next) => {
       gender,
       avatar,
       role: req.user.role,
-      usePassword: !!req.user.passwordHash || !!req.user.passwordSalt
+      usePassword: !!req.user.passwordHash || !!req.user.passwordSalt,
+      licence: {
+        type: 'FREE', // TODO: should query from UserLicences
+        name: 'Miễn phí',
+        expiredAt: new Date()
+      }
     };
 
     const standByInfo = {};
