@@ -6,7 +6,7 @@ const userLicencesSchema = new Schema(
   {
     userId: { type: ObjectId, default: null, ref: 'User' },
     packageId: { type: ObjectId, default: null, ref: 'Package' },
-    histories: { type: Object, default: null },
+    histories: { type: [Object], default: null },
     limitGoogleAd: { type: Number, default: 1 },
     expiredAt: { type: Date, default: null }
   },
