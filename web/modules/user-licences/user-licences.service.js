@@ -1,6 +1,8 @@
 const UserModel = require('../user/user.model');
 const UserLicenceModel = require('./user-licences.model');
 const moment = require('moment');
+const log4js = require('log4js');
+const logger = log4js.getLogger('Services');
 
 /**
  * Does user can call api google, especially when block or delete ip
@@ -20,6 +22,17 @@ const canCallAPIGoogle = async (userId) => {
   return moment(licence.expiredAt).isAfter(now);
 };
 
+const findUserLicenceByUserId = async (userId) => {
+  logger.info('UserLicenceServices::findUserLicenceByUserId:is called', { userId });
+  try{
+    return await UserLicenceModel.findOne({ userId }).populate('packageId');
+  }catch(e){
+    logger.error('UserLicenceServices::findUserLicenceByUserId:error', e);
+    throw e;
+  }
+}
+
 module.exports = {
-  canCallAPIGoogle
+  canCallAPIGoogle,
+  findUserLicenceByUserId
 };
