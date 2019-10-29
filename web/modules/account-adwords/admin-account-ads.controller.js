@@ -8,62 +8,77 @@ const requestUtil = require('../../utils/RequestUtil');
 const UserLicencesServices = require('../user-licences/user-licences.service');
 const PackageConstant = require('../packages/packages.constant');
 const AccountAdsModel = require('./account-ads.model');
+const UserLicenceModel = require('../user-licences/user-licences.model');
 
-const { UpdateLimitWebsiteValidationSchema } = require('./validations/update-limit-website.schema');
+const {
+  UpdateLimitWebsiteValidationSchema
+} = require('./validations/update-limit-website.schema');
 
-const updateLimitWebsite = async(req, res, next) => {
-  logger.info('AdminAccountAdsController::updateLimitWebsite::is called', { accountId: req.body.accountId, limitWebsite: req.body.limitWebsite });
-	try{
-		const { error } = Joi.validate(req.body, UpdateLimitWebsiteValidationSchema);
+const updateLimitWebsite = async (req, res, next) => {
+  logger.info('AdminAccountAdsController::updateLimitWebsite::is called', {
+    accountId: req.body.accountId,
+    limitWebsite: req.body.limitWebsite
+  });
+  try {
+    const { error } = Joi.validate(
+      req.body,
+      UpdateLimitWebsiteValidationSchema
+    );
 
-		if (error) {
-			return requestUtil.joiValidationResponse(error, res);
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
     }
-    
-    const { accountId, limitWebsite } = req.body;
-    const accountAds = await AccountAdsModel.findOne({_id: mongoose.Types.ObjectId(accountId)});
 
-    if(!accountAds)
-    {
+    const { accountId, limitWebsite } = req.body;
+    const accountAds = await AccountAdsModel.findOne({
+      _id: mongoose.Types.ObjectId(accountId)
+    });
+
+    if (!accountAds) {
       return res.status(HttpStatus.NOT_FOUND).json({
-        messages: ["không tìm thấy tài khoản google Ads."]
+        messages: ['không tìm thấy tài khoản google Ads.']
       });
     }
 
-    const userLicence = await UserLicencesServices.findUserLicenceByUserId(accountAds.user);
+    const userLicence = await UserLicenceModel.findOne({
+      userId: accountAds.user
+    }).populate('packageId');
 
-    if(!userLicence)
-    {
+    if (!userLicence) {
       return res.status(HttpStatus.NOT_FOUND).json({
-        messages: ["không tìm thấy licence."]
+        messages: ['không tìm thấy licence.']
       });
     }
 
     const typePackage = userLicence.packageId ? userLicence.packageId.type : '';
 
-    if(typePackage != PackageConstant.packageTypes.CUSTOM && typePackage != PackageConstant.packageTypes.VIP1)
-    {
+    if (
+      typePackage != PackageConstant.packageTypes.CUSTOM &&
+      typePackage != PackageConstant.packageTypes.VIP1
+    ) {
       return res.status(HttpStatus.BAD_REQUEST).json({
-        messages: ["Tài khoản không thuộc gói được phép thiết lập chức năng này."]
+        messages: [
+          'Tài khoản không thuộc gói được phép thiết lập chức năng này.'
+        ]
       });
     }
 
     accountAds.setting.limitWebsite = limitWebsite;
     await accountAds.save();
 
-		return res.status(HttpStatus.OK).json({
-      messages: ["Thiết lập thành công."],
+    return res.status(HttpStatus.OK).json({
+      messages: ['Thiết lập thành công.'],
       data: {
         licence: userLicence,
         accountAds
       }
-		});
-	}catch(e){
-		logger.error('AdminAccountAdsController::updateLimitWebsite::error', e);
-		return next(e);
-	}
+    });
+  } catch (e) {
+    logger.error('AdminAccountAdsController::updateLimitWebsite::error', e);
+    return next(e);
+  }
 };
 
 module.exports = {
   updateLimitWebsite
-}
+};

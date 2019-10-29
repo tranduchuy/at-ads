@@ -22,17 +22,6 @@ const canCallAPIGoogle = async (userId) => {
   return moment(licence.expiredAt).isAfter(now);
 };
 
-const findUserLicenceByUserId = async (userId) => {
-  logger.info('UserLicenceServices::findUserLicenceByUserId:is called', { userId });
-  try{
-    return await UserLicenceModel.findOne({ userId }).populate('packageId');
-  }catch(e){
-    logger.error('UserLicenceServices::findUserLicenceByUserId:error', e);
-    throw e;
-  }
-}
-
 module.exports = {
-  canCallAPIGoogle,
-  findUserLicenceByUserId
+  canCallAPIGoogle
 };
