@@ -6,8 +6,11 @@ const Joi = require('@hapi/joi');
 const { RegisterValidationSchema } = require('./validations/register.schema');
 const UserTokenService = require('../userToken/userToken.service');
 const AdsAccountService = require('../account-adwords/account-ads.service');
+const UserLicencesModel = require('../user-licences/user-licences.model');
+const PackageModel = require('../packages/packages.model');
 
 const UserConstant = require('./user.constant');
+const PackageConstant = require('../packages/packages.constant');
 const { Status } = require('../../constants/status');
 const { LoginValidationSchema } = require('./validations/login.schema');
 const { ResendConfirm } = require('./validations/resend-confirm-email.schema');
@@ -266,7 +269,6 @@ const loginByGoogle = async (request, res, next) => {
       }
       logger.info('UserController::loginByGoogle::success');
 
-
       if(refreshToken)
       {
         user.googleRefreshToken = refreshToken;
@@ -276,6 +278,31 @@ const loginByGoogle = async (request, res, next) => {
       user.googleAccessToken = accessToken;
       user.expiryDateOfAccesstoken = new Date(timeAfterOneHour);
       await user.save();
+
+      const userId = user._id;
+      const userLicence = await UserLicencesModel.findOne({userId});
+
+      if(!userLicence)
+      {
+        const package = await PackageModel.findOne({type: PackageConstant.packageTypes.FREE});
+        if(package)
+        {
+          const newUserLicence = new UserLicencesModel({
+            userId,
+            packageId: package._id,
+            histories: [{
+              packageId: package._id,
+              name: package.name,
+              type: package.type,
+              price: package.price,
+              createdAt: new Date()
+            }],
+          });
+
+          await newUserLicence.save();
+        }
+      }
+
       const result = await UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);
     });
