@@ -1,6 +1,8 @@
 const UserModel = require('../user/user.model');
 const UserLicenceModel = require('./user-licences.model');
 const moment = require('moment');
+const log4js = require('log4js');
+const logger = log4js.getLogger('Services');
 
 /**
  * Does user can call api google, especially when block or delete ip
