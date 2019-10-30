@@ -183,7 +183,7 @@ const updateUser = async ( { password, name, phone, email} ) =>  {
   return await UserModel.findOne({email});
 };
 
-const getAccountInfo = async (user ,message) => {
+const getAccountInfo = async (user, message) => {
   const userInfoResponse = {
     _id: user.id,
     role: user.role,
@@ -195,9 +195,9 @@ const getAccountInfo = async (user ,message) => {
     usePassword: !!user.passwordHash || !!user.passwordSalt,
     avatar: user.avatar || '',
     licence: {
-      type: 'FREE', // TODO: should query from UserLicences
-      name: 'Miễn phí',
-      expiredAt: new Date()
+      type: user.userLicence.packageId ? user.userLicence.packageId.type : null, 
+      name: user.userLicence.packageId ? user.userLicence.packageId.name : null,
+      expiredAt: moment(user.userLicence.expiredAt)
     }
   };
   const userToken = await UserTokenService.createUserToken(user._id);
