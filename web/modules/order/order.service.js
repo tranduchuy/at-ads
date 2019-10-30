@@ -10,7 +10,7 @@ const createCode = async () => {
     let flag = true;
     while (flag) {
       const code = crypto.randomBytes(4).toString('hex');
-      const order = await OrderModel.findOne({ code });
+      const order = await OrderModel.findOne({ code }).lean();
       if (!order) {
         flag = false;
         return code;

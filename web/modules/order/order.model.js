@@ -6,7 +6,7 @@ const orderTransactionsSchema = new Schema(
   {
     packageId: { type: ObjectId, default: null },
     userId: { type: ObjectId, default: null },
-    code: { type: String, default: null, unique: true },
+    code: { type: String, unique: true },
     status: { type: Number, default: null }
   },
   { timestamps: true }
