@@ -147,7 +147,7 @@ const getAccountsAdsByUserId = async (userId) => {
     user: userId,
     isDeleted: false
   });
-  
+
   if (accountsAds.length !== 0) {
     const promises = accountsAds.map(async (account) => {
       let websites = await WebsiteService.getWebsitesByAccountId(account._id);
@@ -171,7 +171,8 @@ const getAccountsAdsByUserId = async (userId) => {
         websites,
         key: account.key,
         campaignNumber,
-        isFree: await isFreeAccount(account)
+        isFree: await isFreeAccount(account),
+        limitWebsite: account.setting.limitWebsite
       }
     });
     return await Promise.all(promises);
