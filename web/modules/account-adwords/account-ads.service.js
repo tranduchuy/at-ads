@@ -171,22 +171,12 @@ const getAccountsAdsByUserId = async (userId) => {
         websites,
         key: account.key,
         campaignNumber,
-        isFree: await isFreeAccount(account),
         limitWebsite: account.setting.limitWebsite
       }
     });
     return await Promise.all(promises);
   }
   return null;
-};
-
-const isFreeAccount = async (account) => {
-  const websites = await WebsiteService.getWebsitesByAccountId(account._id);
-  let flagNotFree = websites.some(website => {
-    return !website.isExpired;
-  });
-
-  return !flagNotFree;
 };
 
 const createCampaign = (accountId, campaign) => {
