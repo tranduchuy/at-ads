@@ -8,6 +8,9 @@ const moment = require('moment');
 const requestUtil = require('../../utils/RequestUtil');
 const UserLicencesModel = require('./user-licences.model');
 const PackageModel = require('../packages/packages.model');
+const OrderService = require('../order/order.service');
+const OrderModel = require('../order/order.model');
+const OrderConstant = require('../order/order.constant');
 
 const {
   UpdatePackageForUserValidationSchema
@@ -78,8 +81,15 @@ const updatePackageForUser = async (req, res, next) => {
     userLicences.histories = history;
     userLicences.expiredAt = expiredAt;
     userLicences.packageId = package._id;
-
     await userLicences.save();
+    const code = await OrderService.createCode();
+    const newOrder = new OrderModel({
+      userId,
+      packageId: package._id,
+      code,
+      status: OrderConstant.status.SUCCESS
+    });
+    await newOrder.save();
 
     return res.status(HttpStatus.OK).json({
       messages: ['Cập nhật thành công'],
