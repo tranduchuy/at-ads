@@ -280,16 +280,16 @@ const loginByGoogle = async (request, res, next) => {
       await user.save();
 
       const userId = user._id;
-      const userLicence = await UserLicencesModel.findOne({userId});
+      let userLicence = await UserLicencesModel.findOne({userId}).populate('packageId');
 
       if(!userLicence)
       {
         const package = await PackageModel.findOne({type: PackageConstant.packageTypes.FREE});
         if(package)
         {
-          const newUserLicence = new UserLicencesModel({
+          userLicence = new UserLicencesModel({
             userId,
-            packageId: package._id,
+            packageId: package,
             histories: [{
               packageId: package._id,
               name: package.name,
@@ -299,10 +299,11 @@ const loginByGoogle = async (request, res, next) => {
             }],
           });
 
-          await newUserLicence.save();
+          await userLicence.save();
         }
       }
 
+      user.userLicence = userLicence;
       const result = await UserService.getAccountInfo(user, messages.ResponseMessages.User.Login.LOGIN_SUCCESS);
       return res.status(HttpStatus.OK).json(result);
     });
@@ -347,6 +348,31 @@ const login = async (request, res, next) => {
       return res.status(HttpStatus.BAD_REQUEST).json(result);
     }
 
+    const userId = user._id;
+    let userLicence = await UserLicencesModel.findOne({userId}).populate('packageId');
+
+    if(!userLicence)
+    {
+      const package = await PackageModel.findOne({type: PackageConstant.packageTypes.FREE});
+      if(package)
+      {
+        console.log('dô nè');
+        userLicence = new UserLicencesModel({
+          userId,
+          packageId: package,
+          histories: [{
+            packageId: package._id,
+            name: package.name,
+            type: package.type,
+            price: package.price,
+            createdAt: new Date()
+          }],
+        });
+
+        await userLicence.save();
+      }
+    }
+
     const userInfoResponse = {
       _id: user._id,
       role: user.role,
@@ -359,9 +385,9 @@ const login = async (request, res, next) => {
       registerBy: user.registerBy,
       usePassword: !!user.passwordHash || !!user.passwordSalt,
       licence: {
-        type: 'FREE', // TODO: should query from UserLicences
-        name: 'Miễn phí',
-        expiredAt: new Date()
+        type: userLicence.packageId ? userLicence.packageId.type : null, 
+        name: userLicence.packageId ? userLicence.packageId.name : null,
+        expiredAt: moment(userLicence.expiredAt)
       }
     };
 
@@ -574,6 +600,18 @@ const getLoggedInInfo = async (req, res, next) => {
   logger.info('UserController::getLoggedInInfo::called');
   try {
     const { _id, name, email, phone, birthday, gender, avatar } = req.user;
+    const userLicence = await UserLicencesModel.findOne({userId: _id}).populate('packageId');
+    let packageType = null;
+    let packageName = null;
+    let expiredAt = null;
+
+    if(userLicence)
+    {
+      packageType = userLicence.packageId ? userLicence.packageId.type : null;
+      packageName = userLicence.packageId ? userLicence.packageId.name : null;
+      expiredAt = moment(userLicence.expiredAt);
+    }
+
     const userInfoResponse = {
       _id,
       name,
@@ -585,9 +623,9 @@ const getLoggedInInfo = async (req, res, next) => {
       role: req.user.role,
       usePassword: !!req.user.passwordHash || !!req.user.passwordSalt,
       licence: {
-        type: 'FREE', // TODO: should query from UserLicences
-        name: 'Miễn phí',
-        expiredAt: new Date()
+        type: packageType,
+        name: packageName,
+        expiredAt
       }
     };
 
