@@ -33,8 +33,8 @@ const updatePackageForUser = async (req, res, next) => {
     }
 
     const { userId, packageId } = req.body;
-    const expiredAtOfUserLicence = req.body.expiredAt
-      ? moment(req.body.expiredAt, 'DD-MM-YYYY').endOf('day')
+    const expiredAtOfUserLicence = Number(req.body.expiredAt)
+      ? moment(Number(req.body.expiredAt)).endOf('day')
       : null;
 
     if (expiredAtOfUserLicence && expiredAtOfUserLicence.isBefore(moment())) {
