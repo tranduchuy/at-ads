@@ -51,14 +51,14 @@ const createdOrderWhenRegisterPackage = async (req, res, next) => {
         code,
         packageId: package._id,
         numOfMonths,
-        price: Number(numOfMonths) * Number(package.price)
+        price: OrderService.discount(numOfMonths, package.price)
       });
     } else {
       order.numOfMonths =
         order.numOfMonths != numOfMonths
           ? Number(numOfMonths)
           : order.numOfMonths;
-      order.price = Number(numOfMonths) * Number(package.price);
+      order.price = OrderService.discount(numOfMonths, package.price)
     }
 
     await order.save();

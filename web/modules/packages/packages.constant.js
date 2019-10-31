@@ -21,5 +21,15 @@ module.exports = {
     FREE: 'FREE',
     VIP1: 'VIP1',
     CUSTOM: 'CUSTOM'
+  },
+  discount: {
+    THREE_MONTH: 0.1,
+    SIX_MONTH: 0.2,
+    A_YEAR: 0.4
+  },
+  month: {
+    THREE: 3,
+    SIX: 6,  
+    TWELVE: 12
   }
 };
