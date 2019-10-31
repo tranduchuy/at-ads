@@ -21,22 +21,22 @@ const filterExpiredAt = ({ userLicences, package, expiredAtOfUserLicence }) => {
     ) {
       if (package.type == PackageConstant.packageTypes.FREE) {
         expiredAt = moment()
-          .add(package.numOfDays, 'days')
+          .add(package.numOfMonths, 'M')
           .endOf('day');
       } else {
         expiredAt = expiredAtOfUserLicence
           ? expiredAtOfUserLicence
           : moment()
-              .add(package.numOfDays, 'days')
+              .add(package.numOfMonths, 'M')
               .endOf('day');
       }
     } else {
       if (package.type == PackageConstant.packageTypes.FREE) {
-        expiredAt = expiredAt.add(package.numOfDays, 'days').endOf('day');
+        expiredAt = expiredAt.add(package.numOfMonths, 'M').endOf('day');
       } else {
         expiredAt = expiredAtOfUserLicence
           ? expiredAtOfUserLicence
-          : expiredAt.add(package.numOfDays, 'days').endOf('day');
+          : expiredAt.add(package.numOfMonths, 'M').endOf('day');
       }
     }
 

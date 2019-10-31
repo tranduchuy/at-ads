@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const packagesSchema = new Schema({
   name: String,
   type: String,
-  numOfDays: Number,
+  numOfMonths: Number,
   price: Number
 }, { timestamps: true });
 

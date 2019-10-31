@@ -2,9 +2,8 @@ const express = require('express');
 const router = express.Router({});
 const UserController = require('./user.controller');
 const UserActionHistoryController = require('../user-action-history/user-action-history.controller');
-const websiteController = require('../website/website.controller');
 const CheckTokenMiddleware = require('../../middlewares/check-token');
-const CheckUserAdminMidddleware = require('../../middlewares/check-user-admin');
+const OrderController = require('../order/order.controller');
 // const multer = require('multer');
 
 router.post('/check', UserController.check);
@@ -21,5 +20,6 @@ router.get('/info', CheckTokenMiddleware, UserController.getLoggedInInfo);
 router.get('/actions-history', CheckTokenMiddleware, UserActionHistoryController.getActionsHistory);
 router.get('/check-refresh-token', CheckTokenMiddleware, UserController.checkRefreshToken);
 router.put('/refresh-token-access-token', CheckTokenMiddleware, UserController.updateRefreshTokenAndAccessToken);
+router.post('/order', CheckTokenMiddleware, OrderController.createdOrderWhenRegisterPackage);
 
 module.exports = router;

@@ -7,7 +7,9 @@ const orderTransactionsSchema = new Schema(
     packageId: { type: ObjectId, default: null },
     userId: { type: ObjectId, default: null },
     code: { type: String, unique: true },
-    status: { type: Number, default: null }
+    status: { type: Number, default: null },
+    numOfMonths: { type: Number, default: null },
+    price: {type: Number, default: null}
   },
   { timestamps: true }
 );

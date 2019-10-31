@@ -12,18 +12,18 @@ const initPackages = async (packagesModel) => {
       name: 'Miễn phí',
       price: 0,
       type: PackagesConstant.packageTypes.FREE,
-      numOfDays: 30
+      numOfMonths: 1
     },
     [PackagesConstant.packageTypes.VIP1]: {
       name: 'Vip1',
       price: 5e5,
-      numOfDays: 30,
+      numOfMonths: 1,
       type: PackagesConstant.packageTypes.VIP1
     },
     [PackagesConstant.packageTypes.CUSTOM]: {
       name: 'Đối tác',
-      price: 0,
-      numOfDays: 30,
+      price: 1e6,
+      numOfMonths: 1,
       type: PackagesConstant.packageTypes.CUSTOM
     }
   };
