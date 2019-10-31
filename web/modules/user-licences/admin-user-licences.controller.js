@@ -11,6 +11,7 @@ const PackageModel = require('../packages/packages.model');
 const OrderService = require('../order/order.service');
 const OrderModel = require('../order/order.model');
 const OrderConstant = require('../order/order.constant');
+const AdminUserLicencesService = require('./admin-user-licences.service');
 
 const {
   UpdatePackageForUserValidationSchema
@@ -32,6 +33,19 @@ const updatePackageForUser = async (req, res, next) => {
     }
 
     const { userId, packageId } = req.body;
+    const expiredAtOfUserLicence = req.body.expiredAt
+      ? moment(req.body.expiredAt, 'DD-MM-YYYY').endOf('day')
+      : null;
+
+    if (expiredAtOfUserLicence && expiredAtOfUserLicence.isBefore(moment())) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: [
+          `Ngày gửi lên: ${expiredAtOfUserLicence.format(
+            'DD-MM-YYYY'
+          )} đang nhỏ hơn ngày hiện tại: ${moment().format('DD-MM-YYYY')}`
+        ]
+      });
+    }
 
     const userLicences = await UserLicencesModel.findOne({
       userId: mongoose.Types.ObjectId(userId)
@@ -61,22 +75,11 @@ const updatePackageForUser = async (req, res, next) => {
       price: package.price,
       createdAt: new Date()
     });
-    let expiredAt = userLicences.expiredAt
-      ? moment(userLicences.expiredAt)
-      : moment();
-    const packageType = userLicences.packageId
-      ? userLicences.packageId.type
-      : '';
-
-    if (
-      !userLicences.packageId ||
-      packageType != package.type ||
-      expiredAt.isBefore(moment())
-    ) {
-      expiredAt = moment().add(package.numOfDays, 'days').endOf('day');
-    } else {
-      expiredAt = expiredAt.add(package.numOfDays, 'days').endOf('day');
-    }
+    const expiredAt = AdminUserLicencesService.filterExpiredAt({
+      userLicences,
+      package,
+      expiredAtOfUserLicence
+    });
 
     userLicences.histories = history;
     userLicences.expiredAt = expiredAt;
