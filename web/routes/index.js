@@ -13,5 +13,6 @@ router.use('/admin/websites', require('../modules/website/admin-website.route'))
 router.use('/admin/users', require('../modules/user/admin-user.route'));
 router.use('/admin/account-ads', require('../modules/account-adwords/admin-account-ads.route'));
 router.use('/admin/user-licences', require('../modules/user-licences/admin-user-licences.route'));
+router.use('/admin', require('../modules/admin/admin.route'));
 
 module.exports = router;
