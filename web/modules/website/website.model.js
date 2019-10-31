@@ -7,11 +7,9 @@ const websiteSchema = new Schema({
   status: { type: Number, default: StatusConstant.Status.ACTIVE},
   domain: {type: String, unique: true},
   accountAd: Schema.Types.ObjectId,
-  expiredAt: { type: Date, default: WebsiteConstant.expiredAt.doesNotExpire },
   isTracking: { type: Boolean, default: false },
   isValid: { type: Boolean, default: false },
-  isDuplicateScript: { type: Boolean, default: false },
-  vipType: { type: Number, default: WebsiteConstant.vipType.notTheVip }
+  isDuplicateScript: { type: Boolean, default: false }
 }, { timestamps: true });
 
 const WebsiteModel = mongoose.model('Website', websiteSchema, 'Websites');

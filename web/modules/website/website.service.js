@@ -1,6 +1,5 @@
 const WebsiteModel = require('./website.model');
 const AccountAdsModel = require('../account-adwords/account-ads.model');
-const HistoryTransactionsModel = require('../history-transactions/history-transactions.model');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const log4js = require('log4js');
@@ -9,8 +8,6 @@ const Mongoose = require('mongoose');
 const UserModel = require('../../modules/user/user.model');
 
 const moment = require('moment');
-const WebsitesConstant = require('../website/website.constant');
-const PackagesConstant = require('../packages/packages.constant');
 
 const onlyUnique = (value, index, self) => {
   return self.indexOf(value) == index;
@@ -47,10 +44,6 @@ const createDomain = async ({ domain, accountId }) => {
 const getWebsitesByAccountId = async accountId => {
   const websites = await WebsiteModel.find({
     accountAd: mongoose.Types.ObjectId(accountId)
-  }).sort({ expiredAt: -1 });
-
-  websites.forEach((website, index) => {
-    websites[index].isExpired = isExpired(website);
   });
 
   return websites;
@@ -72,68 +65,6 @@ const getAllDomainNames = async () => {
   return websites.map(website => website.domain);
 };
 
-const saveHistoryTransactionsInfo = async ({ package, websiteCode, price }) => {
-  const historyTransactions = new HistoryTransactionsModel({
-    package,
-    websiteCode,
-    price
-  });
-
-  return await historyTransactions.save();
-};
-
-const getVipTypeAndExpiredAt = (package, expired) => {
-  let vipType = WebsitesConstant.vipType.notTheVip;
-  let expiredAt = WebsitesConstant.expiredAt.doesNotExpire;
-  const now = moment().startOf('day');
-  const expiredDay = moment(expired).startOf('day');
-
-  switch (package.name) {
-    case PackagesConstant.name.vip1:
-      expiredAt =
-        !expired || expiredDay.isBefore(now)
-          ? WebsitesConstant.expiredAt.aMonth
-          : moment(expired)
-              .add(WebsitesConstant.month.aMonth, 'M')
-              .endOf('day');
-      vipType = WebsitesConstant.vipType.vipWithinAMonth;
-
-      break;
-    case PackagesConstant.name.vip2:
-      expiredAt =
-        !expired || expiredDay.isBefore(now)
-          ? WebsitesConstant.expiredAt.threeMonths
-          : moment(expired)
-              .add(WebsitesConstant.month.threeMonths, 'M')
-              .endOf('day');
-      vipType = WebsitesConstant.vipType.vipWithinThreeMonths;
-      break;
-    case PackagesConstant.name.vip3:
-      expiredAt =
-        !expired || expiredDay.isBefore(now)
-          ? WebsitesConstant.expiredAt.sixMonths
-          : moment(expired)
-              .add(WebsitesConstant.month.sixMonths, 'M')
-              .endOf('day');
-      vipType = WebsitesConstant.vipType.vipWithinSixMonths;
-      break;
-    case PackagesConstant.name.vip4:
-      expiredAt =
-        !expired || expiredDay.isBefore(now)
-          ? WebsitesConstant.expiredAt.aYear
-          : moment(expired)
-              .add(WebsitesConstant.month.aYear, 'M')
-              .endOf('day');
-      vipType = WebsitesConstant.vipType.vipWithinAYear;
-      break;
-    default:
-      vipType = WebsitesConstant.vipType.notTheVip;
-      expiredAt = WebsitesConstant.expiredAt.doesNotExpire;
-  }
-
-  return { vipType, expiredAt };
-};
-
 const getWebsiteByDomain = async domain => {
   try {
     return await WebsiteModel.findOne({ domain }).lean();
@@ -150,20 +81,6 @@ const findWebsite = async codeOrIdOrDomain => {
       { domain: codeOrIdOrDomain }
     ]
   });
-};
-
-const isExpired = website => {
-  if (!website) {
-    return true;
-  }
-
-  if (!website.expiredAt) {
-    return true;
-  }
-
-  const now = moment();
-  const expiredAt = moment(website).endOf('day');
-  return now.isAfter(expiredAt);
 };
 
 /**
@@ -417,11 +334,8 @@ module.exports = {
   getWebsitesByAccountId,
   isOwnDomain,
   getAllDomainNames,
-  saveHistoryTransactionsInfo,
-  getVipTypeAndExpiredAt,
   getWebsiteByDomain,
   findWebsite,
-  isExpired,
   getWebsitesForAdminPage,
   getWebsiteInfoforAdminPage
 };
