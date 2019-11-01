@@ -134,11 +134,11 @@ const getTrafficSourceStatisticByDay = (accountKey, websiteInfo, from, to) => {
 	});
 };
 
-const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
-	logger.info('ReportService::getTrafficSourceLogs::is called ', { accountKey, from, to, page, limit });
+const getTrafficSourceLogs = (accountKey, websiteInfo, from, to, page, limit) => {
+	logger.info('ReportService::getTrafficSourceLogs::is called ', { accountKey, from: from._d, to: to._d, page, limit });
 	return new Promise(async (res, rej) => {
 		try {
-			const matchStage = {
+			let matchStage = {
 				$match: {
 					accountKey,
 					createdAt: {
@@ -147,6 +147,11 @@ const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
 					}
 				}
 			};
+
+			if(websiteInfo)
+			{
+				matchStage.$match['domain'] = websiteInfo.domain;
+			}
 
 			const sortStage = {
 				$sort: {
@@ -193,11 +198,11 @@ const getTrafficSourceLogs = (accountKey, from, to, page, limit) => {
 	});
 };
 
-const getSessionCountOfIp = (accountKey, from, to, ips) => {
-	logger.info('ReportService::getSessionCountOfIp::is called ', { accountKey, from, to, ips });
+const getSessionCountOfIp = (accountKey, websiteInfo, from, to, ips) => {
+	logger.info('ReportService::getSessionCountOfIp::is called ', { accountKey, from: from._d, to: to._d, ips });
 	return new Promise(async (res, rej) => {
 		try {
-			const matchStage = {
+			let matchStage = {
 				$match: {
 					accountKey,
 					createdAt: {
@@ -209,6 +214,11 @@ const getSessionCountOfIp = (accountKey, from, to, ips) => {
 					}
 				}
 			};
+
+			if(websiteInfo)
+			{
+				matchStage.$match['domain'] = websiteInfo.domain;
+			}
 
 			const groupStage = {
 				$group: {

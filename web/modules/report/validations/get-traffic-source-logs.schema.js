@@ -1,12 +1,11 @@
-const BaseJoi = require('@hapi/joi');
-const Extension = require('@hapi/joi-date');
-const Joi = BaseJoi.extend(Extension);
+const Joi = require('@hapi/joi');
 
 const getTrafficSourceLogsValidationSchema = Joi.object().keys({
-    from: Joi.date().format('DD-MM-YYYY').required(),
-    to: Joi.date().format('DD-MM-YYYY').required(),
-    page: BaseJoi.number().min(1),
-    limit: BaseJoi.number().min(1)
+    from: Joi.number().min(1).required(),
+    to: Joi.number().min(1).required(),
+    page: Joi.number().min(1),
+    limit: Joi.number().min(1),
+    website: Joi.string()
 });
 
 module.exports = {
