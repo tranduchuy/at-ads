@@ -2,13 +2,14 @@ const AccountAdsModel = require('../modules/account-adwords/account-ads.model');
 const HttpStatus = require('http-status-codes');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Middleware');
+const mongoose = require('mongoose');
 
 module.exports = async (req, res, next) => {
 	logger.info('Middlewares::check-account-id is called');
 	try {
 		const { accountId } = req.params;
 		const query = {
-			_id: accountId,
+			_id: mongoose.Types.ObjectId(accountId),
 			user: req.user._id,
 			isDeleted: false
 		};

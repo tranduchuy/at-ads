@@ -82,12 +82,12 @@ buildStageGetDetailIPClick = (queryCondition) => {
 	return stages;
 };
 
-const getTrafficSourceStatisticByDay = (accountKey, from, to) => {
-	logger.info('ReportService::getTrafficSourceStatisticByDay::is called ', { accountKey, from, to });
+const getTrafficSourceStatisticByDay = (accountKey, websiteInfo, from, to) => {
+	logger.info('ReportService::getTrafficSourceStatisticByDay::is called ', { accountKey, from: from._d, to: to._d });
 
 	return new Promise(async (res, rej) => {
 		try {
-			const matchStage = {
+			let matchStage = {
 				$match: {
 					accountKey,
 					createdAt: {
@@ -96,6 +96,11 @@ const getTrafficSourceStatisticByDay = (accountKey, from, to) => {
 					}
 				}
 			};
+
+			if(websiteInfo)
+			{
+				matchStage.$match['domain'] = websiteInfo.domain;
+			}
 
 			const groupStage = {
 				$group: {
