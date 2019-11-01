@@ -3,8 +3,10 @@ const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
 const HttpStatus = require("http-status-codes");
 const moment = require('moment');
+const mongoose = require('mongoose');
 
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
+const WebsiteModel = require('../website/website.model');
 
 const { getDetailIpClickValidationSchema } = require('./validations/get-detail-ip-click.schema');
 const { getTrafficSourceStatisticByDayValidationSchema } = require('./validations/get-traffic-source-statistic-by-day.schema');
@@ -158,7 +160,8 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 		id   : req.adsAccount._id,
 		adsId: req.adsAccount.adsId,
 		from : req.query.from,
-		to   : req.query.to
+		to   : req.query.to,
+		website: req.query.website
 	};
 
 	logger.info('ReportController::getTrafficSourceStatisticByDay is called\n', info);
@@ -168,9 +171,9 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 		if (error) {
 			return requestUtil.joiValidationResponse(error, res);
 		}
-		let { from, to } = req.query;
-		from = moment(from, 'DD-MM-YYYY');
-		to = moment(to, 'DD-MM-YYYY');
+		let { from, to, website } = req.query;
+		from = moment(Number(from)).startOf('day');
+		to = moment(Number(to)).endOf('day');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::babRequest\n', info);
@@ -179,9 +182,24 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 			});
 		}
 
-		const endDateTime = moment(to).endOf('day');
+		let websiteInfo = null;
+
+		if(website)
+		{
+			websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website), accountAd: req.adsAccount._id});
+			console.log(websiteInfo);
+		}
+
+		if(!websiteInfo && website)
+		{
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::website not found\n', info);
+			return res.status(HttpStatus.NOT_FOUND).json({
+				messages: ['Không tìm thấy website.']
+			});
+		}
+
 		const accountKey = req.adsAccount.key;
-		let result = await ReportService.getTrafficSourceStatisticByDay(accountKey, from, endDateTime);
+		let result = await ReportService.getTrafficSourceStatisticByDay(accountKey, websiteInfo, from, to);
 		result.sort((trafficSource, trafficSource1) => trafficSource1.sessionCount - trafficSource.sessionCount);
 
 		logger.info('AccountAdsController::getTrafficSourceStatisticByDay::success');
@@ -204,7 +222,8 @@ const getTrafficSourceLogs = async (req, res, next) => {
 		from : req.query.from,
 		to   : req.query.to,
 		page : req.query.page,
-		limit: req.query.limit
+		limit: req.query.limit,
+		website: req.query.website
 	};
 
 	logger.info('ReportController::getTrafficSourceLogs is called\n', info);
@@ -214,15 +233,14 @@ const getTrafficSourceLogs = async (req, res, next) => {
 		if (error) {
 			return requestUtil.joiValidationResponse(error, res);
 		}
-		let { from, to } = req.query;
-		from = moment(from, 'DD-MM-YYYY');
-		to = moment(to, 'DD-MM-YYYY');
+		let { from, to, website } = req.query;
+		from = moment(Number(from)).startOf('day');
+		to = moment(Number(to)).endOf('day');
 		let page = req.query.page || Paging.PAGE;
 		let limit = req.query.limit || Paging.LIMIT;
 		page = Number(page);
 		limit = Number(limit);
-		const twoWeek = moment(from).add(14, 'd');
-		const endDateTime = moment(to).endOf('day');
+		const twoWeek = moment(from).add(14, 'd').startOf('day');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getTrafficSourceLogs::babRequest\n', info);
@@ -231,15 +249,30 @@ const getTrafficSourceLogs = async (req, res, next) => {
 			});
 		}
 
-		if (twoWeek.isBefore(endDateTime)) {
+		if (twoWeek.isBefore(to)) {
 			logger.info('AccountAdsController::getTrafficSourceLogs::babRequest\n', info);
 			return res.status(HttpStatus.BAD_REQUEST).json({
 				messages: ['Khoảng cách giữa ngày bắt đầu và ngày kết thúc tối đa là 2 tuần.']
 			});
 		}
 
+		let websiteInfo = null;
+
+		if(website)
+		{
+			websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website), accountAd: req.adsAccount._id});
+		}
+
+		if(!websiteInfo && website)
+		{
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::website not found\n', info);
+			return res.status(HttpStatus.NOT_FOUND).json({
+				messages: ['Không tìm thấy website.']
+			});
+		}
+
 		const accountKey = req.adsAccount.key;
-		const result = await ReportService.getTrafficSourceLogs(accountKey, from, endDateTime, page, limit);
+		const result = await ReportService.getTrafficSourceLogs(accountKey, websiteInfo, from, to, page, limit);
 		let trafficSourceData = [];
 		let totalItems = 0;
 
@@ -248,8 +281,7 @@ const getTrafficSourceLogs = async (req, res, next) => {
 			totalItems = result[0].meta[0].totalItems;
 			trafficSourceData = trafficSourceData.map(ele => ele.info);
 			const ips = trafficSourceData.map(ele => ele.ip);
-			const sessions = await ReportService.getSessionCountOfIp(accountKey, from, endDateTime, ips);
-			;
+			const sessions = await ReportService.getSessionCountOfIp(accountKey, websiteInfo, from, to, ips);
 			trafficSourceData = ReportService.addSessionCountIntoTrafficSourceData(trafficSourceData, sessions);
 		}
 
