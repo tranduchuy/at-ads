@@ -2088,7 +2088,7 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 		    }
 		    
 			return res.status(HttpStatus.BAD_REQUEST).json({
-				messages: ["Bạn đã kết nói GoogleAds này: " + adWordId],
+				messages: ["Bạn đã kết nối GoogleAds này: " + adWordId],
 			});
 		}
 
