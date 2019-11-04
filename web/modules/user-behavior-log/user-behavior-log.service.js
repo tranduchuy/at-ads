@@ -20,14 +20,14 @@ admin.initializeApp({
 });
 const messaging = admin.messaging();
 
-const createUserBehaviorLog = async ({
-                                       ip, utmMedium, utmSource, utmCampaign, type,
-                                       referrer, userAgent, browser, engine, isPrivateBrowsing,
-                                       device, os, cpu, domain, pathname, uuid, accountKey, location,
-                                       browserResolution, screenResolution, keyword, gclid, href, localIp, trafficSource,
-                                       createdAt
-                                     }) => {
+const createUserBehaviorLog = async (inputData) => {
   try {
+    const {
+      ip, utmMedium, utmSource, utmCampaign, type,
+      referrer, userAgent, browser, engine, isPrivateBrowsing,
+      device, os, cpu, domain, pathname, uuid, accountKey, location,
+      browserResolution, screenResolution, keyword, gclid, href, localIp, trafficSource
+    } = inputData;
     const company = await IPLookupService.getNetworkCompanyByIP(ip);
 
     const newUserBehaviorLog = new UserBehaviorLogModel({
@@ -56,14 +56,12 @@ const createUserBehaviorLog = async ({
       engine: engine || null,
       device: device || null,
       os: os || null,
-      cpu: cpu || null,
-      createdAt
+      cpu: cpu || null
     });
 
     return await newUserBehaviorLog.save();
-
   } catch (e) {
-    console.log(e);
+    logger.error('UserBihaviorLogService::createUserBehaviorLog::error', e);
     return e;
   }
 };
@@ -289,7 +287,7 @@ const sendMessageForFireBase = async (sendData) => {
   }
 };
 
-const getInfoSend = (data, account, isPrivateBrowsing) => {
+const getInfoSend = (log, account, isPrivateBrowsing) => {
   let isSpam = false;
 
   if(account)
@@ -300,18 +298,16 @@ const getInfoSend = (data, account, isPrivateBrowsing) => {
     }
   }
 
-  const sendData = {
-    createdAt: new Date(),
-    ip: data.ip,
+  return {
+    createdAt: log.createdAt,
+    ip: log.ip,
     isSpam,
-    device: { name: data.device.vendor || null },
-    os: {name: data.os.name || null, version: data.os.version || null},
-    browser: data.browser || null,
-    network: data.networkCompany || null,
-    location: data.location
+    device: { name: log.device.vendor || null },
+    os: {name: log.os.name || null, version: log.os.version || null},
+    browser: log.browser || null,
+    network: log.networkCompany || null,
+    location: log.location
   };
-
-  return sendData;
 };
 
 const getDataForIntroPage = () => {

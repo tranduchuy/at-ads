@@ -28,9 +28,7 @@ const logTrackingBehavior = async (req, res, next) => {
     let { key, uuid } = req.body;
     const hrefURL = new Url(href);
     const hrefOrigin = hrefURL.origin;
-
     const accountOfKey = await AdAccountModel.findOne({key}).lean();
-
     const website = await WebsiteService.getWebsiteByDomain(hrefOrigin);
 
     if (!website || !accountOfKey || website.accountAd.toString() !== accountOfKey._id.toString()) {
@@ -44,16 +42,14 @@ const logTrackingBehavior = async (req, res, next) => {
     }
 
     let localIp = req.ip; // trust proxy sets ip to the remote client (not to the ip of the last reverse proxy server)
-
     if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
       localIp = localIp.substr(7);
     }
-    const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
 
-    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer, createdAt} = req.body;
+    const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
+    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer} = req.body;
     const referrerURL = new Url(referrer);
     let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
-
     const hrefQuery = queryString.parse(hrefURL.query);
   
     if(googleUrls.includes(referrerURL.hostname.replace('www.', '')) && hrefQuery.gclid || !referrerURL.hostname && hrefQuery.gclid){
@@ -61,7 +57,6 @@ const logTrackingBehavior = async (req, res, next) => {
     }
 
     const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
-
     const ua = parser(userAgent);
     const data = {
       uuid,
@@ -84,14 +79,10 @@ const logTrackingBehavior = async (req, res, next) => {
       utmSource: hrefQuery.utm_source || null,
       keyword: hrefQuery.keyword || null,
       trafficSource,
-      createdAt: new Date(parseInt(createdAt)),
       ...ua
     };
 
     const log = await UserBehaviorLogService.createUserBehaviorLog(data);
-
-    console.log('detect session');
-    // detect session
     RabbitMQService.detectSession(log._id);
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
@@ -165,7 +156,7 @@ const getLogForIntroPage = async (req, res, next) => {
 
 const updateTimeOutOfPage = async (req, res, next) => {
   const logId = req.params.id;
-  const timeMillisecond = req.body.time;
+  const timeMillisecond = new Date().getTime();
   logger.info('UserBehaviorController::updateTimeOutOfPage::called', {logId, timeMillisecond});
   try {
     const log = await UserBehaviorLogModel.findOne({_id: logId});
@@ -175,7 +166,7 @@ const updateTimeOutOfPage = async (req, res, next) => {
       });
     }
 
-    log.timeUnLoad = new Date(parseInt(timeMillisecond));
+    log.timeUnLoad = timeMillisecond;
     log.timeOnPage = timeMillisecond - log.createdAt.getTime();
     await log.save();
 
