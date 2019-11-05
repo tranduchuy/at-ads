@@ -4,9 +4,12 @@ const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
 const _ = require('lodash');
 const mongoose = require('mongoose');
+const moment = require('moment');
 
 const AdminOrderService = require('../order/admin-order.service');
 const OrderModel = require('../order/order.model');
+const UserLicenceModel = require('../user-licences/user-licences.model');
+const PackageModel = require('../packages/packages.model');
 const OrderConstant = require('../order/order.constant');
 const requestUtil = require('../../utils/RequestUtil');
 const { Paging } = require('../account-adwords/account-ads.constant');
@@ -14,6 +17,9 @@ const { Paging } = require('../account-adwords/account-ads.constant');
 const {
   GetOrderListValidationSchema
 } = require('../order/validations/get-order-list.schema');
+const {
+  UpdateOrderValidationSchema
+} = require('./validations/update-order.schema');
 
 const getOrderList = async (req, res, next) => {
   logger.info('AdminOrder::getOrderList::Is called', {
@@ -69,6 +75,104 @@ const getOrderList = async (req, res, next) => {
   }
 };
 
+const updateOrder = async (req, res, next) => {
+  logger.info('AdminOrder::getOrderList::id called', { code: req.params.code });
+  try {
+    const { error } = Joi.validate(req.params, UpdateOrderValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { code } = req.params;
+    const order = await OrderModel.findOne({ code });
+
+    if (!order) {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ['Không tìm thấy order.']
+      });
+    }
+
+    if (order.status == OrderConstant.status.SUCCESS) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ['Mã code này đã được cập nhật.']
+      });
+    }
+
+    const userLicence = await UserLicenceModel.findOne({
+      userId: order.userId
+    }).populate('packageId');
+
+    if (!userLicence) {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ['Không tìm thấy userLicence.']
+      });
+    }
+
+    const package = await PackageModel.findOne({ _id: order.packageId });
+
+    if (!package) {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ['Không tìm thấy package.']
+      });
+    }
+
+    const packageType = userLicence.packageId ? userLicence.packageId.type : '';
+    let expiredAt = userLicence.expiredAt
+      ? moment(userLicence.expiredAt)
+      : moment();
+    console.log(expiredAt._d);
+    console.log(packageType);
+    console.log(package.type);
+    console.log(order.numOfMonths);
+
+    if (
+      !userLicence.packageId ||
+      packageType != package.type ||
+      expiredAt.isBefore(moment())
+    ) {
+      expiredAt = order.numOfMonths
+        ? moment()
+            .add(order.numOfMonths, 'M')
+            .endOf('day')
+        : moment()
+            .add(package.numOfMonths, 'M')
+            .endOf('day');
+    } else {
+      expiredAt = order.numOfMonths
+        ? expiredAt.add(order.numOfMonths, 'M').endOf('day')
+        : expiredAt.add(package.numOfMonths, 'M').endOf('day');
+    }
+
+    userLicence.expiredAt = expiredAt;
+    let history = userLicence.histories || [];
+    history.push({
+      packageId: package._id,
+      name: package.name,
+      type: package.type,
+      price: order.price,
+      createdAt: new Date()
+    });
+    userLicence.packageId = package._id;
+    await userLicence.save();
+    order.status = OrderConstant.status.SUCCESS;
+    await order.save();
+
+    console.log(expiredAt._d);
+    return res.status(HttpStatus.OK).json({
+      messages: ['Cập nhật thành công.'],
+      data: {
+        userLicence,
+        order
+      }
+    });
+  } catch (e) {
+    logger.error('AdminOrder::getOrderList::error', e);
+    next(e);
+  }
+};
+
 module.exports = {
-  getOrderList
+  getOrderList,
+  updateOrder
 };
