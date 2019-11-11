@@ -386,8 +386,8 @@ const statisticsOfGoogleErrorsAndNumberOfRequests = async (req, res, next) => {
 		}
 
 		let { from, to } = req.query;
-		from = moment(from, 'DD-MM-YYYY');
-		to = moment(to, 'DD-MM-YYYY');
+		from = moment(Number(from)).startOf('day');
+		to = moment(Number(to)).endOf('day');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::statisticsOfGoogleErrorsAndNumberOfRequests::babRequest\n', info);
@@ -396,9 +396,8 @@ const statisticsOfGoogleErrorsAndNumberOfRequests = async (req, res, next) => {
 			});
 		}
 
-		const endDateTime = moment(to).endOf('day');
-		let result = await ReportService.getStatisticOfGoogleAdsErrorsNumber(from, endDateTime);
-		let googleRequestNumber = await ReportService.getRequestsOfGoogleNumber(from, endDateTime);
+		let result = await ReportService.getStatisticOfGoogleAdsErrorsNumber(from, to);
+		let googleRequestNumber = await ReportService.getRequestsOfGoogleNumber(from, to);
 
 		result = ReportService.mapDateOfErrorGoogleAndDateOfRequest(result, googleRequestNumber);
 

@@ -845,7 +845,7 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
 };
 
 const getIpsInfoInClassD = (accountKey, from, to, page, limit) => {
-  logger.info('AccountAdsService::getIpsInfoInClassD::is called ', {accountKey});
+  logger.info('AccountAdsService::getIpsInfoInClassD::is called ', {accountKey, from: from._d, to: to._d, page, limit});
   return new Promise(async(res, rej) => {
     try{
       const matchStage =  {
