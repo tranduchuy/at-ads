@@ -97,7 +97,7 @@ const updateCampaignNameForOneCampaign = (campaignInfo, cb) => {
     };
 
     BlockingCriterionsModel
-    .update(queryUpdate, dataUpdate)
+    .updateOne(queryUpdate, dataUpdate)
     .exec(err => {
         if(err)
         {

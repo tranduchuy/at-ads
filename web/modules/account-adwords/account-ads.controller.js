@@ -1448,8 +1448,8 @@ const getReportForAccount = async (req, res, next) => {
 		page = Number(page);
 		limit = Number(limit);
 
-		from = moment(from, 'DD-MM-YYYY');
-		to = moment(to, 'DD-MM-YYYY');
+		from = moment(Number(from)).startOf('day');
+		to = moment(Number(to)).endOf('day');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getReportForAccount::babRequest\n', info);
@@ -1458,10 +1458,9 @@ const getReportForAccount = async (req, res, next) => {
 			});
 		}
 
-		const endDateTime = moment(to).endOf('day');
 		const accountKey = req.adsAccount.key;
 
-		let result = await AccountAdsService.getReportForAccount(accountKey, from, endDateTime, page, limit);
+		let result = await AccountAdsService.getReportForAccount(accountKey, from, to, page, limit);
 		let logs = [];
 		let totalItems = 0;
 
@@ -1472,7 +1471,7 @@ const getReportForAccount = async (req, res, next) => {
 			const ips = logs.map(log => log.ip);
 			const clickReport = await ClickReportService.getReportByGclId(gclidList);
 			logs = ClickReportService.mapCLickReportIntoUserLogs(clickReport, logs);
-			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, from._d, endDateTime._d, ips);
+			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, from._d, to._d, ips);
 			logs.forEach((item, index) => {
 				logs[index].click = clickInDaysOfAccountKey[item.ip] || 0;
 			});
@@ -1637,8 +1636,8 @@ const getIpsInfoInClassD = async (req, res, next) => {
 		page = Number(page);
 		limit = Number(limit);
 
-		from = moment(from, 'DD-MM-YYYY');
-		to = moment(to, 'DD-MM-YYYY');
+		from = moment(Number(from)).startOf('day');
+		to = moment(Number(to)).endOf('day');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getIpsInfoInClassD::babRequest\n', info);
@@ -1647,10 +1646,9 @@ const getIpsInfoInClassD = async (req, res, next) => {
 			});
 		}
 
-		const endDateTime = moment(to).endOf('day');
 		const accountKey = req.adsAccount.key;
 
-		const result = await AccountAdsService.getIpsInfoInClassD(accountKey, from, endDateTime, page, limit);
+		const result = await AccountAdsService.getIpsInfoInClassD(accountKey, from, to, page, limit);
 		let rangeIps = [];
 		let totalItems = 0;
 
@@ -1845,10 +1843,8 @@ const statisticUser = async (req, res, next) => {
 
 		let { limit, page, startDate, endDate } = req.query;
 
-		startDate = startDate ? moment(startDate, 'DD-MM-YYYY') : null;
-		endDate = endDate ? moment(endDate, 'DD-MM-YYYY') : null;
-		startDate = !startDate ? moment().add(-7, 'd').startOf('day') : moment(startDate).startOf('day');
-		endDate = !endDate ? moment().endOf('day') : moment(endDate).endOf('day');
+		startDate = Number(startDate) ? moment(Number(startDate)).startOf('day') : moment().add(-7, 'd').startOf('day');
+		endDate = Number(endDate) ? moment(Number(endDate)).endOf('day') : moment().endOf('day');
 		const twoWeek = moment(startDate).add(14, 'd').endOf('day');
 
 		if (endDate.isBefore(startDate)) {
@@ -1927,9 +1923,13 @@ const detailUser = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		const { limit, page, startDate, endDate } = req.query;
+		let { limit, page, startDate, endDate } = req.query;
 
 		const { id } = req.params;
+		limit = Number(limit) ? Number(limit) : Paging.LIMIT;
+		page = Number(page) ? Number(page) : Paging.PAGE;
+		startDate = Number(startDate) ? moment(Number(startDate)).startOf('day') : null;
+		endDate = Number(endDate) ? moment(Number(endDate)).endOf('day') : null;
 
 		const stages = UserBehaviorLogService.buildStageDetailUser({
 			uuid : id,
@@ -1938,10 +1938,10 @@ const detailUser = async (req, res, next) => {
 			startDate,
 			endDate
 		});
+		logger.info('UserController::detailUser::query', {query: JSON.stringify(stages)});
 
 		const result = await UserBehaviorLogModel.aggregate(stages);
-
-
+		
 		// get last log
 		const lastLog = await UserBehaviorLogModel.findOne({
 			uuid : id,
@@ -1987,9 +1987,8 @@ const getReportStatistic = async (req, res, next) => {
 		}
 
 		let { from, to } = req.query;
-
-		from = moment(from, 'DD-MM-YYYY');
-		to = moment(to, 'DD-MM-YYYY');
+		from = moment(Number(from)).startOf('day');
+		to = moment(Number(to)).endOf('day');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getReportStatistic::babRequest\n', info);
@@ -1997,11 +1996,9 @@ const getReportStatistic = async (req, res, next) => {
 				messages: ['Ngày bắt đầu đang nhỏ hơn ngày kết thúc.']
 			});
 		}
-
-		const endDateTime = moment(to).endOf('day');
 		const accountKey = req.adsAccount.key;
 
-		let result = await AccountAdsService.getReportStatistic(accountKey, from, endDateTime)
+		let result = await AccountAdsService.getReportStatistic(accountKey, from, to)
 		const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
 		const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
 

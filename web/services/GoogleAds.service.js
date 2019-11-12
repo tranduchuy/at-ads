@@ -89,7 +89,7 @@ const sendManagerRequest = function (accountAdsId) {
 					authConfig,
 					params,
 					functionName  : 'GoogleAdsService::sendManagerRequest',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					serviceVersion: adwordConfig.version,
 					serviceName   : 'ManagedCustomerService',
 					moduleName    : 'AdwordsUser'
@@ -140,7 +140,7 @@ const getListCampaigns = function (adwordId) {
 					serviceVersion: adwordConfig.version,
 					authConfig,
 					functionName  : 'GoogleAdsService::getListCampaigns',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params,
 					serviceName   : 'CampaignService',
 					moduleName    : 'AdwordsUser'
@@ -192,7 +192,7 @@ const getCampaignsName = function (adwordId, campaignIds) {
 					serviceVersion: adwordConfig.version,
 					authConfig,
 					functionName  : 'GoogleAdsService::getCampaignsName',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params,
 					serviceName   : 'CampaignService',
 					moduleName    : 'AdwordsUser'
@@ -254,7 +254,7 @@ const addIpBlackList = function (adwordId, campaignId, ipAddress) {
 					serviceVersion: adwordConfig.version,
 					authConfig,
 					functionName  : 'GoogleAdsService::addIpBlackList',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params,
 					serviceName   : 'CampaignCriterionService',
 					moduleName    : 'AdwordsUser'
@@ -315,7 +315,7 @@ const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion
 					serviceVersion: adwordConfig.version,
 					authConfig,
 					functionName  : 'GoogleAdsService::removeIpBlackList',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params,
 					serviceName   : 'CampaignCriterionService',
 					moduleName    : 'AdwordsUser'
@@ -457,7 +457,7 @@ const getAccountHierachy = function (refreshToken, adwordId) {
 					serviceVersion: adwordConfig.version,
 					authConfig,
 					functionName  : 'GoogleAdsService::getAccountHierachy',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params,
 					serviceName   : 'ManagedCustomerService',
 					moduleName    : 'AdwordsUser'
@@ -512,7 +512,7 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
 					serviceVersion: '',
 					authConfig,
 					functionName  : 'GoogleAdsService::getReportOnDevice',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params,
 					moduleName    : 'AdwordsReport'
 				});
@@ -562,7 +562,7 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
 					serviceVersion: adwordConfig.version,
 					authConfig,
 					functionName  : 'GoogleAdsService::enabledOrPauseTheCampaignByDevice',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params,
 					serviceName   : 'CampaignCriterionService',
 					moduleName    : 'AdwordsUser'
@@ -607,7 +607,7 @@ const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
 					serviceVersion: adwordConfig.version,
 					authConfig,
 					functionName  : 'GoogleAdsService::getIpBlockOfCampaign',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params,
 					serviceName   : 'CampaignCriterionService',
 					moduleName    : 'AdwordsUser'
@@ -650,7 +650,7 @@ const getListGoogleAdsAccount = (accessToken, refreshToken) => {
 					serviceVersion: adwordConfig.version,
 					authConfig,
 					functionName  : 'GoogleAdsService::getListGoogleAdsAccount',
-					error         : JSON.parse(JSON.stringify(error)),
+					error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 					params        : {},
 					serviceName   : 'CustomerService',
 					moduleName    : 'AdwordsUser'
@@ -699,7 +699,7 @@ const getClickReport = (adwordId, campaignIds, fields) => {
 			serviceVersion: adwordConfig.version,
 			report,
 			functionName  : 'GoogleAdsService::getClickReport',
-			error         : JSON.parse(JSON.stringify(error)),
+			error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 			params        : {adwordId, campaignIds, fields},
 			serviceName   : 'CLICK_PERFORMANCE_REPORT',
 			moduleName    : 'AdwordsReport'
@@ -748,7 +748,7 @@ const getKeywordsReport = (adwordId, campaignIds, fields) => {
 			serviceVersion: adwordConfig.version,
 			report,
 			functionName  : 'GoogleAdsService::getKeywordsReport',
-			error         : JSON.parse(JSON.stringify(error)),
+			error         : JSON.parse(JSON.stringify(error)) ? JSON.parse(JSON.stringify(error)) : error,
 			params        : {adwordId, campaignIds, fields},
 			serviceName   : 'KEYWORDS_PERFORMANCE_REPORT',
 			moduleName    : 'AdwordsReport'
