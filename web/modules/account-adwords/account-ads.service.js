@@ -125,7 +125,7 @@ const addIpAndCriterionIdToTheBlacklistOfACampaign = (result, accountId, campaig
   }
   const criterionId = result.value[0].criterion.id;
   const infoCampaign ={ip, criterionId, createdAt: new Date()};
-  BlockingCriterionsModel.update({accountId, campaignId},{$push: {customBlackList: infoCampaign}}).exec(err=>{
+  BlockingCriterionsModel.updateOne({accountId, campaignId},{$push: {customBlackList: infoCampaign}}).exec(err=>{
     if(err)
     {
       logger.error('AccountAdsService::addIpsToBlackListOfOneCampaign:error ', err);
@@ -267,7 +267,7 @@ const removeIpAndCriterionIdToTheBlacklistOfACampaign = (accountId, campaignId, 
   const queryUpdate = {accountId, campaignId};
   const updateingData = {$pull: {customBlackList : {ip}}};
 
-  BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
+  BlockingCriterionsModel.updateOne(queryUpdate, updateingData).exec((e) => {
       if(e)
       {
         logger.error('AccountAdsService::RemoveIpsToBlackListOfOneCampaign:error ', e);
@@ -462,7 +462,7 @@ const removeIpAndCriterionsIdForSampleBlockingIp = (accountInfo, callback) => {
   const updateingData = {sampleBlockingIp: null};
 
   BlockingCriterionsModel
-    .update(queryUpdate, updateingData)
+    .updateOne(queryUpdate, updateingData)
     .exec((e) => {
       if(e)
       {
@@ -528,7 +528,7 @@ const addIpAndCriterionIdForSampleBlockingIp = (accountInfo, callback) => {
   const updateingData =  {sampleBlockingIp: infoCampaign};
 
   BlockingCriterionsModel
-    .update(updateQuery, updateingData)
+    .updateOne(updateQuery, updateingData)
     .exec(err=>{
       if(err)
       {
@@ -1042,7 +1042,7 @@ const removeIpAndCriterionIdToTheAutoBlacklistOfACampaign = (accountId, campaign
   const queryUpdate = {accountId, campaignId};
   const updateingData = {$pull: {autoBlackListIp : {ip}}};
 
-  BlockingCriterionsModel.update(queryUpdate, updateingData).exec((e) => {
+  BlockingCriterionsModel.updateOne(queryUpdate, updateingData).exec((e) => {
       if(e)
       {
         logger.error('AccountAdsService::removeIpAndCriterionIdToTheAutoBlacklistOfACampaign:error ', e);

@@ -1941,7 +1941,7 @@ const detailUser = async (req, res, next) => {
 		logger.info('UserController::detailUser::query', {query: JSON.stringify(stages)});
 
 		const result = await UserBehaviorLogModel.aggregate(stages);
-
+		
 		// get last log
 		const lastLog = await UserBehaviorLogModel.findOne({
 			uuid : id,

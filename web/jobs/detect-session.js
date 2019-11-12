@@ -40,13 +40,12 @@ const isLogTimeValidInOldSession = (session, log) => {
     return searchDate.isBefore(session.lastHitAt) && endOfDate.isAfter(session.lastHitAt);
 };
 
-const detectSession = async (channel, data, msg) => {
+const detectSession = async (data) => {
     try {
         const {logId} = data;
         const log = await getDetailLogById(logId);
         if (!log) {
             console.log('detectSession::detectSession::notFound. Sale not found, sale id', logId);
-            channel.ack(msg);
             return;
         }
 
@@ -96,20 +95,23 @@ const detectSession = async (channel, data, msg) => {
                 await session.save();
             }
         }
-        channel.ack(msg);
+        return;
     } catch (e) {
-        channel.ack(msg);
         console.log('detectSession::detectSession', e);
+        return;
     }
 };
 
 module.exports = async (channel, msg) => {
     try {
         const data = JSON.parse(msg.content.toString());
-        await detectSession(channel, data, msg);
+        await detectSession(data);
+        channel.ack(msg);
+        return;
     } catch (e) {
         console.log(e);
         channel.ack(msg);
+        return;
     }
 };
 

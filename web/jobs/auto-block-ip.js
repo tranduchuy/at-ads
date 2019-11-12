@@ -20,7 +20,6 @@ const saveIpIntoAutoBlackListIp = async (key, id, ip, message) => {
         const updateData = { $push: { "setting.autoBlackListIp": ip } };
         await AccountAdsModel.updateOne({ key }, updateData);
         await updateIsSpamStatus(id, message);
-
         return;
     } catch (e) {
         logger.error('jobs::saveIpIntoAutoBlackListIp::error', err, { id });
@@ -38,7 +37,6 @@ const updateIsSpamStatus = async (id, message) => {
 
         logger.info(`jobs::updateIspamStatus::udpate query ${query}`);
         await UserBehaviorLogsModel.updateOne(queryUpdate, dataUpdate);
-
         return;
     } catch (e) {
         logger.error('jobs::updateIspamStatus::error', e, { id });
@@ -86,7 +84,7 @@ const countClickInLogs = async (ip, accountKey, countMaxClickInHours) => {
     }
 };
 
-const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, message, log) => {
+const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log) => {
     if (isConnected) {
         const query = { accountId: accountAds._id, isDeleted: false };
         const campaignsOfAccount = await BlockingCriterionsModel.find(query);
@@ -98,7 +96,6 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, 
             }
             log.isSpam = true;
             await log.save();
-            channel.ack(msg);
             return;
         }
 
@@ -116,7 +113,7 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, 
                 }
                 else
                 {
-                    cb();
+                    return cb();
                 }
             }
         ], err => {
@@ -153,13 +150,13 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, 
                         error: JSON.stringify(error)
                     }
                     await log.save();
-                    //   channel.ack(msg); // TODO: improve call google api limited.
+                    // channel.ack(msg); // TODO: improve call google api limited.
+                    // channel.reject(msg, true);
                     return;
                 }
     
                 await saveIpIntoAutoBlackListIp(key, id, ip, message);
                 logger.info('jobs::autoBlockIp::success', { id });
-                channel.ack(msg);
                 return;
             });
         });
@@ -167,7 +164,6 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, channel, msg, 
     else {
         await updateIsSpamStatus(id, message);
         logger.info('jobs::autoBlockIp::success', { id });
-        channel.ack(msg);
         return;
     }
 };
@@ -332,7 +328,9 @@ module.exports = async (channel, msg) => {
             }
         }
 
-        await saveIpIntoDB(isConnected, accountAds, ip, key, id, channel, msg, message, log);     
+        await saveIpIntoDB(isConnected, accountAds, ip, key, id, message, log);
+        channel.ack(msg);  
+        return;
     } catch (e) {
         logger.error('jobs::autoBlockIp::error', e);
         channel.ack(msg);

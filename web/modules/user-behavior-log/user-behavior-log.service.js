@@ -148,13 +148,13 @@ buildStageDetailUser = (queryCondition) => {
   matchStage['uuid'] = queryCondition.uuid;
   if (queryCondition.startDate) {
     matchStage.createdAt = {
-      $gte: queryCondition.startDate
+      $gte: new Date(queryCondition.startDate)
     };
   }
 
   if (queryCondition.endDate) {
     matchStage.createdAt = matchStage.createdAt || {};
-    matchStage.createdAt['$lt'] = queryCondition.endDate;
+    matchStage.createdAt['$lt'] = new Date(queryCondition.endDate);
   }
 
   if (Object.keys(matchStage).length > 0) {

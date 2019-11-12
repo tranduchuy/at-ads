@@ -90,7 +90,7 @@ const addIpAndCriterionIdInAutoBlackListIp = (accountInfo, callback) => {
   const updateingData ={ip, criterionId, createdAt: new Date()};
 
   BlockingCriterionsModel
-  .update(updateQuery,{$push: {autoBlackListIp: updateingData}})
+  .updateOne(updateQuery,{$push: {autoBlackListIp: updateingData}})
   .exec(err=>{
     if(err)
     {
