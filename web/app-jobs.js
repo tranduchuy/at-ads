@@ -43,19 +43,7 @@ db(() => {
           console.log(error);
           return;
         }
-        // connection.createConfirmChannel((err, ch) => {
-        //   if(err){
-        //     console.log("lỗi nè");
-        //     console.log(err);
-        //     return;
-        //   }
-
-        //   console.log("dô nè");
-        //   ch.assertExchange("my_intermediate_exchange", 'fanout', {durable: false});
-        //   // ch.assertExchange('my-delay-exchange', "x-delayed-message", {autoDelete: false, durable: true, passive: true,  arguments: {'x-delayed-type':  "direct"}})
-        //   // //Bind the queue: "jobs" to the exchnage: "my-delay-exchange" with the binding key "jobs"
-        //   // ch.bindQueue('jobs', 'my-delay-exchange' ,'jobs');
-        // });
+        
         connection.createChannel(async(error1, channel) => {
           if (error1) {
             const title = 'Phần mềm của bạn đang gặp vấn đề.';
@@ -72,7 +60,7 @@ db(() => {
           console.log('RabbitMQ is waiting..');
 
           channel.prefetch(1);
-          
+
           queues.forEach(q => {
             channel.assertQueue(q, {
               durable: true
