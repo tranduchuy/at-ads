@@ -1986,9 +1986,11 @@ const getReportStatistic = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		let { from, to } = req.query;
+		let { from, to, timeZone } = req.query;
 		from = moment(Number(from)).startOf('day');
 		to = moment(Number(to)).endOf('day');
+		timeZone = timeZone || '+07:00';
+		timeZone = timeZone.replace(" ", "+");
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getReportStatistic::babRequest\n', info);
@@ -1998,7 +2000,7 @@ const getReportStatistic = async (req, res, next) => {
 		}
 		const accountKey = req.adsAccount.key;
 
-		let result = await AccountAdsService.getReportStatistic(accountKey, from, to)
+		let result = await AccountAdsService.getReportStatistic(accountKey, from, to, timeZone);
 		const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
 		const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
 

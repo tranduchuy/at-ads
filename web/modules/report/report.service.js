@@ -490,8 +490,8 @@ const splitIp = (ip) => {
 	return ipClass;
 };
 
-const getStatisticOfGoogleAdsErrorsNumber = (from, to) => {
-	logger.info('AccountAdsService::getStatisticOfGoogleAdsErrorsNumber::is called\n', { from: from._d, to: to._d });
+const getStatisticOfGoogleAdsErrorsNumber = (from, to, timeZone) => {
+	logger.info('AccountAdsService::getStatisticOfGoogleAdsErrorsNumber::is called\n', { from: from._d, to: to._d, timeZone });
 	return new Promise(async (res, rej) => {
 		try {
 			const matchStage = {
@@ -510,7 +510,7 @@ const getStatisticOfGoogleAdsErrorsNumber = (from, to) => {
 						{ 
 							format: "%d-%m-%Y",
 							date: "$createdAt",
-							timezone: "+07:00" 
+							timezone: timeZone 
 						} 
 					}
 				}
@@ -552,8 +552,8 @@ const getStatisticOfGoogleAdsErrorsNumber = (from, to) => {
 	});
 };
 
-const getRequestsOfGoogleNumber = (from, to) => {
-	logger.info('AccountAdsService::getRequestsOfGoogleNumber::is called\n', { from: from._d, to: to._d });
+const getRequestsOfGoogleNumber = (from, to, timeZone) => {
+	logger.info('AccountAdsService::getRequestsOfGoogleNumber::is called\n', { from: from._d, to: to._d, timeZone });
 	return new Promise(async (res, rej) => {
 		try {
 			const matchStage = {
@@ -572,7 +572,7 @@ const getRequestsOfGoogleNumber = (from, to) => {
 						{ 
 							format: "%d-%m-%Y",
 							date: "$createdAt",
-							timezone: "+07:00" 
+							timezone: timeZone 
 						} 
 					},
 					'count': {$add: ['$count', '$countReport']}

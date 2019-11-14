@@ -689,8 +689,8 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
   });
 };
 
-const getReportStatistic = (accountKey, from, to) => {
-  logger.info('AccountAdsService::getReportStatistic::is called ', {accountKey, from: from._d, to: to._d});
+const getReportStatistic = (accountKey, from, to, timeZone) => {
+  logger.info('AccountAdsService::getReportStatistic::is called ', {accountKey, from: from._d, to: to._d, timeZone});
   return new Promise(async (res, rej) => {
     try{
       const matchStage =  {
@@ -713,7 +713,7 @@ const getReportStatistic = (accountKey, from, to) => {
       const groupStage = { 
           $group: { 
             _id: { 
-                $dateToString: { format: "%d-%m-%Y", date: "$createdAt"} 
+                $dateToString: { format: "%d-%m-%Y", date: "$createdAt", timezone: timeZone} 
             }, 
             spamClick: { 
                 $sum: {

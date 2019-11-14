@@ -385,9 +385,11 @@ const statisticsOfGoogleErrorsAndNumberOfRequests = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		let { from, to } = req.query;
+		let { from, to, timeZone } = req.query;
 		from = moment(Number(from)).startOf('day');
 		to = moment(Number(to)).endOf('day');
+		timeZone = timeZone || '+07:00';
+		timeZone = timeZone.replace(" ", "+");
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::statisticsOfGoogleErrorsAndNumberOfRequests::babRequest\n', info);
@@ -396,8 +398,8 @@ const statisticsOfGoogleErrorsAndNumberOfRequests = async (req, res, next) => {
 			});
 		}
 
-		let result = await ReportService.getStatisticOfGoogleAdsErrorsNumber(from, to);
-		let googleRequestNumber = await ReportService.getRequestsOfGoogleNumber(from, to);
+		let result = await ReportService.getStatisticOfGoogleAdsErrorsNumber(from, to, timeZone);
+		let googleRequestNumber = await ReportService.getRequestsOfGoogleNumber(from, to, timeZone);
 
 		result = ReportService.mapDateOfErrorGoogleAndDateOfRequest(result, googleRequestNumber);
 
