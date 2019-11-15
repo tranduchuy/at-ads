@@ -109,17 +109,22 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log) 
                 {
                     logger.info('jobs::autoBlockIp::Ips number in DB greater than ips default number.', { id, ip });
                     const ipFirst = [accountAds.setting.autoBlackListIp[0]];
-                    removeIps(accountAds, campaignIds, ipFirst, cb);      
+                    return removeIps(accountAds, campaignIds, ipFirst, cb);      
                 }
                 else
                 {
                     return cb();
                 }
             }
-        ], err => {
+        ], async err => {
             if(err)
             {
                 logger.error('jobs::autoBlockIp::error', err, '\n', { id });
+                log.reason = {
+                    message: MESSAGE.errorGoogle,
+                    error: JSON.stringify(err)
+                }
+                await log.save();
                 return;
             }
 
@@ -127,7 +132,7 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log) 
                 GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
                     .then((result) => {
                         const accountInfo = { result, accountId, campaignId, adsId, ip };
-                        RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
+                        return RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
                     }).catch(err => {
                         switch (GoogleAdsService.getErrorCode(err)) {
                             case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':

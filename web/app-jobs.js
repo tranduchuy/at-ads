@@ -43,40 +43,61 @@ db(() => {
           console.log(error);
           return;
         }
-        connection.createChannel((error1, channel) => {
+        
+        connection.createChannel(async(error1, channel) => {
           if (error1) {
+            const title = 'Phần mềm của bạn đang gặp vấn đề.';
+            const info  = {
+              service: 'RabbitMQ ERROR',
+              error  : error1
+            };
+
+            await SendGrid.sendErrorMessage(SendGridConfig.TO, title, 'hello', info);
             console.log(error1);
             return;
           }
-      
+
           console.log('RabbitMQ is waiting..');
-          
+
           channel.prefetch(1);
-  
+
           queues.forEach(q => {
             channel.assertQueue(q, {
               durable: true
-            });
-            channel.consume(q, async msg => {
-              console.log(q, " [x] Received %s", msg.content.toString());
-      
-              switch (q) {
-                case rabbitChannels.BLOCK_IP:
-                  await autoBlockIpJobFn(channel, msg);
-                  break;
-                case rabbitChannels.DETECT_SESSION:
-                  await detectSessionFn(channel, msg);
-                  break;
-                case rabbitChannels.COUNT_REQUEST_GOOGLE:
-                  await countRequestGoogle(channel, msg);
-                  break;
+            }, async(error2, ok) => {
+              if(error2)
+              {
+                const title = 'Phần mềm của bạn đang gặp vấn đề.';
+                const info  = {
+                  service: 'RabbitMQ ERROR',
+                  error  : error2
+                };
+
+                await SendGrid.sendErrorMessage(SendGridConfig.TO, title, 'hello', info);
+                console.log(error2);
+                return;
               }
-            }, {
-                noAck: false
+
+              channel.consume(q, async msg => {
+                console.log(q, " [x] Received %s", msg.content.toString());
+        
+                switch (q) {
+                  case rabbitChannels.BLOCK_IP:
+                    await autoBlockIpJobFn(channel, msg);
+                    break;
+                  case rabbitChannels.DETECT_SESSION:
+                    await detectSessionFn(channel, msg);
+                    break;
+                  case rabbitChannels.COUNT_REQUEST_GOOGLE:
+                    await countRequestGoogle(channel, msg);
+                    break;
+                }
+              }, {
+                  noAck: false
               });
+            });
           });
         });
       });
   });
 });
-
