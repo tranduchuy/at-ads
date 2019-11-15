@@ -31,7 +31,7 @@ db(() => {
 
       console.log(`Server is listening on port ${port}`);
 
-      amqp.connect(rabbitMQConfig.uri, async (error, connection) => {
+      amqp.connect(rabbitMQConfig.uri + "?heartbeat=300", async (error, connection) => {
         if (error) {
           const title = 'Phần mềm của bạn đang gặp vấn đề.';
           const info  = {
@@ -43,7 +43,7 @@ db(() => {
           console.log(error);
           return;
         }
-        
+     
         connection.createChannel(async(error1, channel) => {
           if (error1) {
             const title = 'Phần mềm của bạn đang gặp vấn đề.';
@@ -59,43 +59,31 @@ db(() => {
 
           console.log('RabbitMQ is waiting..');
 
-          channel.prefetch(1);
-
           queues.forEach(q => {
-            channel.assertQueue(q, {
-              durable: true
-            }, async(error2, ok) => {
-              if(error2)
-              {
-                const title = 'Phần mềm của bạn đang gặp vấn đề.';
-                const info  = {
-                  service: 'RabbitMQ ERROR',
-                  error  : error2
-                };
-
-                await SendGrid.sendErrorMessage(SendGridConfig.TO, title, 'hello', info);
-                console.log(error2);
-                return;
-              }
-
-              channel.consume(q, async msg => {
-                console.log(q, " [x] Received %s", msg.content.toString());
-        
-                switch (q) {
-                  case rabbitChannels.BLOCK_IP:
-                    await autoBlockIpJobFn(channel, msg);
-                    break;
-                  case rabbitChannels.DETECT_SESSION:
-                    await detectSessionFn(channel, msg);
-                    break;
-                  case rabbitChannels.COUNT_REQUEST_GOOGLE:
-                    await countRequestGoogle(channel, msg);
-                    break;
-                }
-              }, {
-                  noAck: false
-              });
-            });
+            switch (q) {
+              case rabbitChannels.BLOCK_IP:
+                channel.assertQueue(q, { durable: true });
+                channel.prefetch(1);
+                channel.consume(q, async msg => { 
+                  console.log(q, " [x] Received %s", msg.content.toString());
+                  await autoBlockIpJobFn(channel, msg); 
+                }, { noAck: false });
+                break;
+              case rabbitChannels.DETECT_SESSION:
+                channel.assertQueue(q, { durable: true });
+                channel.consume(q, async msg => { 
+                  console.log(q, " [x] Received %s", msg.content.toString());
+                  await detectSessionFn(channel, msg); 
+                }, { noAck: false });
+                break;
+              case rabbitChannels.COUNT_REQUEST_GOOGLE:
+                channel.assertQueue(q, { durable: true });
+                channel.consume(q, async msg => {
+                  console.log(q, " [x] Received %s", msg.content.toString());
+                  await countRequestGoogle(channel, msg); 
+                }, { noAck: false });
+                break;
+            }
           });
         });
       });

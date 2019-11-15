@@ -84,7 +84,7 @@ const countClickInLogs = async (ip, accountKey, countMaxClickInHours) => {
     }
 };
 
-const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log) => {
+const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log, channel, msg) => {
     if (isConnected) {
         const query = { accountId: accountAds._id, isDeleted: false };
         const campaignsOfAccount = await BlockingCriterionsModel.find(query);
@@ -96,7 +96,7 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log) 
             }
             log.isSpam = true;
             await log.save();
-            return;
+            return channel.ack(msg);
         }
 
         const campaignIds = campaignsOfAccount.map(campaign => campaign.campaignId);
@@ -125,7 +125,7 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log) 
                     error: JSON.stringify(err)
                 }
                 await log.save();
-                return;
+                return channel.ack(msg);
             }
 
             Async.eachSeries(campaignIds, (campaignId, callback) => {
@@ -157,19 +157,19 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log) 
                     await log.save();
                     // channel.ack(msg); // TODO: improve call google api limited.
                     // channel.reject(msg, true);
-                    return;
+                    return channel.ack(msg);
                 }
     
                 await saveIpIntoAutoBlackListIp(key, id, ip, message);
                 logger.info('jobs::autoBlockIp::success', { id });
-                return;
+                return channel.ack(msg);
             });
         });
     }
     else {
         await updateIsSpamStatus(id, message);
         logger.info('jobs::autoBlockIp::success', { id });
-        return;
+        return channel.ack(msg);
     }
 };
 
@@ -333,9 +333,7 @@ module.exports = async (channel, msg) => {
             }
         }
 
-        await saveIpIntoDB(isConnected, accountAds, ip, key, id, message, log);
-        channel.ack(msg);  
-        return;
+        return await saveIpIntoDB(isConnected, accountAds, ip, key, id, message, log, channel, msg);
     } catch (e) {
         logger.error('jobs::autoBlockIp::error', e);
         channel.ack(msg);
