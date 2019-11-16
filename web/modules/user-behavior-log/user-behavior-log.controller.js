@@ -93,7 +93,7 @@ const logTrackingBehavior = async (req, res, next) => {
         {
           await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
           const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
-          await UserBehaviorLogService.sendMessageForFireBase(sendData);
+          // await UserBehaviorLogService.sendMessageForFireBase(sendData);
           SocketService.sendDashboardLog(sendData);
         }
         else
@@ -110,6 +110,13 @@ const logTrackingBehavior = async (req, res, next) => {
   
         await log.save();
       }
+    }
+    else{
+      log.reason = { 
+        message: UserBehaviorLogConstant.MESSAGE.isTrack
+      };
+  
+      await log.save();
     }
 
     return res.json({

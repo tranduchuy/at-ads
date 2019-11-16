@@ -238,7 +238,8 @@ const MESSAGE = {
   gclidNotFound: 'Không tìm thấy gclid.',
   websiteNotFound: 'Không tìm thấy website',
   userIdOfWebsiteNotMatchUserIdOfaccount: 'Website không thuộc quyền quản lý của account này.',
-  unKnow: 'Không xác định.'
+  unKnow: 'Không xác định.',
+  isTrack: 'Không phải là click'
 }
 
 module.exports = {
