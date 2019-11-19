@@ -57,12 +57,13 @@ const createAccountAdsHaveIsConnectedStatus = async ({ userId, adsId }, isConnec
   return await newAccountAds.save();
 };
 
-const createAccountAdsHaveIsConnectedStatusAndConnectType = async ({ userId, adWordId, connectType}) => {
+const createAccountAdsHaveIsConnectedStatusAndConnectType = async ({ userId, adWordId, connectType, adsName}) => {
   const key = shortid();
   const newAccountAds = new AccountAdsModel({
     user  : userId,
     adsId : adWordId,  
     isConnected: true,
+    adsName,
     key,
     connectType,
   });

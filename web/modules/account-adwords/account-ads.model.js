@@ -11,6 +11,7 @@ const accountAdsSchema = new Schema(
       ref: 'User'
     },
     adsId: { type: String, unique: true },
+    adsName: {type: String, default: null},
     key: String,
     isConnected: { type: Boolean, default: AccountAdsConstant.isConnected },
     isDeleted: { type: Boolean, default: false },
