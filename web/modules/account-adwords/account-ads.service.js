@@ -165,6 +165,7 @@ const getAccountsAdsByUserId = async (userId) => {
       const campaignNumber = await BlockingCriterionsModel.countDocuments(query);
       return {
         id: account._id,
+        adsName: account.adsName,
         adsId: account.adsId,
         createdAt: account.createdAt,
         isConnected: account.isConnected,
