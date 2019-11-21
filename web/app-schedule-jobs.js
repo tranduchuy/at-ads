@@ -7,6 +7,7 @@ const updateCampaignName = require('./schedule-jobs/update-campaign-name');
 const getClickReport = require('./schedule-jobs/get-click-report');
 const checkRefreshToken = require('./schedule-jobs/check-refresh-token');
 const {updateNetworkCompany} = require('./schedule-jobs/update-network-company');
+const updateAdsName = require('./schedule-jobs/update-ads-name');
 
 // config log4js
 const log4js = require('log4js');
@@ -17,7 +18,7 @@ db(() => {
   const port = config.get('appScheduleJobs').port;
   app.listen(port, err => {
     if (err)
-    return console.error(err);
+      return console.error(err);
 
     console.log(`Server is listening on port ${port}`);
     removeIp();
@@ -25,5 +26,6 @@ db(() => {
     updateNetworkCompany();
     getClickReport();
     checkRefreshToken();
+    updateAdsName();
   });
 });
