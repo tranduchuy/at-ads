@@ -761,6 +761,101 @@ const getKeywordsReport = (adwordId, campaignIds, fields) => {
 	});
 };
 
+const getAdWordsName = (adwordId) => {
+	const info = { adwordId }
+	logger.info('GoogleAdsService::getAdWordsName', info);
+	return new Promise(async (resolve, reject) => {
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await getRefreshToken(adwordId);
+
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const user = new AdwordsUser(authConfig);
+		const managedCustomerService = user.getService('ManagedCustomerService', adwordConfig.version);
+		const selector = {
+			fields    : ['CustomerId', 'Name']
+		};
+		const params = { serviceSelector: selector };
+
+		managedCustomerService.get(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::getAdWordsName',
+					error,
+					params,
+					serviceName   : 'ManagedCustomerService',
+					moduleName    : 'AdwordsUser'
+				});
+				logger.error('GoogleAdsService::getAdWordsName::error', error);
+				return reject(error);
+			}
+
+			logger.info('GoogleAdsService::getAdWordsName::success', result);
+			if (result.entries) {
+				return resolve(result.entries);
+			}
+			return resolve([]);
+		});
+	});
+};
+
+const getkeyWords = (adwordId) => {
+	const info = { adwordId }
+	logger.info('GoogleAdsService::getkeyWords', info);
+	return new Promise(async (resolve, reject) => {
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await getRefreshToken(adwordId);
+
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+		const user = new AdwordsUser(authConfig);
+		const managedCustomerService = user.getService('AdGroupCriterionService', adwordConfig.version);
+		const selector = {
+			fields    : ['Id', 'KeywordMatchType', 'KeywordText', 'SystemServingStatus']
+		};
+		const params = { serviceSelector: selector };
+
+		managedCustomerService.get(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::getkeyWords',
+					error,
+					params,
+					serviceName   : 'AdGroupCriterionService',
+					moduleName    : 'AdwordsUser'
+				});
+
+				logger.error('GoogleAdsService::getkeyWords::error', error);
+				return reject(error);
+			}
+
+			logger.info('GoogleAdsService::getkeyWords::success', result);
+			if (result.entries) {
+				return resolve(result.entries);
+			}
+			return resolve([]);
+		});
+	});
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
@@ -776,5 +871,7 @@ module.exports = {
   getCampaignsName,
   getIpBlockOfCampaigns,
   getClickReport,
-  getKeywordsReport
+	getKeywordsReport,
+	getAdWordsName,
+	getkeyWords
 };
