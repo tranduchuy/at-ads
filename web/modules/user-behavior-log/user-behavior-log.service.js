@@ -302,8 +302,8 @@ const getInfoSend = (log, account, isPrivateBrowsing) => {
     createdAt: log.createdAt,
     ip: log.ip,
     isSpam,
-    device: { name: log.device.vendor || null },
-    os: {name: log.os.name || null, version: log.os.version || null},
+    device: { name: log.device ? log.device.vendor : null },
+    os: {name: log.os ? log.os.name : null, version: log.os ? log.os.version : null},
     browser: log.browser || null,
     network: log.networkCompany || null,
     location: log.location

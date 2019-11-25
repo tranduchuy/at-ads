@@ -856,6 +856,60 @@ const getkeyWords = (adwordId) => {
 	});
 };
 
+const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
+	return new Promise(async (resolve, reject) => {
+		logger.info('GoogleAdsService::setTrackingUrlTemplateForCampaign', { adwordId, campaignIds });
+
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		const googleRefreshToken = await getRefreshToken(adwordId);
+
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
+			clientCustomerId: adwordId,
+		};
+
+		const user = new AdwordsUser(authConfig);
+		const CampaignService = user.getService('CampaignService', adwordConfig.version);
+
+		let operations = [];
+
+		campaignIds.forEach(campaignId => {
+			operations.push({
+				operator: 'SET',
+				operand : {
+					id                 : campaignId,
+					trackingUrlTemplate: '',
+				}
+			});
+		});
+
+		const params = { operations };
+
+		CampaignService.mutate(params, (error, result) => {
+			if (error) {
+				GoogleAdsErrorService.createLogError({
+					serviceVersion: adwordConfig.version,
+					authConfig,
+					functionName  : 'GoogleAdsService::setTrackingUrlTemplateForCampaign',
+					error,
+					params,
+					serviceName   : 'CampaignService',
+					moduleName    : 'AdwordsUser'
+				});
+				logger.error('GoogleAdsService::setTrackingUrlTemplateForCampaign::error', error);
+				return reject(error);
+			}
+
+			logger.info('GoogleAdsService::setTrackingUrlTemplateForCampaign::success', result);
+			return resolve(result);
+		});
+	});
+}
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
@@ -873,5 +927,6 @@ module.exports = {
   getClickReport,
 	getKeywordsReport,
 	getAdWordsName,
-	getkeyWords
+	getkeyWords,
+	setTrackingUrlTemplateForCampaign
 };
