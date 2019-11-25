@@ -856,9 +856,15 @@ const getkeyWords = (adwordId) => {
 	});
 };
 
+<<<<<<< Updated upstream
 const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::setTrackingUrlTemplateForCampaign', { adwordId, campaignIds });
+=======
+const setTrackingUrlTemplateForCampaign = (adwordId, campaignId) => {
+	return new Promise(async (resolve, reject) => {
+		logger.info('GoogleAdsService::setTrackingUrlTemplateForCampaign', { adwordId, campaignId });
+>>>>>>> Stashed changes
 
 		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
 		const googleRefreshToken = await getRefreshToken(adwordId);
@@ -871,6 +877,7 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
 			clientCustomerId: adwordId,
 		};
+<<<<<<< Updated upstream
 
 		const user = new AdwordsUser(authConfig);
 		const CampaignService = user.getService('CampaignService', adwordConfig.version);
@@ -888,6 +895,18 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 		});
 
 		const params = { operations };
+=======
+		const user = new AdwordsUser(authConfig);
+		const CampaignService = user.getService('CampaignService', adwordConfig.version);
+		const operation = {
+			operator: 'ADD',
+			operand : {
+				campaignId         : campaignId,
+				trackingUrlTemplate: '{lpurl}?gclid={gclid}&matchtype={matchtype}&keyword={keyword}&device={device}&devicemodel={devicemodel}&location={loc_physical_ms}&adposition={adposition}?network={network}',
+			}
+		};
+		const params = { operations: [operation] };
+>>>>>>> Stashed changes
 
 		CampaignService.mutate(params, (error, result) => {
 			if (error) {
