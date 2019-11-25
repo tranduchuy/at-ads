@@ -83,6 +83,8 @@ const logTrackingBehavior = async (req, res, next) => {
     };
 
     const log = await UserBehaviorLogService.createUserBehaviorLog(data);
+    logger.info('UserBehaviorController::logTrackingBehavior::log', JSON.stringify(log));
+
     RabbitMQService.detectSession(log._id);
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
@@ -122,7 +124,7 @@ const logTrackingBehavior = async (req, res, next) => {
     return res.json({
       status: HttpStatus.OK,
       data: {
-        logId: log._id.toString()
+        logId: log._id ? log._id.toString() : null
       },
       messages: [messages.ResponseMessages.SUCCESS]
     });
