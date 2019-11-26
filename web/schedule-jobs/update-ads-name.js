@@ -80,7 +80,7 @@ module.exports = () => {
   schedule.scheduleJob(timeUpdateAdsName, async() => {
     try{
       logger.info('Schedulejobs::UpdateAdsName::Is called.');
-      const accountAds = await AccountAdsModel.find();
+      const accountAds = await AccountAdsModel.find({isConnected : true, isDeleted: false});
 
       if(accountAds.length <= 0)
       {
