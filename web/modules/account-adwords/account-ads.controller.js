@@ -2113,65 +2113,6 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 	}
 };
 
-const test = (req, res, next) => {
-	try{
-		// GoogleAdwordsService.setTrackingUrlTemplateForCampaign('3789064090', [
-		// 	'1635105339',
-		// 	'1645807820',
-		// 	'1645851544',
-		// 	'1736397992',
-		// 	'1737369987',
-		// 	'1640248952',
-		// 	'1633273908',
-		// 	'2085513303',
-		// 	'6604386450',
-		// 	'6536201677',
-		// 	'6540036844',
-		// 	'1645853956',
-		// 	'1631793326',
-		// 	'2068577012',
-		// 	'1640236457',
-		// 	'1518375507',
-		// 	'1518293991',
-		// 	'1518293994',
-		// 	'1518293988',
-		// 	'1503647644'
-		// ])
-		GoogleAdwordsService.setTrackingUrlTemplateForCampaign('3789064090', [
-				'1635105339',
-				'1645807820',
-				'1645851544',
-				'1736397992',
-				'1737369987',
-				'1640248952',
-				'1633273908',
-				'2085513303',
-				'6604386450',
-				'6536201677',
-				'6540036844',
-				'1645853956',
-				'1631793326',
-				'2068577012',
-				'1640236457',
-				'1518375507',
-				'1518293991',
-				'1518293994',
-				'1518293988',
-				'1503647644'
-			])
-		.then(result => {
-			return res.status(HttpStatus.OK).json({
-				messages: ["Thành công."],
-				result
-			});
-		}).catch(err => {
-			return next(err);
-		});
-	}catch(e){
-		return next(e);
-	}
-};
-
 module.exports = {
 	addAccountAds,
 	handleManipulationGoogleAds,
@@ -2204,7 +2145,6 @@ module.exports = {
 	getReportStatistic,
 	detailUser,
 	getListGoogleAdsOfUser,
-	ConnectGoogleAdsByEmail: connectGoogleAdsByEmail,
-	test
+	ConnectGoogleAdsByEmail: connectGoogleAdsByEmail
 };
 
