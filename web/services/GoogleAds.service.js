@@ -882,7 +882,7 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 				operator: 'SET',
 				operand : {
 					id                 : campaignId,
-					trackingUrlTemplate: '',
+					trackingUrlTemplate: '{lpurl}?click_matchtype={matchtype}&click_keyword={keyword}&click_location={loc_physical_ms}&click_adposition={adposition}&click_network={network}',
 				}
 			});
 		});
