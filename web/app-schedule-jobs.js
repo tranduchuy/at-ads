@@ -8,6 +8,7 @@ const getClickReport = require('./schedule-jobs/get-click-report');
 const checkRefreshToken = require('./schedule-jobs/check-refresh-token');
 const {updateNetworkCompany} = require('./schedule-jobs/update-network-company');
 const updateAdsName = require('./schedule-jobs/update-ads-name');
+const updateUrlTracking = require('./schedule-jobs/update-tracking-url-template');
 
 // config log4js
 const log4js = require('log4js');
@@ -27,5 +28,6 @@ db(() => {
     getClickReport();
     checkRefreshToken();
     updateAdsName();
+    updateUrlTracking();
   });
 });
