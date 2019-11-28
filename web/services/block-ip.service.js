@@ -108,7 +108,7 @@ const saveIpIntoAutoBlackListIp = async (key, ips, positionBlockInAccountAds) =>
 
       return await AccountAdsModel.updateOne({ key }, updateData);
   } catch (e) {
-      logger.error('BlockIpService::saveIpIntoAutoBlackListIp::error', err);
+      logger.error('BlockIpService::saveIpIntoAutoBlackListIp::error', e);
       throw new Error(e);
   }
 };
@@ -133,7 +133,7 @@ const updateIpsIntoCampaign = async(campaignInfo, positionBlock, callback) => {
     await BlockingCriterionsModel.updateMany(conditionUpdate, dataUpdate);
     return callback();
   }catch(e){
-    logger.error('BlockIpService::updateIpsIntoCampaign::error', err);
+    logger.error('BlockIpService::updateIpsIntoCampaign::error', e);
     return callback();
   }
 }
@@ -145,7 +145,7 @@ const updateIsDeletedStatusForCampaignDeleted = async (accountId, campaigns) => 
     const dataUpdate = {$set: { isDeleted: true, isOriginalDeleted: true }};
     return await BlockingCriterionsModel.updateMany(conditionUpdate, dataUpdate);
   } catch (e) {
-    logger.error('BlockIpService::UpdateIsDeletedStatusForCampaignDeleted::error', err);
+    logger.error('BlockIpService::UpdateIsDeletedStatusForCampaignDeleted::error', e);
     throw new Error(e);
   }
 };
