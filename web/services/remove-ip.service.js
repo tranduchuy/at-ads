@@ -29,7 +29,8 @@ const standardizedIps = (ips) => {
 
 const mapIpAndCriterion = (result) => {
   const campaignsArr = [];
-  result.forEach(campaign => {
+  const ips_Block = result.filter(ip => ip.criterion.type === 'IP_BLOCK');
+  ips_Block.forEach(campaign => {
     const temp = {
       campaignId: campaign.campaignId,
       criterionId: campaign.criterion.id,
