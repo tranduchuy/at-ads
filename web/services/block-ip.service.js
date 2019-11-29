@@ -49,40 +49,44 @@ const blockIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, p
     try{
       const ads = accountAds.adsId;
 
+      //get campaignid on google ads
       GoogleAdwordsService.getCampaignsName(ads, campaigns)
       .then(async cp => {
-        if(cp.length > 0)
+        if(cp.length <= 0)
         {
-          campaignsGoogle = cp.map(campaign => campaign.id);
-          const CampaignDeleted = _.difference(campaigns, campaignsGoogle);
-
-          if(CampaignDeleted.length > 0)
-          {
-            await updateIsDeletedStatusForCampaignDeleted(accountAds._id, CampaignDeleted);
-          }
-
-          GoogleAdwordsService.addIpBlackListToCampaigns(ads, campaignsGoogle, ips)
-          .then(result => {
-            const campaignsArr = mapIpToUpdateDB(campaignsGoogle, result);
-            Async.eachSeries(campaignsArr, (campaign, callback) => {
-              updateIpsIntoCampaign(campaign, positionBlockInBlockingCriterion, callback);
-            }, async error => {
-              if(error)
-              {
-                logger.error('BlockIpService::blockIp::Error', { error });
-                console.log(error);
-                return rej(error);
-              }
-
-              await saveIpIntoAutoBlackListIp(accountAds.key, ips, positionBlockInAccountAds);
-              return res('Thành công');
-            });
-          }).catch(err => {
-            logger.error('BlockIpService::blockIp::Error', { error: GoogleAdwordsService.getErrorCode(err) });
-            console.log(err);
-            return rej(err);
-          });
+          return res('Thành công');
         }
+
+        campaignsGoogle = cp.map(campaign => campaign.id);
+        const CampaignDeleted = _.difference(campaigns, campaignsGoogle);
+
+        if(CampaignDeleted.length > 0)
+        {
+          await updateIsDeletedStatusForCampaignDeleted(accountAds._id, CampaignDeleted);
+        }
+
+        //block ips
+        GoogleAdwordsService.addIpBlackListToCampaigns(ads, campaignsGoogle, ips)
+        .then(result => {
+          const campaignsArr = mapIpToUpdateDB(campaignsGoogle, result);
+          Async.eachSeries(campaignsArr, (campaign, callback) => {
+            updateIpsIntoCampaign(campaign, positionBlockInBlockingCriterion, callback);
+          }, async error => {
+            if(error)
+            {
+              logger.error('BlockIpService::blockIp::Error', { error });
+              console.log(error);
+              return rej(error);
+            }
+
+            await saveIpIntoAutoBlackListIp(accountAds.key, ips, positionBlockInAccountAds);
+            return res('Thành công');
+          });
+        }).catch(err => {
+          logger.error('BlockIpService::blockIp::Error', { error: GoogleAdwordsService.getErrorCode(err) });
+          console.log(err);
+          return rej(err);
+        });
       }).catch(e => {
         logger.error('BlockIpService::blockIp::Error', { error: GoogleAdwordsService.getErrorCode(e) });
         console.log(e);
