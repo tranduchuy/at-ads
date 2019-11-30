@@ -908,7 +908,193 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 			return resolve(result);
 		});
 	});
-}
+};
+
+const addIpBlackListToCampaigns = function (adwordId, campaignIds, ips) {
+	return new Promise(async (resolve, reject) => {
+		try{
+			logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignIds, ips);
+
+			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+			const googleRefreshToken = await getRefreshToken(adwordId);
+
+			const authConfig = {
+				developerToken  : adwordConfig.developerToken,
+				userAgent       : adwordConfig.userAgent,
+				client_id       : adwordConfig.client_id,
+				client_secret   : adwordConfig.client_secret,
+				refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
+				clientCustomerId: adwordId,
+			};
+			const user = new AdwordsUser(authConfig);
+			const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+
+			let operations = [];
+
+			campaignIds.forEach(campaignId => {
+				ips.forEach(ip => {
+					operations.push({
+						operator: 'ADD',
+						operand : {
+							campaignId: campaignId,
+							criterion : {
+								type      : 'IP_BLOCK',
+								'xsi:type': 'IpBlock',
+								ipAddress : ip,
+							},
+							'xsi:type': 'NegativeCampaignCriterion'
+						}
+					});
+				})
+			});
+			const params = { operations };
+
+			CampaignCriterionService.mutate(params, (error, result) => {
+				if (error) {
+					GoogleAdsErrorService.createLogError({
+						serviceVersion: adwordConfig.version,
+						authConfig,
+						functionName  : 'GoogleAdsService::addIpBlackList',
+						error,
+						params,
+						serviceName   : 'CampaignCriterionService',
+						moduleName    : 'AdwordsUser'
+					});
+					logger.error('GoogleAdsService::addIpBlackList::error', error);
+					return reject(error);
+				}
+
+				logger.info('GoogleAdsService::addIpBlackList::success', result);
+				return resolve(result);
+			});
+		}catch(e){
+			logger.error('GoogleAdsService::addIpBlackList::error', e);
+			return reject(e);
+		}
+	});
+};
+
+const getIpOnGoogleFilteredByCampaignsAndIps = (adwordId, campaignIds, ips) => {
+	const info = { adwordId, campaignIds, ips }
+	logger.info('GoogleAdsService::getIpOnGoogleFilteredByCampaignsAndIps', info);
+	return new Promise(async (resolve, reject) => {
+		try{
+			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+			const googleRefreshToken = await getRefreshToken(adwordId);
+
+			const authConfig = {
+				developerToken  : adwordConfig.developerToken,
+				userAgent       : adwordConfig.userAgent,
+				client_id       : adwordConfig.client_id,
+				client_secret   : adwordConfig.client_secret,
+				refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
+				clientCustomerId: adwordId,
+			};
+			const user = new AdwordsUser(authConfig);
+			const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+			const selector = {
+				fields    : ['IpAddress', 'CampaignId'],
+				predicates: [
+					{ field: 'CampaignId', operator: 'IN', values: campaignIds },
+					{ field: 'IpAddress', operator: 'IN', values: ips }
+				],
+			};
+			const params = { serviceSelector: selector };
+
+
+			CampaignCriterionService.get(params, (error, result) => {
+				if (error) {
+					GoogleAdsErrorService.createLogError({
+						serviceVersion: adwordConfig.version,
+						authConfig,
+						functionName  : 'GoogleAdsService::getIpOnGoogleFilteredByCampaignsAndIps',
+						error,
+						params,
+						serviceName   : 'CampaignCriterionService',
+						moduleName    : 'AdwordsUser'
+					});
+					logger.error('GoogleAdsService::getIpOnGoogleFilteredByCampaignsAndIps::error', error);
+					return reject(error);
+				}
+
+				logger.info('GoogleAdsService::getIpOnGoogleFilteredByCampaignsAndIps::success', result);
+				if (result.entries) {
+					return resolve(result.entries);
+				}
+
+				return resolve([]);
+			});
+		}catch(e){
+			logger.error('GoogleAdsService::getIpOnGoogleFilteredByCampaignsAndIps::error', e);
+			return reject(e);
+		}
+	});
+};
+
+const removeIpBlackListToCampaigns = (adwordId, campaignsInfo) => {
+	return new Promise(async (resolve, reject) => {
+		try{
+			logger.info('GoogleAdsService::removeIpBlackListToCampaigns', adwordId);
+
+			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+			const googleRefreshToken = await getRefreshToken(adwordId);
+
+			const authConfig = {
+				developerToken  : adwordConfig.developerToken,
+				userAgent       : adwordConfig.userAgent,
+				client_id       : adwordConfig.client_id,
+				client_secret   : adwordConfig.client_secret,
+				refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
+				clientCustomerId: adwordId,
+			};
+			const user = new AdwordsUser(authConfig);
+			const CampaignCriterionService = user.getService('CampaignCriterionService', adwordConfig.version);
+
+			let operations = [];
+
+			campaignsInfo.forEach(campaign => {
+				const operation = {
+					operator: 'REMOVE',
+					operand : {
+						campaignId: campaign.campaignId,
+						criterion : {
+							id        : campaign.criterionId,
+							type      : 'IP_BLOCK',
+							'xsi:type': 'IpBlock',
+							ipAddress : campaign.ip,
+						},
+						'xsi:type': 'NegativeCampaignCriterion'
+					}
+				};
+
+				operations.push(operation);
+			})
+
+			const params = { operations };
+
+			CampaignCriterionService.mutate(params, (error, result) => {
+				if (error) {
+					GoogleAdsErrorService.createLogError({
+						serviceVersion: adwordConfig.version,
+						authConfig,
+						functionName  : 'GoogleAdsService::removeIpBlackListToCampaigns',
+						error,
+						params,
+						serviceName   : 'CampaignCriterionService',
+						moduleName    : 'AdwordsUser'
+					});
+					logger.error('GoogleAdsService::removeIpBlackListToCampaigns::error', error);
+					return reject(error);
+				}
+				logger.info('GoogleAdsService::removeIpBlackListToCampaigns::success', result);
+				return resolve(result);
+			});
+		}catch(e){
+			logger.error('GoogleAdsService::removeIpBlackListToCampaigns::error', e);
+			return reject(e);
+		}
+	});
+};
 
 module.exports = {
   sendManagerRequest,
@@ -928,5 +1114,8 @@ module.exports = {
 	getKeywordsReport,
 	getAdWordsName,
 	getkeyWords,
-	setTrackingUrlTemplateForCampaign
+	setTrackingUrlTemplateForCampaign,
+	addIpBlackListToCampaigns,
+	getIpOnGoogleFilteredByCampaignsAndIps,
+	removeIpBlackListToCampaigns
 };

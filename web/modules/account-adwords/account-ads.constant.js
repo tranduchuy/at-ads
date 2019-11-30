@@ -44,5 +44,10 @@ module.exports = {
     LIMIT: 10
   },
   trackingScript: `<script type="text/javascript" src="${trackingScript}?key={accountKey}"></script>`,
-  retryCount:3
+  retryCount:3,
+  positionBlockIp: {
+    CUSTOM_BLACKLIST:'customBlackList',
+    AUTO_BLACKLIST: 'autoBlackListIp',
+    SAMPLE_BLACKLIST: 'sampleBlockingIp'
+  }
 };
