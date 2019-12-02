@@ -369,8 +369,12 @@ const getLogsOfIpsInAutoBlackList = (accountKey, ipsArr) => {
 					_id              : 1,
 					network          : '$log.networkCompany.name',
 					isPrivateBrowsing: '$log.isPrivateBrowsing',
-					gclid            : '$log.gclid'
-				}
+					gclid            : '$log.gclid',
+					keyword          : '$log.keyword',
+					matchType        : '$log.matchType',
+					page             : '$log.page',
+					position         : '$log.position'
+ 				}
 			};
 
 			const query = [
@@ -447,7 +451,11 @@ const getInfoLogForGroupIp = async (groupIps, ipsInfo) => {
 								_id              : ip,
 								network          : result[0].networkCompany.name,
 								isPrivateBrowsing: result[0].isPrivateBrowsing,
-								gclid            : result[0].gclid
+								gclid            : result[0].gclid,
+								keyword          : result[0].keyword,
+								matchType        : result[0].matchType,
+								page             : result[0].page,
+								position         : result[0].position,
 							}
 
 							logsArr.push(data);

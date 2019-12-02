@@ -161,28 +161,18 @@ const checkIpsNumber = (accountAds) => {
 
 const removeIps = (accountAds, campaignIds, ip, cb) => {
     logger.info('jobs::removeIps::is called',  {accountAds, campaignIds, ip});
-    Async.eachSeries(campaignIds, (campaignId, callback) => {
-        AccountAdsService.removeIpsToAutoBlackListOfOneCampaign(accountAds._id, accountAds.adsId, campaignId, ip, callback);
-    }, err => {
-        if(err)
-        {
-            logger.error('jobs::removeIps::error', err);
-            return cb();
-        }
-
-        const ipsInAutoBlackListAfterRemove = accountAds.setting.autoBlackListIp.splice(1);
-        accountAds.setting.autoBlackListIp = ipsInAutoBlackListAfterRemove;
-
-        accountAds.save(e => {
-            if(e)
-            {
-                logger.error('jobs::removeIps::error', e);
-                return cb();
-            }
-
-            return cb();
-        })    
-    })
+    try{
+        BlockIpServices.blockIp(accountAds, campaignIds, [ip], BlockingCriterionsConstant.positionBlockIp.AUTO_BLACKLIST, AccountAdsConstant.positionBlockIp.AUTO_BLACKLIST)
+        .then(result => {
+            return cb()
+        }).catch(err => {
+            logger.error('jobs::removeIps::Error',  err);
+            return cb(err);
+        });
+    }catch(e){
+        logger.error('jobs::removeIps::Error',  e);
+        return cb(e);
+    }
 }
 
 module.exports = async (channel, msg) => {

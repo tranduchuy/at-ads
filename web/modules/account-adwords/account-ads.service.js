@@ -655,7 +655,11 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
             location          : 1,
             isPrivateBrowsing : 1,
             reason            : 1,
-            gclid             : 1
+            gclid             : 1,
+            keyword           : 1,
+            matchType         : 1,
+            page              : 1,
+            position          : 1
           }
       };
 
@@ -1683,7 +1687,7 @@ const getListGoogleAdsOfUser = (req) => {
           });
         })
         .catch(err => {
-          if (GoogleAdwordsService.getErrorCode(err) === 'CUSTOMER_NOT_FOUND') {
+          if (GoogleAdwordsService.getErrorCode(err) === 'CUSTOMER_NOT_FOUND' || GoogleAdwordsService.getErrorCode(err) === 'NOT_ADS_USER') {
             return reject(new Error('Bạn không có tài khoản hợp lệ.'));
           }
           return reject(err);
