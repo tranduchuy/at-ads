@@ -406,6 +406,10 @@ const addLogInfoIntoIpInfo = (logsInfo, ipsInfo) => {
 				ipInfo.network           = logInfo.network;
 				ipInfo.isPrivateBrowsing = logInfo.isPrivateBrowsing;
 				ipInfo.gclid             = logInfo.gclid;
+				ipInfo.keyword           = logInfo.keyword;
+				ipInfo.matchType         = logInfo.matchType;
+				ipInfo.page              = logInfo.page;
+				ipInfo.position          = logInfo.position;
 			}
 		});
 	});
