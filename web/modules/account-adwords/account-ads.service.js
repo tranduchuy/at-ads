@@ -26,6 +26,10 @@ const Request = require('../../utils/Request');
 const config = require('config');
 const trackingScript = config.get('trackingScript');
 const adwordConfig = config.get('google-ads');
+const BlockIpService = require('../../services/block-ip.service');
+const RemoveIpService = require('../../services/remove-ip.service');
+const BlockingCriterionsConstant =  require('../blocking-criterions/blocking-criterions.constant');
+
 /**
  *
  * @param {string} userId
@@ -1278,33 +1282,23 @@ const blockIpsInAutoBlackList = (accountId, adsId, campaignId, ipsArr, callback)
   }, callback);
 };
 
-const removeIpsOnGoogleAndAsyncIpsInDB = ({accountAds, campaignId, ipsAndCriterionsId, ipsInCustomBlackListIp, ipInSampleBlockIp, ipsInAutoBlackListIp, cb}) => {
-  logger.info('AccountAdsService::removeIpsOnGoogleAndAsyncIpsInDB::is called\n', {campaignId});
+const blockIpsOnGoogleIntoDB = ({accountAds, campaignId, ipsInCustomBlackListIp, ipInSampleBlockIp, ipsInAutoBlackListIp, cb}) => {
+  logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::is called\n', {campaignId});
   try{
     Async.series([
-      callback => {
-        if(ipsAndCriterionsId.length === 0)
-        {
-          return callback(null);
-        }
-        logger.info('AccountAdsService::removeIpsOnGoogleAndAsyncIpsInDB::removeIpsOnGoogleAds', {campaignId});
-        
-        removeIpsOnGoogleAds(accountAds.adsId, campaignId, ipsAndCriterionsId, callback);
-      },
       callback => {
         if(ipsInCustomBlackListIp.length === 0)
         {
           return callback(null);
         }
-        logger.info('AccountAdsService::removeIpsOnGoogleAndAsyncIpsInDB::UpdateIpsInCustomBlackList', {campaignId});
-        BlockingCriterionsModel.updateOne({campaignId, accountId: accountAds._id}, {$set: {customBlackList: []}})
-        .exec(err => {
-          if(err)
-          {
-            return callback(err);
-          }
-          
-          addIpsToBlackListOfOneCampaign(accountAds._id, accountAds.adsId, campaignId, ipsInCustomBlackListIp, callback);
+        logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpsInCustomBlackList', {campaignId});
+        BlockIpService.blockIp(accountAds, campaignId, ipsInCustomBlackListIp, BlockingCriterionsConstant.positionBlockIp.CUSTOM_BLACKLIST, AdAccountConstant.positionBlockIp.CUSTOM_BLACKLIST)
+        .then(result => {
+          logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpsInCustomBlackList::success');
+          return callback();
+        }).catch(err => {
+          logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpsInCustomBlackList::error', err);
+          return callback(err);
         });
       },
       callback => {
@@ -1313,36 +1307,41 @@ const removeIpsOnGoogleAndAsyncIpsInDB = ({accountAds, campaignId, ipsAndCriteri
           return callback(null);
         }
 
-        logger.info('AccountAdsService::removeIpsOnGoogleAndAsyncIpsInDB::UpdateIpInSampleIps', {campaignId});
-        
-        blockSampleIpForOneCampaign(accountAds._id, accountAds.adsId, campaignId, ipInSampleBlockIp[0], callback);
+        logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpInSampleIps', {campaignId});
+        BlockIpService.blockIp(accountAds, campaignId, ipInSampleBlockIp, BlockingCriterionsConstant.positionBlockIp.SAMPLE_BLACKLIST, AdAccountConstant.positionBlockIp.SAMPLE_BLACKLIST)
+        .then(result => {
+          logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpInSampleIps::success');
+          return callback();
+        }).catch(err => {
+          logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpInSampleIps::error', err);
+          return callback(err);
+        });
       },
       callback => {
         if(ipsInAutoBlackListIp.length === 0)
         {
           return callback(null);
         }
-        logger.info('AccountAdsService::removeIpsOnGoogleAndAsyncIpsInDB::UpdateIpsInAutoBlackList', {campaignId});
-        BlockingCriterionsModel.updateOne({campaignId, accountId: accountAds._id}, {$set: {autoBlackListIp: []}})
-        .exec(err => {
-          if(err)
-          {
-            return callback(err);
-          }
-          
-          blockIpsInAutoBlackList(accountAds._id, accountAds.adsId, campaignId, ipsInAutoBlackListIp, callback);
-        }); 
+        logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpsInAutoBlackList', {campaignId});
+        BlockIpService.blockIp(accountAds, campaignId, ipsInAutoBlackListIp, BlockingCriterionsConstant.positionBlockIp.AUTO_BLACKLIST, AdAccountConstant.positionBlockIp.AUTO_BLACKLIST)
+        .then(result => {
+          logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpsInAutoBlackList::success');
+          return callback();
+        }).catch(err => {
+          logger.info('AccountAdsService::BlockIpsOnGoogleIntoDB::UpdateIpsInAutoBlackList::error', err);
+          return callback(err);
+        });
       }
     ], error => {
       if(error)
       {
-        logger.error('AccountAdsService::removeIpsOnGoogleAndAsyncIpsInDB::error', error, '\n' ,{campaignId});
+        logger.error('AccountAdsService::BlockIpsOnGoogleIntoDB::error', error, '\n' ,{campaignId});
         return cb(error);
       }
       return cb();
     });
   }catch(e){
-    logger.error('AccountAdsService::removeIpsOnGoogleAndAsyncIpsInDB::error', e, '\n' ,{campaignId});
+    logger.error('AccountAdsService::BlockIpsOnGoogleIntoDB::error', e, '\n' ,{campaignId});
     return cb(e);
   }
 };
@@ -1352,34 +1351,88 @@ const backUpIpOnGoogleAds = (accountAds, campaignIds) => {
   return new Promise(async (res, rej) => {
     try{
       const adsId = accountAds.adsId;
-      const ipsOnGoogle = await GoogleAdwordsService.getIpBlockOfCampaigns(adsId, campaignIds);
-      const filterIpWithTypeIpBlock = ipsOnGoogle.filter(ip => ip.criterion.type === 'IP_BLOCK').map(ip =>{
-        return {
-          campaignId: ip.campaignId,
-          criterionId: ip.criterion.id,
-          ip: ip.criterion.ipAddress}
-        });
-      
-      const standardizedIpsInCampaigns = standardizedIps(filterIpWithTypeIpBlock);
-      const ipsInCustomBlackListIp = accountAds.setting.customBlackList;
-      const sampleBlockIp = accountAds.setting.sampleBlockingIp;
-      const ipInSampleBlockIp = sampleBlockIp === '' ? [] : [sampleBlockIp];
-      const ipsInAutoBlackListIp = accountAds.setting.autoBlackListIp;
-      // const ips = ipsInAutoBlackListIp.concat(ipsInCustomBlackListIp, ipInSampleBlockIp);
 
-      Async.eachSeries(campaignIds, (campaignId, cb) => {
-        const ipsAndCriterionsId = standardizedIpsInCampaigns.filter(ipInfo => ipInfo.campaignId === campaignId)
-        .map(ipInfo => {
-          return { ip: ipInfo.ip, criterionId: ipInfo.criterionId }
-        });
-        return removeIpsOnGoogleAndAsyncIpsInDB({accountAds, campaignId, ipsAndCriterionsId, ipsInCustomBlackListIp, ipInSampleBlockIp, ipsInAutoBlackListIp, cb});
-      }, err => {
-        if(err)
+      GoogleAdwordsService.getCampaignsName(adsId, campaignIds)
+      .then(async cp => {
+        if(cp.length <= 0)
         {
-          logger.error('AccountAdsService::backUpIpOnGoogleAds::error', err, '\n' ,{campaignIds, accountAds});
-          return rej(err);
-        } 
-        return res('thành công.');
+          await updateIsDeletedStatusForCampaignDeleted(accountAds._id, campaignIds);
+          return res('Thành công');
+        }
+
+        campaignGoogle = cp.map(campaign => campaign.id);
+        const CampaignDeleted = _.difference(campaignIds, campaignGoogle);
+        
+        if(CampaignDeleted.length > 0)
+        {
+          await updateIsDeletedStatusForCampaignDeleted(accountAds._id ,CampaignDeleted);
+        }
+
+        GoogleAdwordsService.getIpBlockOfCampaigns(adsId, campaignGoogle)
+        .then( async ipsOnGoogle => {
+          const filterIpWithTypeIpBlock = ipsOnGoogle.filter(ip => ip.criterion.type === 'IP_BLOCK').map(ip =>{
+            return {
+              campaignId: ip.campaignId,
+              criterionId: ip.criterion.id,
+              ip: ip.criterion.ipAddress}
+            });
+          const ipsInCustomBlackListIp = accountAds.setting.customBlackList;
+          const sampleBlockIp = accountAds.setting.sampleBlockingIp;
+          const ipInSampleBlockIp = !sampleBlockIp || sampleBlockIp === '' ? [] : [sampleBlockIp];
+          const ipsInAutoBlackListIp = accountAds.setting.autoBlackListIp;
+
+          if(filterIpWithTypeIpBlock.length > 0)
+          {
+            GoogleAdwordsService.removeIpBlackListToCampaigns(adsId, filterIpWithTypeIpBlock)
+            .then(result => {
+              Async.series([
+                cb => {
+                  updateBlockIpEmptyInAccountAdAndBlockingCriterion(adsId, campaignGoogle, cb);
+                },
+                cb => {
+                  const campaignId = campaignGoogle;
+                  blockIpsOnGoogleIntoDB({accountAds, campaignId, ipsInCustomBlackListIp, ipInSampleBlockIp, ipsInAutoBlackListIp, cb});
+                }
+              ], err => {
+                if(err)
+                {
+                  logger.error('AccountAdsService::backUpIpOnGoogleAds::error', err, '\n', {campaignIds, accountAds});
+                  return rej(err);
+                }
+
+                return res('thành công');
+              });
+            }).catch(e => {
+              logger.error('AccountAdsService::backUpIpOnGoogleAds::error', e, '\n', {campaignIds, accountAds});
+              return rej(e);
+            });
+          }
+          else{
+            Async.series([
+              cb => {
+                updateBlockIpEmptyInAccountAdAndBlockingCriterion(adsId, campaignGoogle, cb);
+              },
+              cb => {
+                const campaignId = campaignGoogle;
+                blockIpsOnGoogleIntoDB({accountAds, campaignId, ipsInCustomBlackListIp, ipInSampleBlockIp, ipsInAutoBlackListIp, cb});
+              }
+            ], err => {
+              if(err)
+              {
+                logger.error('AccountAdsService::backUpIpOnGoogleAds::error', err, '\n', {campaignIds, accountAds});
+                return rej(err);
+              }
+
+              return res('thành công');
+            });
+          }
+        }).catch(err => {
+          logger.error('AccountAdsService::backUpIpOnGoogleAds::error', err, '\n', {campaignIds, accountAds});
+          return rej(error);
+        });
+      }).catch(error => {
+        logger.error('AccountAdsService::backUpIpOnGoogleAds::error', error, '\n', {campaignIds, accountAds});
+        return rej(error);
       });
     }catch(e){
       logger.error('AccountAdsService::backUpIpOnGoogleAds::error', e, '\n', {campaignIds, accountAds});
@@ -1387,6 +1440,48 @@ const backUpIpOnGoogleAds = (accountAds, campaignIds) => {
     }
   });
 };
+
+const updateBlockIpEmptyInAccountAdAndBlockingCriterion = (adsId, campaignGoogle, cb) => {
+  logger.info('AccountAdsService::updateBlockIpEmptyInAccountAdAndBlockingCriterion::Is called.');
+  try{
+    AccountAdsModel.updateOne({adsId}, {$set: {'setting.autoBlackListIp': [], 'setting.customBlackList': [], 'setting.sampleBlockingIp': null}} )
+    .exec(err => {
+      if(err)
+      {
+        logger.error('AccountAdsService::updateBlockIpEmptyInAccountAdAndBlockingCriterion::error', err);
+        return cb(err);
+      }
+
+      BlockingCriterionsModel.updateMany({campaignId: { $in: campaignGoogle}}, {$set: {'sampleBlockingIp': null, 'customBlackList': [], 'autoBlackListIp': []}})
+      .exec( error => {
+        if(error)
+        {
+          logger.error('AccountAdsService::updateBlockIpEmptyInAccountAdAndBlockingCriterion::error', error);
+          return cb(error);
+        }
+      })
+
+      return cb();
+    })
+  }catch(err){
+    logger.error('AccountAdsService::updateBlockIpEmptyInAccountAdAndBlockingCriterion::error', err);
+    return cb(err);
+  }
+}
+
+const updateIsDeletedStatusForCampaignDeleted = async (accountId, campaigns) => {
+  logger.info('AccountAdsService::UpdateIsDeletedStatusForCampaignDeleted::is called', { accountId, campaigns });
+  try {
+    const conditionUpdate = {accountId, campaignId: { $in: campaigns }};
+    const dataUpdate = {$set: { isDeleted: true, isOriginalDeleted: true }};
+    return await BlockingCriterionsModel.updateMany(conditionUpdate, dataUpdate);
+  } catch (e) {
+    logger.error('AccountAdsService::UpdateIsDeletedStatusForCampaignDeleted::error', e);
+    throw new Error(e);
+  }
+};
+
+
 /**
  * Kiểm tra danh sách google ad ids lấy từ google của user có hợp lệ để kết nối hay không
  * @param {ObjectId} userId

@@ -16,6 +16,9 @@ const AccountAdsService = require("./account-ads.service");
 const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.service');
 const { checkWhiteListIpsExistsInBlackList } = require('../../services/check-ip-in-white-list.service');
 const requestUtil = require('../../utils/RequestUtil');
+const BlockingCriterionsConstant = require('../blocking-criterions/blocking-criterions.constant');
+const BlockIpServices = require('../../services//block-ip.service');
+const RemoveIpServices = require('../../services/remove-ip.service');
 
 const UserBehaviorLogService = require('../user-behavior-log/user-behavior-log.service');
 const ClickReportService = require('../click-report/click-report.service');
@@ -241,7 +244,6 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 			const ipsNumber = allIps.length;
 			const maxIpsNumber = req.adsAccount.setting.maxIps || AdAccountConstant.setting.maxIps;
 			
-			console.log()
 			if(ipsNumber >= ( maxIpsNumber - AdAccountConstant.ipsNumberForAutoBlackList))
 			{
 				logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' ::Ips number in DB greater than ips default number ');
@@ -272,50 +274,31 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 				});
 			}
 
-			Async.eachSeries(campaignIds, (campaignId, callback) => {
-				AccountAdsService.addIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, arrAfterRemoveIdenticalElement, callback);
-			}, err => {
-				if (err) {
-					logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err, '\n', info);
-					return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-						messages: ['Thêm ips vào blacklist không thành công.']
-					});
-				}
+			BlockIpServices.blockIp(req.adsAccount, campaignIds, arrAfterRemoveIdenticalElement, BlockingCriterionsConstant.positionBlockIp.CUSTOM_BLACKLIST, AdAccountConstant.positionBlockIp.CUSTOM_BLACKLIST)
+			.then(async result => {
+				logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::success\n', info);
+				// log action history
+				const actionHistory = {
+					userId : req.user._id,
+					content: " Chặn danh sách blacklist ip: " + info.ips.join(', '),
+					param  : { ips: info.ips }
+				};
 
-				const newBlackList = req.adsAccount.setting.customBlackList.concat(arrAfterRemoveIdenticalElement);
-
-				req.adsAccount.setting.customBlackList = newBlackList;
-
-				req.adsAccount.save(async err => {
-					if (err) {
-						logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', err, '\n', info);
-						return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-							messages: ['Thêm ips vào blacklist không thành công.']
-						});
-					}
-					logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::success\n', info);
-
-
-					// log action history
-					const actionHistory = {
-						userId : req.user._id,
-						content: " Chặn danh sách blacklist ip: " + info.ips.join(', '),
-						param  : { ips: info.ips }
-					};
-
-					await userActionHistoryService.createUserActionHistory(actionHistory);
-					return res.status(HttpStatus.OK).json({
-						messages: ['Thêm ips vào blacklist thành công.']
-					});
+				await userActionHistoryService.createUserActionHistory(actionHistory);
+				return res.status(HttpStatus.OK).json({
+					messages: ['Thêm ips vào blacklist thành công.']
 				});
-
+			}).catch(error => {
+				logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + '::error', error, '\n', info);
+				return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+					messages: ['Thêm ips vào blacklist không thành công.']
+				});
 			});
 		}
 		//REMOVE IPS IN CUSTOMBLACKLIST
 		else {
 			logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + ' is called\n', info);
 			const blackList = req.adsAccount.setting.customBlackList || [];
-
 			const checkIpsInBlackList = AccountAdsService.checkIpIsNotOnTheBlackList(blackList, arrAfterRemoveIdenticalElement);
 
 			if (checkIpsInBlackList.length !== 0) {
@@ -328,39 +311,24 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 				});
 			}
 
-			Async.eachSeries(campaignIds, (campaignId, callback) => {
-				AccountAdsService.removeIpsToBlackListOfOneCampaign(req.adsAccount._id, req.adsAccount.adsId, campaignId, arrAfterRemoveIdenticalElement, callback);
-			}, err => {
-				if (err) {
-					logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
-					return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-						messages: ['Xóa ip không thành công.']
-					});
-				}
+			RemoveIpServices.removeIp(req.adsAccount, campaignIds, arrAfterRemoveIdenticalElement, BlockingCriterionsConstant.positionBlockIp.CUSTOM_BLACKLIST, AdAccountConstant.positionBlockIp.CUSTOM_BLACKLIST)
+			.then(async result => {
+				// log action history
+				const actionHistory = {
+					userId : req.user._id,
+					content: " Xóa ip ra khỏi danh sách blacklist: " + info.ips.join(', '),
+					param  : { ips: info.ips }
+				};
 
-				const ipNotExistsInListArr = _.difference(blackList, arrAfterRemoveIdenticalElement);
-
-				req.adsAccount.setting.customBlackList = ipNotExistsInListArr;
-				req.adsAccount.save(async err => {
-					if (err) {
-						logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', err, '\n', info);
-						return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-							messages: ['Xóa ip không thành công.']
-						});
-					}
-
-					// log action history
-					const actionHistory = {
-						userId : req.user._id,
-						content: " Xóa ip ra khỏi danh sách blacklist: " + info.ips.join(', '),
-						param  : { ips: info.ips }
-					};
-
-					await userActionHistoryService.createUserActionHistory(actionHistory);
-					logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success\n', info);
-					return res.status(HttpStatus.OK).json({
-						messages: ['Xóa ip thành công.']
-					});
+				await userActionHistoryService.createUserActionHistory(actionHistory);
+				logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::success\n', info);
+				return res.status(HttpStatus.OK).json({
+					messages: ['Xóa ip thành công.']
+				});
+			}).catch(error => {
+				logger.error('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.REMOVE + '::error', error, '\n', info);
+				return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+					messages: ['Xóa ip không thành công.']
 				});
 			});
 		}
@@ -1113,8 +1081,6 @@ const blockSampleIp = (req, res, next) => {
 
 		const { ip } = req.body;
 		const campaignIds = req.campaignIds || [];
-		const adsId = req.adsAccount.adsId;
-		const accountId = req.adsAccount._id;
 		let allIpInBlackList = req.adsAccount.setting.customBlackList;
 		const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
 		allIpInBlackList = allIpInBlackList.concat(req.adsAccount.setting.autoBlackListIp);
@@ -1154,13 +1120,15 @@ const blockSampleIp = (req, res, next) => {
 
 		Async.series([
 			(cb) => {
-				if (req.adsAccount.setting.sampleBlockingIp || req.adsAccount.setting.sampleBlockingIp !== '') {
-					AccountAdsService.removeSampleBlockingIp(adsId, accountId, campaignIds)
-						.then(result => {
-							logger.info('AccountAdsController::blockSampleIp::removeSampleBlockingIp::success', info);
-							cb(null);
-						}).catch(err => {
-						cb(err);
+				if (req.adsAccount.setting.sampleBlockingIp && req.adsAccount.setting.sampleBlockingIp !== '') {
+					const sampleIp = req.adsAccount.setting.sampleBlockingIp;
+					RemoveIpServices.removeIp(req.adsAccount, campaignIds, [sampleIp], BlockingCriterionsConstant.positionBlockIp.SAMPLE_BLACKLIST, AdAccountConstant.positionBlockIp.SAMPLE_BLACKLIST)
+					.then(result => {
+						logger.info('AccountAdsController::blockSampleIp::removeSampleBlockingIp::success', info);
+						return cb();
+					}).catch( error => {
+						logger.info('AccountAdsController::blockSampleIp::removeSampleBlockingIp::error', error, info);
+						return cb(error);
 					});
 				} else {
 					cb();
@@ -1173,36 +1141,27 @@ const blockSampleIp = (req, res, next) => {
 					messages: ['Thêm ip không thành công.']
 				});
 			}
-			AccountAdsService.addSampleBlockingIp(adsId, accountId, campaignIds, ip)
-				.then(result => {
-					req.adsAccount.setting.sampleBlockingIp = ip;
-					req.adsAccount.save(async error => {
-						if (error) {
-							logger.error('AccountAdsController::blockSampleIp::error', error, '\n', info);
-							return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-								messages: ['Thêm ip không thành công.']
-							});
-						}
 
-						// log action history
-						const actionHistory = {
-							userId : req.user._id,
-							content: "Chặn thử 1 ip: " + info.ip,
-							param  : { ip }
-						};
+			BlockIpServices.blockIp(req.adsAccount, campaignIds, [ip], BlockingCriterionsConstant.positionBlockIp.SAMPLE_BLACKLIST, AdAccountConstant.positionBlockIp.SAMPLE_BLACKLIST)
+			.then(async result => {
+				// log action history
+				const actionHistory = {
+					userId : req.user._id,
+					content: "Chặn thử 1 ip: " + info.ip,
+					param  : { ip }
+				};
 
-						await userActionHistoryService.createUserActionHistory(actionHistory);
+				await userActionHistoryService.createUserActionHistory(actionHistory);
 
-						logger.info('AccountAdsController::blockSampleIp::addSampleBlockingIp::success', info);
-						return res.status(HttpStatus.OK).json({
-							messages: ['Thêm ip thành công.']
-						});
-					});
-				}).catch(err => {
-				logger.error('AccountAdsController::blockSampleIp::addSampleBlockingIp::error', err, '\n', info);
+				logger.info('AccountAdsController::blockSampleIp::addSampleBlockingIp::success', info);
+				return res.status(HttpStatus.OK).json({
+					messages: ['Thêm ip thành công.']
+				});
+			}).catch(error => {
+				logger.error('AccountAdsController::blockSampleIp::addSampleBlockingIp::error', error, '\n', info);
 				return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
 					messages: ['Thêm ip không thành công.']
-				});
+				});	
 			});
 		});
 	} catch (e) {
@@ -1246,36 +1205,26 @@ const unblockSampleIp = (req, res, next) => {
 		}
 
 		const campaignIds = req.campaignIds || [];
-		const adsId = req.adsAccount.adsId;
-		const accountId = req.adsAccount._id;
 
-		AccountAdsService.removeSampleBlockingIp(adsId, accountId, campaignIds)
-			.then(result => {
-				req.adsAccount.setting.sampleBlockingIp = '';
-				req.adsAccount.save(async error => {
-					if (error) {
-						logger.error('AccountAdsController::unblockSampleIp::error', error, '\n', info);
-						return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-							messages: ['Xóa ip không thành công.']
-						});
-					}
+		RemoveIpServices.removeIp(req.adsAccount, campaignIds, [ip], BlockingCriterionsConstant.positionBlockIp.SAMPLE_BLACKLIST, AdAccountConstant.positionBlockIp.SAMPLE_BLACKLIST)
+		.then(async result => {
+			// log action history
+			const actionHistory = {
+				userId : req.user._id,
+				content: " Xóa ip ra khỏi danh sách chặn thử: " + info.ip,
+				param  : { ip: info.ip }
+			};
 
-					// log action history
-					const actionHistory = {
-						userId : req.user._id,
-						content: " Xóa ip ra khỏi danh sách chặn thử: " + info.ip,
-						param  : { ip: info.ip }
-					};
-
-					await userActionHistoryService.createUserActionHistory(actionHistory);
-					logger.info('AccountAdsController::unblockSampleIp::success\n', info);
-					return res.status(HttpStatus.OK).json({
-						messages: ['Xóa ip thành công.']
-					});
-				});
-			}).catch(err => {
-			logger.error('AccountAdsController::unblockSampleIp::error', err, '\n', info);
-			next(err);
+			await userActionHistoryService.createUserActionHistory(actionHistory);
+			logger.info('AccountAdsController::unblockSampleIp::success\n', info);
+			return res.status(HttpStatus.OK).json({
+				messages: ['Xóa ip thành công.']
+			});
+		}).catch(error => {
+			logger.error('AccountAdsController::unblockSampleIp::error', error, '\n', info);
+			return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+				messages: ['Xóa ip không thành công.']
+			});
 		});
 	} catch (e) {
 		logger.error('AccountAdsController::unblockSampleIp::error', e, '\n', info);

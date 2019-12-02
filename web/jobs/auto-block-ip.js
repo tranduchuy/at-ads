@@ -13,19 +13,8 @@ const { checkIpsInWhiteList } = require('../services/check-ip-in-white-list.serv
 const AccountAdsConstant = require('../modules/account-adwords/account-ads.constant');
 const AccountAdsService = require('../modules/account-adwords/account-ads.service');
 const { MESSAGE } = require('../modules/user-behavior-log/user-behavior-log.constant');
-
-const saveIpIntoAutoBlackListIp = async (key, id, ip, message) => {
-    logger.info('jobs::saveIpIntoAutoBlackListIp::is called', { key, id, ip });
-    try {
-        const updateData = { $push: { "setting.autoBlackListIp": ip } };
-        await AccountAdsModel.updateOne({ key }, updateData);
-        await updateIsSpamStatus(id, message);
-        return;
-    } catch (e) {
-        logger.error('jobs::saveIpIntoAutoBlackListIp::error', err, { id });
-        return;
-    }
-};
+const BlockIpServices = require('../services/block-ip.service');
+const BlockingCriterionsConstant = require('../modules/blocking-criterions/blocking-criterions.constant');
 
 const updateIsSpamStatus = async (id, message) => {
     logger.info('jobs::updateIsSpamStatus::is called', { id });
@@ -128,40 +117,20 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log, 
                 return channel.ack(msg);
             }
 
-            Async.eachSeries(campaignIds, (campaignId, callback) => {
-                GoogleAdsService.addIpBlackList(adsId, campaignId, ip)
-                    .then((result) => {
-                        const accountInfo = { result, accountId, campaignId, adsId, ip };
-                        return RabbitMQService.addIpAndCriterionIdInAutoBlackListIp(accountInfo, callback);
-                    }).catch(err => {
-                        switch (GoogleAdsService.getErrorCode(err)) {
-                            case 'OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY':
-                                logger.info('AccountAdsController::autoBlockIp::OPERATION_NOT_PERMITTED_FOR_REMOVED_ENTITY', {campaignId});
-                                return AccountAdsService.updateIsDeletedStatusIsTrueForCampaign(accountId, campaignId, callback);
-                            case 'INVALID_IP_ADDRESS':
-                                logger.info('AccountAdsController::autoBlockIp::INVALID_IP_ADDRESS', {campaignId});
-                                return callback();
-                            default:
-                                const message = GoogleAdsService.getErrorCode(err);
-                                logger.error('AccountAdsController::autoBlockIp::error', message);
-                                return callback();
-                        }
-                    });
-            }, async error => {
-                if (error) {
-                    logger.error('jobs::autoBlockIp::error', error, { id });
-                    log.reason = {
-                        message: MESSAGE.errorGoogle,
-                        error: JSON.stringify(error)
-                    }
-                    await log.save();
-                    // channel.ack(msg); // TODO: improve call google api limited.
-                    // channel.reject(msg, true);
-                    return channel.ack(msg);
-                }
-    
-                await saveIpIntoAutoBlackListIp(key, id, ip, message);
+            BlockIpServices.blockIp(accountAds, campaignIds, [ip], BlockingCriterionsConstant.positionBlockIp.AUTO_BLACKLIST, AccountAdsConstant.positionBlockIp.AUTO_BLACKLIST)
+            .then(async result => {
+                await updateIsSpamStatus(id, message);
                 logger.info('jobs::autoBlockIp::success', { id });
+                return channel.ack(msg);
+            }).catch(async e => {
+                logger.error('jobs::autoBlockIp::error', error, { id });
+                log.reason = {
+                    message: MESSAGE.errorGoogle,
+                    error: JSON.stringify(error)
+                }
+                await log.save();
+                // channel.ack(msg); // TODO: improve call google api limited.
+                // channel.reject(msg, true);
                 return channel.ack(msg);
             });
         });

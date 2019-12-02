@@ -54,6 +54,7 @@ const blockIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, p
       .then(async cp => {
         if(cp.length <= 0)
         {
+          await updateIsDeletedStatusForCampaignDeleted(accountAds._id, campaigns);
           return res('Thành công');
         }
 
