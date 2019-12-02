@@ -25,6 +25,9 @@ const userBehaviorLogSchema = new Schema({
     state: String
   },
   keyword: String,
+  matchType : String,
+  page: String,
+  position: String,
   utmMedium: String,
   utmSource: String,
   utmCampaign: String,
