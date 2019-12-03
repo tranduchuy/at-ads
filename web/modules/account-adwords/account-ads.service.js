@@ -800,7 +800,11 @@ const getDailyClicking =  (accountKey, maxClick, page, limit) => {
               "browser": "$browser",
               "createdAt": "$createdAt",
               "isPrivateBrowsing": "$isPrivateBrowsing",
-              "reason": "$reason"
+              "reason": "$reason",
+              "page" : "$page",
+              "position": "$position",
+              "matchType": "$matchType",
+              "campaignType": "$campaignType"
             }
           ]
         }
