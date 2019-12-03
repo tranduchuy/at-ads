@@ -40,6 +40,7 @@ const { removeIpInAutoBlackListValidationSchema } = require('./validations/remov
 const { getIpHistoryValidationSchema } = require('./validations/get-ip-history.schema');
 const { getReportStatisticValidationSchema } = require('./validations/get-report-Statistic.schema');
 const { connectGoogleAdsByEmailValidationSchema } = require('./validations/connect-google-ads-by-email.schema');
+const { updateConfigStepValidationSchema } = require('./validations/update-config-step.schema');
 
 const GoogleAdwordsService = require('../../services/GoogleAds.service');
 const Async = require('async');
@@ -2040,7 +2041,33 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 			}
 		});
 	}catch(e){
-		logger.error('AccountAdsController::ConnectGoogleAdsByEmail::is called\n', info);
+		logger.error('AccountAdsController::ConnectGoogleAdsByEmail::Error\n', e);
+		return next(e);
+	}
+};
+
+const updateConfigStep = async (req, res, next) => {
+	const info = {
+		account : req.adsAccount._id,
+		adsId   : req.adsAccount.adsId
+	}
+	logger.info('AccountAdsController::updateConfigStep::is called\n', info);
+	try{
+		const { error } = Joi.validate(req.body, updateConfigStepValidationSchema);
+
+		if (error) {
+			return requestUtil.joiValidationResponse(error, res);
+		}
+
+		req.adsAccount.configStep = req.body.step;
+		await req.adsAccount.save();
+
+		return res.status(HttpStatus.OK).json({
+			messages: ["Kết nối tài khoản thành công."],
+			account: req.adsAccount
+		});
+	}catch(e){
+		logger.error('AccountAdsController::updateConfigStep::Error\n', e);
 		return next(e);
 	}
 };
@@ -2077,6 +2104,7 @@ module.exports = {
 	getReportStatistic,
 	detailUser,
 	getListGoogleAdsOfUser,
-	ConnectGoogleAdsByEmail: connectGoogleAdsByEmail
+	ConnectGoogleAdsByEmail: connectGoogleAdsByEmail,
+	updateConfigStep
 };
 

@@ -49,5 +49,12 @@ module.exports = {
     CUSTOM_BLACKLIST:'customBlackList',
     AUTO_BLACKLIST: 'autoBlackListIp',
     SAMPLE_BLACKLIST: 'sampleBlockingIp'
+  },
+  configStep: {
+    CONNECT_GOOGLE_ADS: 1,
+    ADD_CAMPAIGN: 2,
+    ADD_WEBSITE: 3,
+    ADD_TRACKING_FOR_WEBSITE: 4,
+    SUCCESS: 5
   }
 };
