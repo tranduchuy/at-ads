@@ -314,7 +314,8 @@ const getInfoSend = (log, account, isPrivateBrowsing) => {
     keyword: log.keyword,
     position: log.position,
     matchType: log.matchType,
-    page: log.page
+    page: log.page,
+    campaignType: log.campaignType
   };
 };
 
@@ -342,7 +343,8 @@ const getDataForIntroPage = () => {
           keyword: 1,
           page: 1,
           position: 1,
-          matchType: 1
+          matchType: 1,
+          campaignType: 1
         }
       };
 
