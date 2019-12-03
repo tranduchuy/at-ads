@@ -12,6 +12,7 @@ const accountAdsSchema = new Schema(
     },
     adsId: { type: String, unique: true },
     adsName: {type: String, default: null},
+    configStep: {type: Number, default: AccountAdsConstant.configStep.CONNECT_GOOGLE_ADS},
     key: String,
     isConnected: { type: Boolean, default: AccountAdsConstant.isConnected },
     isDeleted: { type: Boolean, default: false },

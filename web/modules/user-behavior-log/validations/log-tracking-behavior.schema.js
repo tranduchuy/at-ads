@@ -1,7 +1,7 @@
 const Joi = require('@hapi/joi');
 
 const LogTrackingBehaviorValidationSchema = Joi.object().keys({
-  ip: Joi.string().required(),
+  ip: Joi.string().ip({version: ['ipv4']}).required(),
   key: Joi.string().required(),
   uuid: Joi.string().required(),
   href: Joi.string().required(),

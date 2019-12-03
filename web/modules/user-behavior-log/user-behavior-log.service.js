@@ -26,7 +26,7 @@ const createUserBehaviorLog = async (inputData) => {
       ip, utmMedium, utmSource, utmCampaign, type,
       referrer, userAgent, browser, engine, isPrivateBrowsing,
       device, os, cpu, domain, pathname, uuid, accountKey, location,
-      browserResolution, screenResolution, keyword, gclid, href, localIp, trafficSource
+      browserResolution, screenResolution, keyword, matchType, page, position, campaignType, gclid, href, localIp, trafficSource
     } = inputData;
     const company = await IPLookupService.getNetworkCompanyByIP(ip);
 
@@ -47,6 +47,10 @@ const createUserBehaviorLog = async (inputData) => {
       browserResolution,
       screenResolution,
       keyword,
+      matchType,
+      page,
+      position,
+      campaignType,
       trafficSource,
       gclid: gclid || null,
       utmCampaign: utmCampaign || null,
@@ -306,7 +310,12 @@ const getInfoSend = (log, account, isPrivateBrowsing) => {
     os: {name: log.os ? log.os.name : null, version: log.os ? log.os.version : null},
     browser: log.browser || null,
     network: log.networkCompany || null,
-    location: log.location
+    location: log.location,
+    keyword: log.keyword,
+    position: log.position,
+    matchType: log.matchType,
+    page: log.page,
+    campaignType: log.campaignType
   };
 };
 
@@ -330,7 +339,12 @@ const getDataForIntroPage = () => {
           device: 1,
           os: 1,
           browser: 1,
-          ip: 1
+          ip: 1,
+          keyword: 1,
+          page: 1,
+          position: 1,
+          matchType: 1,
+          campaignType: 1
         }
       };
 
@@ -388,6 +402,69 @@ const filterReason = (website, accountOfKey) => {
   return reason;
 };
 
+const detectKeyWord = (query) => {
+  logger.info('UserBihaviorLogService::detectKeyWord::Is called');
+  try{
+    let matchtype = null;
+		let keyword = null;
+		let adposition = null;
+		let page = null;
+    let position = null;
+    let campaignType = null;
+
+    if(query.click_matchtype) {
+      switch (query.click_matchtype) {
+        case 'b':
+          matchtype = 'Rộng';
+          break;
+        case 'e':
+          matchtype = 'Chính xác';
+          break;
+        case 'p':
+          matchtype = 'Cụm từ';
+          break;
+        default:
+          break;
+      };
+    }
+
+    if(query.click_adposition)
+    {
+      adposition = query.click_adposition.split('t');
+      if(adposition.length > 1)
+      {
+        page = adposition[0];
+        position = adposition[1];
+      }
+    }
+
+    if(query.click_network)
+    {
+      switch (query.click_network) {
+        case 'g':
+          campaignType = 'Google search';
+          break;
+        case 'd':
+          campaignType = 'Google display';
+          break;
+        default:
+          campaignType = 'Other';
+          break;
+      };
+    }
+
+    if(query.click_keyword)
+    {
+      keyword = query.click_keyword;
+    }
+    
+    return { keyword, matchtype, page, position, campaignType };
+  }catch(e){
+    logger.error('UserBihaviorLogService::detectKeyWord::Error', e);
+    throw new Error(e);
+  }
+}
+
 module.exports = {
   createUserBehaviorLog,
   buildStageStatisticUser,
@@ -396,5 +473,6 @@ module.exports = {
   sendMessageForFireBase,
   getInfoSend,
   getDataForIntroPage,
-  filterReason
+  filterReason,
+  detectKeyWord
 };

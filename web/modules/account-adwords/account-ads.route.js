@@ -37,5 +37,6 @@ router.get('/:accountId/ip-history', CheckTokenMiddleware, CheckAccountIdMiddleW
 router.get('/:accountId/statistic-user', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.statisticUser);
 router.get('/:accountId/detail-user/:id', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.detailUser);
 router.post('/connect-google-ads-by-email', CheckTokenMiddleware, AccountAdsController.ConnectGoogleAdsByEmail);
+router.put('/:accountId/config-step', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.updateConfigStep);
 
 module.exports = router;

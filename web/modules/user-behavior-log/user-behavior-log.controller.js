@@ -58,6 +58,7 @@ const logTrackingBehavior = async (req, res, next) => {
 
     const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
     const ua = parser(userAgent);
+    const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
     const data = {
       uuid,
       ip,
@@ -77,7 +78,11 @@ const logTrackingBehavior = async (req, res, next) => {
       utmCampaign: hrefQuery.utm_campaign || null,
       utmMedium: hrefQuery.utm_medium || null,
       utmSource: hrefQuery.utm_source || null,
-      keyword: hrefQuery.keyword || null,
+      keyword: detectKeyWord.keyword,
+      page: detectKeyWord.page,
+      matchType: detectKeyWord.matchtype,
+      position: detectKeyWord.position,
+      campaignType: detectKeyWord.campaignType,
       trafficSource,
       ...ua
     };

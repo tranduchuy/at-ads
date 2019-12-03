@@ -47,6 +47,13 @@ const blockIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, p
   logger.info('BlockIpService::blockIp::is called', { ads: accountAds.adsId, campaigns, ips });
   return new Promise((res, rej) => {
     try{
+
+      if(campaigns.length <=0 || ips.length <=0 || !accountAds)
+      {
+        logger.info('BlockIpService::blockIp::campaigns, ips or account Ads is empty', { ads: accountAds.adsId, campaigns, ips });
+        return res('Thành công');
+      }
+
       const ads = accountAds.adsId;
 
       //get campaignid on google ads
@@ -54,6 +61,7 @@ const blockIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, p
       .then(async cp => {
         if(cp.length <= 0)
         {
+          await updateIsDeletedStatusForCampaignDeleted(accountAds._id, campaigns);
           return res('Thành công');
         }
 
@@ -68,6 +76,12 @@ const blockIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, p
         //block ips
         GoogleAdwordsService.addIpBlackListToCampaigns(ads, campaignsGoogle, ips)
         .then(result => {
+          if(!result || result.length == 0)
+          {
+            logger.error('BlockIpService::blockIp::ip not in google Ads', { error });
+            return res('Thành công');
+          }
+
           const campaignsArr = mapIpToUpdateDB(campaignsGoogle, result);
           Async.eachSeries(campaignsArr, (campaign, callback) => {
             updateIpsIntoCampaign(campaign, positionBlockInBlockingCriterion, callback);
