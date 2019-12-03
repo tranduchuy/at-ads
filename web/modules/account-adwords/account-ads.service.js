@@ -659,7 +659,8 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
             keyword           : 1,
             matchType         : 1,
             page              : 1,
-            position          : 1
+            position          : 1,
+            campaignType      : 1
           }
       };
 

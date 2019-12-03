@@ -26,7 +26,7 @@ const createUserBehaviorLog = async (inputData) => {
       ip, utmMedium, utmSource, utmCampaign, type,
       referrer, userAgent, browser, engine, isPrivateBrowsing,
       device, os, cpu, domain, pathname, uuid, accountKey, location,
-      browserResolution, screenResolution, keyword, matchType, page, position, gclid, href, localIp, trafficSource
+      browserResolution, screenResolution, keyword, matchType, page, position, campaignType, gclid, href, localIp, trafficSource
     } = inputData;
     const company = await IPLookupService.getNetworkCompanyByIP(ip);
 
@@ -50,6 +50,7 @@ const createUserBehaviorLog = async (inputData) => {
       matchType,
       page,
       position,
+      campaignType,
       trafficSource,
       gclid: gclid || null,
       utmCampaign: utmCampaign || null,
@@ -407,6 +408,7 @@ const detectKeyWord = (query) => {
 		let adposition = null;
 		let page = null;
     let position = null;
+    let campaignType = null;
 
     if(query.click_matchtype) {
       switch (query.click_matchtype) {
@@ -434,12 +436,27 @@ const detectKeyWord = (query) => {
       }
     }
 
+    if(query.click_network)
+    {
+      switch (query.click_network) {
+        case 'g':
+          campaignType = 'Google search';
+          break;
+        case 'd':
+          campaignType = 'Google display';
+          break;
+        default:
+          campaignType = 'Other';
+          break;
+      };
+    }
+
     if(query.click_keyword)
     {
       keyword = query.click_keyword;
     }
     
-    return { keyword, matchtype, page, position };
+    return { keyword, matchtype, page, position, campaignType };
   }catch(e){
     logger.error('UserBihaviorLogService::detectKeyWord::Error', e);
     throw new Error(e);

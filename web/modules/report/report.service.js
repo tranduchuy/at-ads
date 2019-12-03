@@ -373,7 +373,8 @@ const getLogsOfIpsInAutoBlackList = (accountKey, ipsArr) => {
 					keyword          : '$log.keyword',
 					matchType        : '$log.matchType',
 					page             : '$log.page',
-					position         : '$log.position'
+					position         : '$log.position',
+					campaignType     : '$log.campaignType'
  				}
 			};
 
@@ -410,6 +411,7 @@ const addLogInfoIntoIpInfo = (logsInfo, ipsInfo) => {
 				ipInfo.matchType         = logInfo.matchType;
 				ipInfo.page              = logInfo.page;
 				ipInfo.position          = logInfo.position;
+				ipInfo.campaignType      = logInfo.campaignType;
 			}
 		});
 	});
@@ -460,6 +462,7 @@ const getInfoLogForGroupIp = async (groupIps, ipsInfo) => {
 								matchType        : result[0].matchType,
 								page             : result[0].page,
 								position         : result[0].position,
+								campaignType     : result[0].campaignType
 							}
 
 							logsArr.push(data);
