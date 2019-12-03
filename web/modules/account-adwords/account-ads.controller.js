@@ -1643,7 +1643,7 @@ const removeIpInAutoBlackListIp = (req, res, next) => {
 		ips  : req.body.ips
 	};
 
-	logger.info('AccountAdsController::removeAccountAds::is called\n', info);
+	logger.info('AccountAdsController::removeIpInAutoBlackListIp::is called\n', info);
 	try {
 		const { error } = Joi.validate(req.body, removeIpInAutoBlackListValidationSchema);
 
@@ -1655,13 +1655,11 @@ const removeIpInAutoBlackListIp = (req, res, next) => {
 		const autoBlackListIp = req.adsAccount.setting.autoBlackListIp || [];
 		const ipArrAfterRemoveIdenticalElement = ips.filter(AccountAdsService.onlyUnique);
 		const campaignIds = req.campaignIds || [];
-		const id = req.adsAccount._id;
-		const adsId = req.adsAccount.adsId;
 
 		const checkIpsInBlackList = AccountAdsService.checkIpIsNotOnTheBlackList(autoBlackListIp, ipArrAfterRemoveIdenticalElement);
 
 		if (checkIpsInBlackList.length !== 0) {
-			logger.info('AccountAdsController::removeAccountAds::notFound\n', info);
+			logger.info('AccountAdsController::removeIpInAutoBlackListIp::notFound\n', info);
 			return res.status(HttpStatus.NOT_FOUND).json({
 				messages: ['Ip không nằm trong blacklist.'],
 				data    : {
@@ -1670,39 +1668,24 @@ const removeIpInAutoBlackListIp = (req, res, next) => {
 			});
 		}
 
-		Async.eachSeries(campaignIds, (campaignId, callback) => {
-			AccountAdsService.removeIpsToAutoBlackListOfOneCampaign(id, adsId, campaignId, ipArrAfterRemoveIdenticalElement, callback);
-		}, err => {
-			if (err) {
-				logger.error('AccountAdsController::handleManipulationGoogleAds::error', err, '\n', info);
-				return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-					messages: ['Xóa ip không thành công.']
-				});
-			}
+		RemoveIpServices.removeIp(req.adsAccount, campaignIds, ipArrAfterRemoveIdenticalElement, BlockingCriterionsConstant.positionBlockIp.AUTO_BLACKLIST, AdAccountConstant.positionBlockIp.AUTO_BLACKLIST)
+		.then(async result => {
+			// log action history
+			const actionHistory = {
+				userId : req.user._id,
+				content: " Xóa ip ra khỏi danh sách ip đã chặn: " + info.ips.join(', '),
+				param  : { ips: info.ips }
+			};
 
-			const ipNotExistsInListArr = _.difference(autoBlackListIp, ipArrAfterRemoveIdenticalElement);
-
-			req.adsAccount.setting.autoBlackListIp = ipNotExistsInListArr;
-			req.adsAccount.save(async err => {
-				if (err) {
-					logger.error('AccountAdsController::removeIpInAutoBlackListIp::error', err, '\n', info);
-					return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-						messages: ['Xóa ip không thành công.']
-					});
-				}
-
-				// log action history
-				const actionHistory = {
-					userId : req.user._id,
-					content: " Xóa ip ra khỏi danh sách ip đã chặn: " + info.ips.join(', '),
-					param  : { ips: info.ips }
-				};
-
-				await userActionHistoryService.createUserActionHistory(actionHistory);
-				logger.info('AccountAdsController::removeIpInAutoBlackListIp::success\n', info);
-				return res.status(HttpStatus.OK).json({
-					messages: ['Xóa ip thành công.']
-				});
+			await userActionHistoryService.createUserActionHistory(actionHistory);
+			logger.info('AccountAdsController::removeIpInAutoBlackListIp::success\n', info);
+			return res.status(HttpStatus.OK).json({
+				messages: ['Xóa ip thành công.']
+			});
+		}).catch(err => {
+			logger.error('AccountAdsController::handleManipulationGoogleAds::error', err, '\n', info);
+			return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+				messages: ['Xóa ip không thành công.']
 			});
 		});
 	} catch (e) {

@@ -44,8 +44,15 @@ const mapIpAndCriterion = (result) => {
 };
 
 const removeIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, positionBlockInAccountAds) => {
+  logger.info('RemoveService::removeIp::is called', {ads: accountAds.adsId, campaigns, ips});
   return new Promise((res, rej) => {
     try{
+      if(campaigns.length <= 0 || ips.length <= 0 || !accountAds)
+      {
+        logger.info('RemoveService::removeIp::ip or campaign empty', { ads: accountAds.adsId });
+        return res('Thành công');
+      }
+
       const ads = accountAds.adsId;
 
       //get campaignId;
@@ -69,9 +76,14 @@ const removeIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, 
 
         //get ip exists of campaign on google
         GoogleAdwordsService.getIpOnGoogleFilteredByCampaignsAndIps(ads, campaignGoogle, ipsAfterstandardized)
-        .then(result => {
+        .then(async result => {
           if(result.length <= 0)
           {
+            logger.info('RemoveService::removeIp::ips not in Google Ads');
+            await removeIpsInCampaign(campaignGoogle, ips, positionBlockInBlockingCriterion);
+            const ipInAccountAds = accountAds.setting;
+            const ipNotExistsInListArr = _.difference(ipInAccountAds[positionBlockInAccountAds], ips);
+            await removeIpInAccount(accountAds.key, ipNotExistsInListArr, positionBlockInAccountAds);
             return res('Thành công');
           }
 
@@ -149,7 +161,7 @@ const removeIpsInCampaign = async(campaigns, ips, positionBlock) => {
     logger.error('BlockIpService::removeIpsInCampaign::error', e);
     throw new Error(e);
   }
-}
+};
 
 const updateIsDeletedStatusForCampaignDeleted = async (accountId, campaigns) => {
   logger.info('RemoveService::UpdateIsDeletedStatusForCampaignDeleted::is called', { accountId, campaigns });
