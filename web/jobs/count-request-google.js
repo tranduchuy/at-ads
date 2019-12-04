@@ -19,12 +19,12 @@ module.exports = async (channel, msg) => {
                 date: now
             }
             
-            switch (message) {
+            switch (message.count) {
                 case COUNT.isReport:
-                    info['countReport'] = 1;
+                    info['countReport'] = parseInt(message.number);
                     break;
                 default:
-                    info['count'] = 1;
+                    info['count'] = parseInt(message.number);
                     break;
             };
 
@@ -37,12 +37,12 @@ module.exports = async (channel, msg) => {
             return;
         }
 
-        switch (message) {
+        switch (message.count) {
             case COUNT.isReport:
-                result.countReport = result.countReport + 1;
+                result.countReport = result.countReport + parseInt(message.number);
                 break;
             default:
-                result.count = result.count + 1;
+                result.count = result.count + parseInt(message.number);
                 break;
         };
         
