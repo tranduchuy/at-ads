@@ -804,7 +804,7 @@ const getListOriginalCampaigns = async (req, res, next) => {
 	try {
 		const result = await AccountAdsService.retry(req, AdAccountConstant.retryCount, AccountAdsService.getListOriginalCampaigns);
 
-		logger.info('AccountAdsController::connectionConfirmation::success\n');
+		logger.info('AccountAdsController::getOriginalCampaigns::success\n');
 		return res.status(result.status).json(result);
 	} catch (e) {
 		logger.error('AccountAdsController::getOriginalCampaigns::error', e);

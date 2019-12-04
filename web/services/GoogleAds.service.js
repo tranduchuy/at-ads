@@ -14,6 +14,7 @@ const AccountAdsModel = require('../modules/account-adwords/account-ads.model');
 const UserModel = require('../modules/user/user.model');
 const AdAccountConstant = require('../modules/account-adwords/account-ads.constant');
 const moment = require('moment');
+const UrlTrackingTemplateConstant = require('../constants/url-tracking-template.constant');
 
 const getRefreshToken = async (adwordId) => {
 	logger.info('GoogleAdsService::getRefreshToken is called.', {adwordId});
@@ -127,7 +128,7 @@ const getListCampaigns = function (adwordId) {
 
 		let campaignService = user.getService('CampaignService', adwordConfig.version);
 		const selector = {
-			fields  : ['Id', 'Name', 'Status', 'ServingStatus', 'TargetGoogleSearch', 'AdvertisingChannelSubType', 'AdvertisingChannelType'],
+			fields  : ['Id', 'Name', 'Status', 'ServingStatus', 'TargetGoogleSearch', 'AdvertisingChannelSubType', 'AdvertisingChannelType', 'TrackingUrlTemplate'],
 			ordering: [{ field: 'Name', sortOrder: 'ASCENDING' }],
 			paging  : { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
 		};
@@ -882,7 +883,7 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 				operator: 'SET',
 				operand : {
 					id                 : campaignId,
-					trackingUrlTemplate: '{lpurl}?click_matchtype={matchtype}&click_keyword={keyword}&click_location={loc_physical_ms}&click_adposition={adposition}&click_network={network}',
+					trackingUrlTemplate: UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE
 				}
 			});
 		});
@@ -913,7 +914,7 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 const addIpBlackListToCampaigns = function (adwordId, campaignIds, ips) {
 	return new Promise(async (resolve, reject) => {
 		try{
-			logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignIds, ips);
+			logger.info('GoogleAdsService::addIpBlackListToCampaigns', adwordId, campaignIds, ips);
 
 			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: campaignIds.length * ips.length });
 			const googleRefreshToken = await getRefreshToken(adwordId);
@@ -954,21 +955,21 @@ const addIpBlackListToCampaigns = function (adwordId, campaignIds, ips) {
 					GoogleAdsErrorService.createLogError({
 						serviceVersion: adwordConfig.version,
 						authConfig,
-						functionName  : 'GoogleAdsService::addIpBlackList',
+						functionName  : 'GoogleAdsService::addIpBlackListToCampaigns',
 						error,
 						params,
 						serviceName   : 'CampaignCriterionService',
 						moduleName    : 'AdwordsUser'
 					});
-					logger.error('GoogleAdsService::addIpBlackList::error', error);
+					logger.error('GoogleAdsService::addIpBlackListToCampaigns::error', error);
 					return reject(error);
 				}
 
-				logger.info('GoogleAdsService::addIpBlackList::success', result);
+				logger.info('GoogleAdsService::addIpBlackListToCampaigns::success', result);
 				return resolve(result);
 			});
 		}catch(e){
-			logger.error('GoogleAdsService::addIpBlackList::error', e);
+			logger.error('GoogleAdsService::addIpBlackListToCampaigns::error', e);
 			return reject(e);
 		}
 	});
