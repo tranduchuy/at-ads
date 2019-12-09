@@ -2024,8 +2024,8 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 			adWord.isDeleted = false;
 			adWord.connectType = AdAccountConstant.connectType.byEmail;
 			await adWord.save();
-			return res.status(HttpStatus.BAD_REQUEST).json({
-				messages: ["Bạn đã kết nối GoogleAds này: " + adWordId],
+			return res.status(HttpStatus.OK).json({
+				messages: ["Bạn đã kết nối thành công GoogleAds này: " + adWordId],
 			});
 		}
 
