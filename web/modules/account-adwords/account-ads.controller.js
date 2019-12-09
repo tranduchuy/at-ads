@@ -2026,6 +2026,9 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 			await adWord.save();
 			return res.status(HttpStatus.OK).json({
 				messages: ["Bạn đã kết nối thành công GoogleAds này: " + adWordId],
+				data: {
+					account: adWord
+				}
 			});
 		}
 
