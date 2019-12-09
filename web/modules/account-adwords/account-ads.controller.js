@@ -84,6 +84,7 @@ const addAccountAds = async (req, res, next) => {
 
 					duplicateAdWordId.isDeleted = false;
 					duplicateAdWordId.isConnected = false;
+					duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
 					await duplicateAdWordId.save();
 					logger.info('AccountAdsController::addAccountAds::success', result);
 					return res.status(HttpStatus.OK).json({
@@ -105,6 +106,7 @@ const addAccountAds = async (req, res, next) => {
 
 							duplicateAdWordId.isDeleted = false;
 							duplicateAdWordId.isConnected = true;
+							duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
 							await duplicateAdWordId.save();
 
 							logger.info('AccountAdsController::addAccountAds::reconnect success', duplicateAdWordId);
@@ -118,6 +120,7 @@ const addAccountAds = async (req, res, next) => {
 						case 'ALREADY_INVITED_BY_THIS_MANAGER':
 							duplicateAdWordId.isDeleted = false;
 							duplicateAdWordId.isConnected = false;
+							duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
 							await duplicateAdWordId.save();
 							logger.info('AccountAdsController::addAccountAds::reinvite success', duplicateAdWordId);
 							return res.status(HttpStatus.OK).json({
