@@ -84,6 +84,7 @@ const addAccountAds = async (req, res, next) => {
 
 					duplicateAdWordId.isDeleted = false;
 					duplicateAdWordId.isConnected = false;
+					duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
 					await duplicateAdWordId.save();
 					logger.info('AccountAdsController::addAccountAds::success', result);
 					return res.status(HttpStatus.OK).json({
@@ -105,6 +106,7 @@ const addAccountAds = async (req, res, next) => {
 
 							duplicateAdWordId.isDeleted = false;
 							duplicateAdWordId.isConnected = true;
+							duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
 							await duplicateAdWordId.save();
 
 							logger.info('AccountAdsController::addAccountAds::reconnect success', duplicateAdWordId);
@@ -118,6 +120,7 @@ const addAccountAds = async (req, res, next) => {
 						case 'ALREADY_INVITED_BY_THIS_MANAGER':
 							duplicateAdWordId.isDeleted = false;
 							duplicateAdWordId.isConnected = false;
+							duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
 							await duplicateAdWordId.save();
 							logger.info('AccountAdsController::addAccountAds::reinvite success', duplicateAdWordId);
 							return res.status(HttpStatus.OK).json({
@@ -804,7 +807,7 @@ const getListOriginalCampaigns = async (req, res, next) => {
 	try {
 		const result = await AccountAdsService.retry(req, AdAccountConstant.retryCount, AccountAdsService.getListOriginalCampaigns);
 
-		logger.info('AccountAdsController::connectionConfirmation::success\n');
+		logger.info('AccountAdsController::getOriginalCampaigns::success\n');
 		return res.status(result.status).json(result);
 	} catch (e) {
 		logger.error('AccountAdsController::getOriginalCampaigns::error', e);
@@ -2024,8 +2027,11 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 			adWord.isDeleted = false;
 			adWord.connectType = AdAccountConstant.connectType.byEmail;
 			await adWord.save();
-			return res.status(HttpStatus.BAD_REQUEST).json({
-				messages: ["Bạn đã kết nối GoogleAds này: " + adWordId],
+			return res.status(HttpStatus.OK).json({
+				messages: ["Bạn đã kết nối thành công GoogleAds này: " + adWordId],
+				data: {
+					account: adWord
+				}
 			});
 		}
 

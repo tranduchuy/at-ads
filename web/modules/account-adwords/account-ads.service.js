@@ -29,7 +29,7 @@ const adwordConfig = config.get('google-ads');
 const BlockIpService = require('../../services/block-ip.service');
 const RemoveIpService = require('../../services/remove-ip.service');
 const BlockingCriterionsConstant =  require('../blocking-criterions/blocking-criterions.constant');
-
+const UrlTrackingTemplateConstant = require('../../constants/url-tracking-template.constant');
 /**
  *
  * @param {string} userId
@@ -213,9 +213,9 @@ const filterTheCampaignInfoInTheCampaignList = (result) => {
       .map(c => {
         if(c.status === googleCampaignStatus.ENABLED)
         {
-          return {id: c.id, name: c.name, status: campaignStatus[c.status], isEnabled: campaignStatus.ISENABLED}
+          return {id: c.id, name: c.name, status: campaignStatus[c.status], isEnabled: campaignStatus.ISENABLED, trackingUrlTemplate: c.trackingUrlTemplate}
         }
-        return {id: c.id, name: c.name, status: campaignStatus[c.status], isEnabled: campaignStatus.ISDISABLED}
+        return {id: c.id, name: c.name, status: campaignStatus[c.status], isEnabled: campaignStatus.ISDISABLED, trackingUrlTemplate: c.trackingUrlTemplate}
     });
 };
 
@@ -1636,14 +1636,38 @@ const getListOriginalCampaigns = (req) => {
     try {
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
       const processCampaignList = filterTheCampaignInfoInTheCampaignList(result);
-  
-      logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
-      return resolve({
-        status    : HttpStatus.OK,
-        messages  : ["Lấy danh sách chiến dịch thành công."],
-        data      : { campaignList: processCampaignList }
+
+      const campaignNotSetUrl = processCampaignList.filter(cp => !cp.trackingUrlTemplate || cp.trackingUrlTemplate.indexOf(UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE) < 0).map(cp => cp.id);
+
+      if(campaignNotSetUrl.length <= 0)
+      {
+        logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
+        return resolve({
+          status    : HttpStatus.OK,
+          messages  : ["Lấy danh sách chiến dịch thành công."],
+          data      : { campaignList: processCampaignList }
+        });
+      }
+
+      logger.info('AccountAdService::getListOriginalCampaigns::setUrlTrackingTemplate\n', info);
+      GoogleAdwordsService.setTrackingUrlTemplateForCampaign(req.adsAccount.adsId, campaignNotSetUrl)
+      .then(result => {
+        logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
+        return resolve({
+          status    : HttpStatus.OK,
+          messages  : ["Lấy danh sách chiến dịch thành công."],
+          data      : { campaignList: processCampaignList }
+        });
+      }).catch(err => {
+        logger.error('AccountAdService::getOriginalCampaigns::error', err, '\n', info);
+        return resolve({
+          status    : HttpStatus.OK,
+          messages  : ["Lấy danh sách chiến dịch thành công."],
+          data      : { campaignList: processCampaignList }
+        });
       });
     } catch (e) {
+      console.log(e);
       const message = GoogleAdwordsService.mapManageCustomerErrorMessage(e);
       logger.error('AccountAdService::getOriginalCampaigns::error', e, '\n', info);
       return reject(message);

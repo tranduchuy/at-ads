@@ -123,10 +123,10 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log, 
                 logger.info('jobs::autoBlockIp::success', { id });
                 return channel.ack(msg);
             }).catch(async e => {
-                logger.error('jobs::autoBlockIp::error', error, { id });
+                logger.error('jobs::autoBlockIp::error', e, { id });
                 log.reason = {
                     message: MESSAGE.errorGoogle,
-                    error: JSON.stringify(error)
+                    error: JSON.stringify(e)
                 }
                 await log.save();
                 // channel.ack(msg); // TODO: improve call google api limited.

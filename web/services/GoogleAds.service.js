@@ -14,6 +14,7 @@ const AccountAdsModel = require('../modules/account-adwords/account-ads.model');
 const UserModel = require('../modules/user/user.model');
 const AdAccountConstant = require('../modules/account-adwords/account-ads.constant');
 const moment = require('moment');
+const UrlTrackingTemplateConstant = require('../constants/url-tracking-template.constant');
 
 const getRefreshToken = async (adwordId) => {
 	logger.info('GoogleAdsService::getRefreshToken is called.', {adwordId});
@@ -56,7 +57,7 @@ const getRefreshToken = async (adwordId) => {
 const sendManagerRequest = function (accountAdsId) {
 	return new Promise(async (resolve, reject) => {
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 
 		logger.info('GoogleAdsService::sendManagerRequest', accountAdsId);
 		const authConfig = {
@@ -112,7 +113,7 @@ const getListCampaigns = function (adwordId) {
 	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::getListCampaigns', adwordId);
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -127,7 +128,7 @@ const getListCampaigns = function (adwordId) {
 
 		let campaignService = user.getService('CampaignService', adwordConfig.version);
 		const selector = {
-			fields  : ['Id', 'Name', 'Status', 'ServingStatus', 'TargetGoogleSearch', 'AdvertisingChannelSubType', 'AdvertisingChannelType'],
+			fields  : ['Id', 'Name', 'Status', 'ServingStatus', 'TargetGoogleSearch', 'AdvertisingChannelSubType', 'AdvertisingChannelType', 'TrackingUrlTemplate'],
 			ordering: [{ field: 'Name', sortOrder: 'ASCENDING' }],
 			paging  : { startIndex: 0, numberResults: AdwordsConstants.RECOMMENDED_PAGE_SIZE }
 		};
@@ -167,7 +168,7 @@ const getCampaignsName = function (adwordId, campaignIds) {
 	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::getCampaignsName', adwordId);
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -221,7 +222,7 @@ const addIpBlackList = function (adwordId, campaignId, ipAddress) {
 	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignId, ipAddress);
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -281,7 +282,7 @@ const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion
 	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::removeIpBlackList', adwordId, campaignId, ipAddress);
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -378,7 +379,7 @@ const removeIpBlackList = function (adwordId, campaignId, ipAddress, idCriterion
 const getPendingInvitations = () => {
 	return new Promise(async (resolve, reject) => {
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 
 		const user = new AdwordsUser({
 			developerToken: adwordConfig.developerToken,
@@ -431,7 +432,7 @@ const getAccountHierachy = function (refreshToken, adwordId) {
 	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::getAccountHierachy', adwordId);
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 
 		// const adwordConfig = config.get('google-ads');
 		const authConfig = {
@@ -480,7 +481,7 @@ const getReportOnDevice = (adwordId, campaignIds, fields, startDate, endDate) =>
 	logger.info('GoogleAdsService::getReportOfOneCampaign', adwordId);
 	return new Promise(async (resolve, reject) => {
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.isReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -530,7 +531,7 @@ const enabledOrPauseTheCampaignByDevice = (adwordId, campaignId, criterionId, bi
 	logger.info('GoogleAdsService::enabledOrPauseTheCampaignByDevice', info);
 	return new Promise(async (resolve, reject) => {
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -581,7 +582,7 @@ const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
 	logger.info('GoogleAdsService::getIpBlockOfCampaign', info);
 	return new Promise(async (resolve, reject) => {
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -629,7 +630,7 @@ const getIpBlockOfCampaigns = (adwordId, campaignIds) => {
 const getListGoogleAdsAccount = (accessToken, refreshToken) => {
 	return new Promise(async (resolve, reject) => {
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 
 		// const googleAdAccount = config.get('google-ads');
 		const authConfig = {
@@ -667,7 +668,7 @@ const getClickReport = (adwordId, campaignIds, fields) => {
   logger.info('GoogleAdsService::getClickReport', {adwordId, campaignIds, fields});
   return new Promise(async (resolve, reject) => {
 
-	await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+	await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.isReport, number: 1 });
 	const googleRefreshToken = await getRefreshToken(adwordId);
 
     const report = new AdwordsReport({
@@ -716,7 +717,7 @@ const getKeywordsReport = (adwordId, campaignIds, fields) => {
 	logger.info('GoogleAdsService::getKeywordsReport', {adwordId, campaignIds, fields});
 	return new Promise(async (resolve, reject) => {
 
-	await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.isReport);
+	await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.isReport, number: 1 });
 	const googleRefreshToken = await getRefreshToken(adwordId);
 
 	const report = new AdwordsReport({
@@ -766,7 +767,7 @@ const getAdWordsName = (adwordId) => {
 	logger.info('GoogleAdsService::getAdWordsName', info);
 	return new Promise(async (resolve, reject) => {
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -813,7 +814,7 @@ const getkeyWords = (adwordId) => {
 	logger.info('GoogleAdsService::getkeyWords', info);
 	return new Promise(async (resolve, reject) => {
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -860,7 +861,7 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 	return new Promise(async (resolve, reject) => {
 		logger.info('GoogleAdsService::setTrackingUrlTemplateForCampaign', { adwordId, campaignIds });
 
-		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: campaignIds.length });
 		const googleRefreshToken = await getRefreshToken(adwordId);
 
 		const authConfig = {
@@ -882,7 +883,7 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 				operator: 'SET',
 				operand : {
 					id                 : campaignId,
-					trackingUrlTemplate: '{lpurl}?click_matchtype={matchtype}&click_keyword={keyword}&click_location={loc_physical_ms}&click_adposition={adposition}&click_network={network}',
+					trackingUrlTemplate: UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE
 				}
 			});
 		});
@@ -913,9 +914,9 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 const addIpBlackListToCampaigns = function (adwordId, campaignIds, ips) {
 	return new Promise(async (resolve, reject) => {
 		try{
-			logger.info('GoogleAdsService::addIpBlackList', adwordId, campaignIds, ips);
+			logger.info('GoogleAdsService::addIpBlackListToCampaigns', adwordId, campaignIds, ips);
 
-			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: campaignIds.length * ips.length });
 			const googleRefreshToken = await getRefreshToken(adwordId);
 
 			const authConfig = {
@@ -954,21 +955,21 @@ const addIpBlackListToCampaigns = function (adwordId, campaignIds, ips) {
 					GoogleAdsErrorService.createLogError({
 						serviceVersion: adwordConfig.version,
 						authConfig,
-						functionName  : 'GoogleAdsService::addIpBlackList',
+						functionName  : 'GoogleAdsService::addIpBlackListToCampaigns',
 						error,
 						params,
 						serviceName   : 'CampaignCriterionService',
 						moduleName    : 'AdwordsUser'
 					});
-					logger.error('GoogleAdsService::addIpBlackList::error', error);
+					logger.error('GoogleAdsService::addIpBlackListToCampaigns::error', error);
 					return reject(error);
 				}
 
-				logger.info('GoogleAdsService::addIpBlackList::success', result);
+				logger.info('GoogleAdsService::addIpBlackListToCampaigns::success', result);
 				return resolve(result);
 			});
 		}catch(e){
-			logger.error('GoogleAdsService::addIpBlackList::error', e);
+			logger.error('GoogleAdsService::addIpBlackListToCampaigns::error', e);
 			return reject(e);
 		}
 	});
@@ -979,7 +980,7 @@ const getIpOnGoogleFilteredByCampaignsAndIps = (adwordId, campaignIds, ips) => {
 	logger.info('GoogleAdsService::getIpOnGoogleFilteredByCampaignsAndIps', info);
 	return new Promise(async (resolve, reject) => {
 		try{
-			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
 			const googleRefreshToken = await getRefreshToken(adwordId);
 
 			const authConfig = {
@@ -1036,7 +1037,7 @@ const removeIpBlackListToCampaigns = (adwordId, campaignsInfo) => {
 		try{
 			logger.info('GoogleAdsService::removeIpBlackListToCampaigns', adwordId);
 
-			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, COUNT.notReport);
+			await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: campaignsInfo.length });
 			const googleRefreshToken = await getRefreshToken(adwordId);
 
 			const authConfig = {
