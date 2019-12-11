@@ -123,7 +123,11 @@ buildStageStatisticUser = (queryCondition) => {
       "utmSource": "$info.utmSource",
       "session": "$info.session",
       "browser": "$info.browser",
-      "os": "$info.os" 
+      "os": "$info.os",
+      "matchType": "$info.matchType",
+      "page": "$info.page",
+      "position": "$info.position",
+      "campaignType": "$info.campaignType"
     }
   });
 
