@@ -9,6 +9,10 @@ module.exports = {
   setting: {
     autoBlockByMaxClick: 2,
     countMaxClickInHours: 24,
+    countMaxClickClassCInMinnutes: 30,
+    countMaxClickClassDInMinnutes: 15,
+    autoBlockIpClassCByMaxClick: 20,
+    autoBlockIpClassDByMaxClick: 5,
     autoRemoveBlocking: false,
     autoBlockWithAiAndBigData: true,
     autoBlackListIp: [],

@@ -46,6 +46,22 @@ const accountAdsSchema = new Schema(
         classD: {
           type: Boolean,
           default: AccountAdsConstant.setting.autoBlackListIpRanges
+        },
+        countMaxClickClassCInMinnutes: {
+          type: Number,
+          default: AccountAdsConstant.countMaxClickClassCInMinnutes
+        },
+        countMaxClickClassDInMinnutes: {
+          type: Number,
+          default: AccountAdsConstant.countMaxClickClassDInMinnutes
+        },
+        autoBlockIpClassCByMaxClick: {
+          type: Number,
+          default: AccountAdsConstant.autoBlockIpClassCByMaxClick
+        },
+        autoBlockIpClassDByMaxClick: {
+          type: Number,
+          default: AccountAdsConstant.autoBlockIpClassDByMaxClick
         }
       },
       customBlackList: {
