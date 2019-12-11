@@ -12,7 +12,7 @@ module.exports = {
     countMaxClickClassCInMinnutes: 30,
     countMaxClickClassDInMinnutes: 15,
     autoBlockIpClassCByMaxClick: 20,
-    autoBlockIpClassDByMaxClick: 5,
+    autoBlockIpClassDByMaxClick: 10,
     autoRemoveBlocking: false,
     autoBlockWithAiAndBigData: true,
     autoBlackListIp: [],

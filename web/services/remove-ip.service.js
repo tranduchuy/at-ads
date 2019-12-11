@@ -120,7 +120,7 @@ const removeIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, 
 };
 
 const removeIpInAccount = async (key, ips, positionBlockInAccountAds) => {
-  logger.info('BlockIpService::removeIpInAccount::is called', { key, ips, positionBlockInAccountAds });
+  logger.info('RemoveService::removeIpInAccount::is called', { key, ips, positionBlockInAccountAds });
   try {
       let updateData = { $set: { ['setting.' + positionBlockInAccountAds] : ips } };
 
@@ -131,17 +131,17 @@ const removeIpInAccount = async (key, ips, positionBlockInAccountAds) => {
 
       return await AccountAdsModel.updateOne({ key }, updateData);
   } catch (e) {
-      logger.error('BlockIpService::removeIpInAccount::error', e);
+      logger.error('RemoveService::removeIpInAccount::error', e);
       throw new Error(e);
   }
 };
 
 const removeIpsInCampaign = async(campaigns, ips, positionBlock) => {
-  logger.info('BlockIpService::removeIpsInCampaign::is called', { campaigns, ips, positionBlock });
+  logger.info('RemoveService::removeIpsInCampaign::is called', { campaigns, ips, positionBlock });
   try{
     if(campaigns.length <= 0)
     {
-      logger.info('BlockIpService::removeIpsInCampaign::ips is empty');
+      logger.info('RemoveService::removeIpsInCampaign::ips is empty');
       return;
     }
 
@@ -158,7 +158,7 @@ const removeIpsInCampaign = async(campaigns, ips, positionBlock) => {
     await BlockingCriterionsModel.updateMany(conditionUpdate, dataUpdate);
     return;
   }catch(e){
-    logger.error('BlockIpService::removeIpsInCampaign::error', e);
+    logger.error('RemoveService::removeIpsInCampaign::error', e);
     throw new Error(e);
   }
 };

@@ -323,7 +323,12 @@ const getDataForIntroPage = () => {
   logger.info('UserBihaviorLogService::getDataForIntroPage::Is called');
   return new Promise(async(res, rej) => {
     try{
-
+      const matchStage = {
+				$match: {
+					type: UserBehaviorLogConstant.LOGGING_TYPES.CLICK
+				}
+      };
+      
       const sortStage = {
         $sort: {
           createdAt: -1
@@ -353,6 +358,7 @@ const getDataForIntroPage = () => {
       };
 
       const query = [
+        matchStage,
         sortStage,
         projectStage,
         limitStage
