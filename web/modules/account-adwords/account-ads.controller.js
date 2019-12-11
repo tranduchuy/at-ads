@@ -443,7 +443,11 @@ const autoBlockingRangeIp = (req, res, next) => {
 		_id   : req.adsAccount._id,
 		adsId : req.adsAccount.adsId,
 		classC: req.body.classC,
-		classD: req.body.classD
+		classD: req.body.classD,
+		countMaxClickClassCInMinnutes: req.body.countMaxClickClassCInMinnutes,
+		countMaxClickClassDInMinnutes: req.body.countMaxClickClassDInMinnutes,
+		autoBlockIpClassCByMaxClick: req.body.autoBlockIpClassCByMaxClick,
+		autoBlockIpClassDByMaxClick: req.body.autoBlockIpClassDByMaxClick
 	}
 
 	if (req.user.connectType == AdAccountConstant.connectType.byId && !req.adsAccount.isConnected) {
@@ -461,8 +465,8 @@ const autoBlockingRangeIp = (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		const { classC, classD } = req.body;
-		const rangeIp = { classC, classD };
+		const { classC, classD, countMaxClickClassCInMinnutes, countMaxClickClassDInMinnutes, autoBlockIpClassCByMaxClick, autoBlockIpClassDByMaxClick } = req.body;
+		const rangeIp = { classC, classD, countMaxClickClassCInMinnutes, countMaxClickClassDInMinnutes, autoBlockIpClassCByMaxClick, autoBlockIpClassDByMaxClick };
 
 		req.adsAccount.setting.autoBlackListIpRanges = rangeIp;
 

@@ -173,7 +173,140 @@ const removeIps = (accountAds, campaignIds, ip, cb) => {
         logger.error('jobs::removeIps::Error',  e);
         return cb(e);
     }
-}
+};
+
+const countClickIpClassC = async (accountAds, ip) => {
+    logger.info('jobs::countClickIpClassC::is called', { key: accountAds.key, ip});
+    try{
+      const countMaxClickClassCInMinnutes = accountAds.setting.autoBlackListIpRanges.countMaxClickClassCInMinnutes || AccountAdsConstant.setting.countMaxClickClassCInMinnutes;
+      const timeSet = moment().subtract(countMaxClickClassCInMinnutes, 'minutes');
+      const now = moment();
+      const accountKey = accountAds.key;
+
+      const matchStage =  {
+        $match: {
+          accountKey,
+          type: LOGGING_TYPES.CLICK,
+          createdAt: {
+            $gte: new Date(timeSet),
+            $lt: new Date(now)
+          }
+        }  
+      };
+  
+      const projectStage ={ $project: { 
+          ip1: { $split: ["$ip", "."]}}
+      };
+  
+      const projectStage1 ={ $project: {
+          ip2: {$arrayElemAt: ["$ip1",0]},
+          ip3: {$arrayElemAt: ["$ip1",1]}}
+      };
+
+      const projectStage2 = { $project: { 
+          ipClassC: { $concat: [ "$ip2", ".", "$ip3", ".0", ".0/16"]}}
+      };
+
+      const matchStage1 =  {
+        $match: {
+          "ipClassC": ip
+        }  
+      };
+
+      const groupStage = { $group: { 
+          _id: "$ipClassC",
+          totalClick: {$sum: 1}
+        }
+      };
+
+      const query = [
+          matchStage,
+          projectStage,
+          projectStage1,
+          projectStage2,
+          matchStage1,
+          groupStage
+      ];
+
+      logger.info('jobs::countClickIpClassC::query ', { key: accountAds.key, ip, query: JSON.stringify(query)});
+      const result = await UserBehaviorLogsModel.aggregate(query);
+
+      logger.info('jobs::countClickIpClassC::success ', {accountKey});
+
+      return result;
+    }catch(e){
+        logger.error('jobs::countClickIpClassC::Error',  e);
+        console.log(e);
+        throw new Error(e);
+    }
+};
+
+const countClickIpClassD = async (accountAds, ip) => {
+    logger.info('jobs::countClickIpClassD::is called', { key: accountAds.key, ip});
+    try{
+        const countMaxClickClassDInMinnutes = accountAds.setting.autoBlackListIpRanges.countMaxClickClassDInMinnutes || AccountAdsConstant.setting.countMaxClickClassDInMinnutes;
+        const timeSet = moment().subtract(countMaxClickClassDInMinnutes, 'minutes');
+        const now = moment();
+        const accountKey = accountAds.key;
+
+        const matchStage =  {
+          $match: {
+            accountKey,
+            type: LOGGING_TYPES.CLICK,
+            createdAt: {
+              $gte: new Date(timeSet),
+              $lt: new Date(now)
+            }
+          }  
+        };
+    
+        const projectStage ={ $project: { 
+            ip1: { $split: ["$ip", "."]}}
+        };
+    
+        const projectStage1 ={ $project: {
+            ip2: {$arrayElemAt: ["$ip1",0]},
+            ip3: {$arrayElemAt: ["$ip1",1]},
+            ip4: {$arrayElemAt: ["$ip1",2]}}
+        };
+
+        const projectStage2 = { $project: { 
+            ipClassD: { $concat: [ "$ip2", ".", "$ip3", ".", "$ip4", ".0/24"]}}
+        };
+
+        const matchStage1 =  {
+          $match: {
+            "ipClassD": ip
+          }  
+        };
+
+        const groupStage = { $group: { 
+            _id: "$ipClassD",
+            totalClick: {$sum: 1}
+          }
+        };
+
+        const query = [
+            matchStage,
+            projectStage,
+            projectStage1,
+            projectStage2,
+            matchStage1,
+            groupStage
+        ];
+
+        logger.info('jobs::countClickIpClassD::query ', { key: accountAds.key, ip, query: JSON.stringify(query)});
+        const result = await UserBehaviorLogsModel.aggregate(query);
+
+        logger.info('jobs::countClickIpClassD::success ', {accountKey});
+
+        return result;
+    }catch(e){
+        logger.error('jobs::countClickIpClassD::Error',  e);
+        console.log(e);
+        throw new Error(e);
+    }
+};
 
 module.exports = async (channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
@@ -217,24 +350,61 @@ module.exports = async (channel, msg) => {
             return;
         }
 
+        const sampleBlockingIp = accountAds.setting.sampleBlockingIp;
+        let blackList1 = accountAds.setting.customBlackList.concat(accountAds.setting.autoBlackListIp);
+        blackList1 = sampleBlockingIp && sampleBlockingIp != '' ? blackList1.concat([sampleBlockingIp]) : blackList1;
+        const checkIpBlackList = checkIpsInWhiteList([ip], blackList1);
+
+        if(checkIpBlackList.ipsConflict.length > 0)
+        {
+            logger.info('jobs::autoBlockIp::ipExistsInBlackList.', { id });
+            log.reason = {
+                message: MESSAGE.ipExistsInDB
+            };
+            log.isSpam = true;
+            await log.save();
+            channel.ack(msg);
+            return;
+        }
+
         let ipRangesFlag = 0;
         const ipRangesClassC = accountAds.setting.autoBlackListIpRanges.classC;
         const splitIp = ip.split('.');
 
         if (ipRangesClassC) {
-            const sliceIp = splitIp.slice(0,2);
-            ip = sliceIp.join('.') + ".0.0/16";
+          const sliceIp = splitIp.slice(0,2);
+          const ipClassC = sliceIp.join('.') + ".0.0/16";
+          const autoBlockIpClassCByMaxClick = accountAds.setting.autoBlackListIpRanges.autoBlockIpClassCByMaxClick || AccountAdsConstant.setting.autoBlockIpClassCByMaxClick;
+          const countIpClassC = await countClickIpClassC(accountAds, ipClassC);
+          const totalClickClassC = countIpClassC[0] ? countIpClassC[0].totalClick : 0;
+
+          logger.info('jobs::autoBlockIp::Info ip class C.', { id, totalClickClassC });
+          if(totalClickClassC >= autoBlockIpClassCByMaxClick)
+          {
+            logger.info('jobs::autoBlockIp::Block ip class C.', { id, ipInfo: JSON.stringify(countIpClassC) });
+            ip = countIpClassC[0] ? countIpClassC[0]._id : ip;
             ipRangesFlag = 1;
             message = MESSAGE.blockIpByGroup;
+          }
         }
 
         const ipRangesClassD = accountAds.setting.autoBlackListIpRanges.classD;
 
         if (ipRangesFlag === 0 && ipRangesClassD) {
-           const sliceIp = splitIp.slice(0,3);
-           ip = sliceIp.join('.') + ".0/24";
-           ipRangesFlag = 1;
-           message = MESSAGE.blockIpByGroup;
+          const sliceIp = splitIp.slice(0,3);
+          const ipClassD = sliceIp.join('.') + ".0/24";
+          const autoBlockIpClassDByMaxClick = accountAds.setting.autoBlackListIpRanges.autoBlockIpClassDByMaxClick || AccountAdsConstant.setting.autoBlockIpClassDByMaxClick;
+          const countIpClassD = await countClickIpClassD(accountAds, ipClassD);
+          const totalClickClassD = countIpClassD[0] ? countIpClassD[0].totalClick : 0;
+
+          logger.info('jobs::autoBlockIp::Info ip class D.', { id, totalClickClassD });
+          if(totalClickClassD >= autoBlockIpClassDByMaxClick)
+          {
+            logger.info('jobs::autoBlockIp::Block ip class D.', { id, ipInfo: JSON.stringify(countIpClassD) });
+            ip = countIpClassD[0] ? countIpClassD[0]._id : ip;
+            ipRangesFlag = 1;
+            message = MESSAGE.blockIpByGroup;
+          }
         }
 
         const blackList = {
@@ -271,7 +441,7 @@ module.exports = async (channel, msg) => {
                     const countClick = await countClickInLogs(ip, key, countMaxClickInHours);
                     const maxClick = accountAds.setting.autoBlockByMaxClick;
 
-                    if (maxClick === -1 || countClick <= maxClick) {
+                    if (maxClick === -1 || countClick < maxClick) {
                         logger.info('jobs::autoBlockIp::success.', { id });
                         log.reason = {
                             message: MESSAGE.ipNumberLessThanMaxClick,

@@ -32,7 +32,12 @@ buildStageGetIPClicks = (queryCondition, page, limit) => {
 				os               : 1,
 				isPrivateBrowsing: 1,
 				pathname         : 1,
-				domain           : 1
+				domain           : 1,
+				keyword          : 1,
+				matchType        : 1,
+				page             : 1,
+				position         : 1,
+				campaignType     : 1
 			}
 		},
 		{

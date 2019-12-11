@@ -14,7 +14,7 @@ const statistic = async(req, res, next) => {
     const userIds = users.map(user => user._id);
     const adswords = await AdsWordsModel.find({user: {$in : userIds}});
     const adsIds = adswords.map(ads => ads._id);
-    const numberOfWebsite = await WebsiteModel.count({accountAd: {$in: adsIds}});
+    const numberOfWebsite = await WebsiteModel.countDocuments({accountAd: {$in: adsIds}});
     return res.status(HttpStatus.OK).json({
       messages: ['Lấy dữ liệu thành công.'],
       data: {
