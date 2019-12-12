@@ -243,12 +243,10 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 			const autoBlackListIp = req.adsAccount.setting.autoBlackListIp;
 			const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
 			const ipsArr = AccountAdsService.checkIpIsBlackListed(customBlackList, arrAfterRemoveIdenticalElement, ipInSampleBlocked, autoBlackListIp);
-			const ipSampleArr = ipInSampleBlocked === '' ? [] : [ipInSampleBlocked];
-			const allIps = customBlackList.concat(ipSampleArr, arrAfterRemoveIdenticalElement, autoBlackListIp);
+			const allIps = customBlackList.concat(arrAfterRemoveIdenticalElement);
 			const ipsNumber = allIps.length;
-			const maxIpsNumber = req.adsAccount.setting.maxIps || AdAccountConstant.setting.maxIps;
-			
-			if(ipsNumber >= ( maxIpsNumber - AdAccountConstant.ipsNumberForAutoBlackList))
+
+			if(ipsNumber > AdAccountConstant.MAX_IP.CUSTOM_BLACKLIST)
 			{
 				logger.info('AccountAdsController::handleManipulationGoogleAds::' + ActionConstant.ADD + ' ::Ips number in DB greater than ips default number ');
 				return res.status(HttpStatus.BAD_REQUEST).json({
@@ -486,7 +484,7 @@ const autoBlockingRangeIp = (req, res, next) => {
 
 			const actionHistory = {
 				userId : req.user._id,
-				content: `${classCMessage} chặn theo dãy ip: 127.0.0.* (255 IP) / ${classDMessage} chặn theo dãy ip: IP 127.0.*.* (65.026 IP) `,
+				content: `${classCMessage} chặn theo dãy ip: 127.0.0.* (255 IP) / ${classDMessage} chặn theo dãy ip: IP 127.0.*.* (65.026 IP). Chặn ip lớp D nếu quá ${autoBlockIpClassDByMaxClick} ip trong vòng ${countMaxClickClassDInMinnutes} phút. Chặn ip lớp C nếu quá ${autoBlockIpClassCByMaxClick} ip trong vòng ${countMaxClickClassCInMinnutes} phút `,
 				param  : { classC, classD }
 			};
 
@@ -1093,16 +1091,6 @@ const blockSampleIp = (req, res, next) => {
 		const ipInwhiteList = req.adsAccount.setting.customWhiteList || [];
 		allIpInBlackList = allIpInBlackList.concat(req.adsAccount.setting.autoBlackListIp);
 		const checkIpInDB = allIpInBlackList.filter(ele => ele === ip);
-		const ipsInBlackListNumber = allIpInBlackList.length;
-		const maxIpsNumber = req.adsAccount.setting.maxIps || AdAccountConstant.setting.maxIps;
-
-		if(ipsInBlackListNumber >= ( maxIpsNumber - AdAccountConstant.ipsNumberForAutoBlackList))
-		{
-			logger.info('AccountAdsController::blockSampleIp::Ips number in DB greater than ips default number ');
-			return res.status(HttpStatus.BAD_REQUEST).json({
-				messages: ['Số lượng ip đã vượt quá số lượng ip cho phép! Vui lòng xóa ip để tiếp tục sử dụng chức năng này.']
-			}) 
-		}
 
 		if (checkIpInDB.length !== 0) {
 			logger.info('AccountAdsController::blockSampleIp::blockSampleIp::Conflict\n', info);

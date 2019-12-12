@@ -25,7 +25,7 @@ db(() => {
     removeIp();
     updateCampaignName();
     updateNetworkCompany();
-    getClickReport();
+    // getClickReport();
     checkRefreshToken();
     updateAdsName();
     updateUrlTracking();
