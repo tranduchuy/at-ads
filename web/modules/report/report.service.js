@@ -677,7 +677,6 @@ const mapIpInGetBlockedIpList = (entries) => {
 	logger.info('ReportService::mapIpInGetBlockedIpList::is called');
 	try{
 		entries.forEach(ip => {
-			console.log(ip._id);
 			const splitIp = ip._id.split('.');
 
 			if(splitIp.length > 1)

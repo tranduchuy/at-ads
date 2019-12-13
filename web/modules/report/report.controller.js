@@ -353,6 +353,7 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 			const gclidList = entries.map(log => log.gclid).filter(ReportService.onlyUnique);
 			const clickReport = await ClickReportService.getReportByGclId(gclidList);
 			entries = ClickReportService.mapCLickReportIntoUserLogs(clickReport, entries);
+			entries = ReportService.mapIpInGetBlockedIpList(entries);
 		}
 
 		logger.info('ReportController::getIpsInAutoBlackListOfAccount::success\n', info);
