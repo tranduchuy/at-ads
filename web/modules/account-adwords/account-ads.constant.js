@@ -60,5 +60,9 @@ module.exports = {
     ADD_WEBSITE: 3,
     ADD_TRACKING_FOR_WEBSITE: 4,
     SUCCESS: 5
+  },
+  MAX_IP: {
+    AUTO_BLACKLIST: 350,
+    CUSTOM_BLACKLIST: 99
   }
 };

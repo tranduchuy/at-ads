@@ -14,6 +14,7 @@ const AccountAdsConstant = require('../modules/account-adwords/account-ads.const
 const AccountAdsService = require('../modules/account-adwords/account-ads.service');
 const { MESSAGE } = require('../modules/user-behavior-log/user-behavior-log.constant');
 const BlockIpServices = require('../services/block-ip.service');
+const RemoveIpsServices = require('../services/remove-ip.service');
 const BlockingCriterionsConstant = require('../modules/blocking-criterions/blocking-criterions.constant');
 
 const updateIsSpamStatus = async (id, message) => {
@@ -89,8 +90,6 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log, 
         }
 
         const campaignIds = campaignsOfAccount.map(campaign => campaign.campaignId);
-        const adsId = accountAds.adsId;
-        const accountId = accountAds._id;
 
         Async.series([
             cb => {
@@ -143,15 +142,10 @@ const saveIpIntoDB = async (isConnected, accountAds, ip, key, id, message, log, 
 };
 
 const checkIpsNumber = (accountAds) => {
-    const ipsInBlackList = accountAds.setting.customBlackList;
-    const ipsInAutoBlackList = accountAds.setting.autoBlackListIp;
-    const ipInSampleBlackList = accountAds.setting.sampleBlockingIp;
-    const ipSampleArr = ipInSampleBlackList === "" ? [] : [ipInSampleBlackList];
-    const allIpsArr = ipsInBlackList.concat(ipsInAutoBlackList, ipSampleArr);
-    const maxIps = accountAds.setting.maxIPs || AccountAdsConstant.setting.maxIps;
-    const ipsNumber = allIpsArr.length;
+    const ipsInAutoBlackList = accountAds.setting.autoBlackListIp || [];
+    const ipsNumber = ipsInAutoBlackList.length + 1;
 
-    if(ipsNumber >= maxIps)
+    if(ipsNumber > AccountAdsConstant.MAX_IP.AUTO_BLACKLIST)
     {
         return false;
     }
@@ -159,10 +153,10 @@ const checkIpsNumber = (accountAds) => {
     return true;
 };
 
-const removeIps = (accountAds, campaignIds, ip, cb) => {
-    logger.info('jobs::removeIps::is called',  {accountAds, campaignIds, ip});
+const removeIps = (accountAds, campaignIds, ips, cb) => {
+    logger.info('jobs::removeIps::is called',  {accountAds, campaignIds, ips});
     try{
-        BlockIpServices.blockIp(accountAds, campaignIds, [ip], BlockingCriterionsConstant.positionBlockIp.AUTO_BLACKLIST, AccountAdsConstant.positionBlockIp.AUTO_BLACKLIST)
+        RemoveIpsServices.removeIp(accountAds, campaignIds, ips, BlockingCriterionsConstant.positionBlockIp.AUTO_BLACKLIST, AccountAdsConstant.positionBlockIp.AUTO_BLACKLIST)
         .then(result => {
             return cb()
         }).catch(err => {
@@ -374,11 +368,12 @@ module.exports = async (channel, msg) => {
         if (ipRangesClassC) {
           const sliceIp = splitIp.slice(0,2);
           const ipClassC = sliceIp.join('.') + ".0.0/16";
+          const countMaxClickClassCInMinnutes = accountAds.setting.autoBlackListIpRanges.countMaxClickClassCInMinnutes || AccountAdsConstant.setting.countMaxClickClassCInMinnutes;
           const autoBlockIpClassCByMaxClick = accountAds.setting.autoBlackListIpRanges.autoBlockIpClassCByMaxClick || AccountAdsConstant.setting.autoBlockIpClassCByMaxClick;
           const countIpClassC = await countClickIpClassC(accountAds, ipClassC);
           const totalClickClassC = countIpClassC[0] ? countIpClassC[0].totalClick : 0;
 
-          logger.info('jobs::autoBlockIp::Info ip class C.', { id, totalClickClassC });
+          logger.info('jobs::autoBlockIp::Info ip class C.', { id, totalClickClassC, autoBlockIpClassCByMaxClick, countMaxClickClassCInMinnutes });
           if(totalClickClassC >= autoBlockIpClassCByMaxClick)
           {
             logger.info('jobs::autoBlockIp::Block ip class C.', { id, ipInfo: JSON.stringify(countIpClassC) });
@@ -393,11 +388,12 @@ module.exports = async (channel, msg) => {
         if (ipRangesFlag === 0 && ipRangesClassD) {
           const sliceIp = splitIp.slice(0,3);
           const ipClassD = sliceIp.join('.') + ".0/24";
+          const countMaxClickClassDInMinnutes = accountAds.setting.autoBlackListIpRanges.countMaxClickClassDInMinnutes || AccountAdsConstant.setting.countMaxClickClassDInMinnutes;
           const autoBlockIpClassDByMaxClick = accountAds.setting.autoBlackListIpRanges.autoBlockIpClassDByMaxClick || AccountAdsConstant.setting.autoBlockIpClassDByMaxClick;
           const countIpClassD = await countClickIpClassD(accountAds, ipClassD);
           const totalClickClassD = countIpClassD[0] ? countIpClassD[0].totalClick : 0;
 
-          logger.info('jobs::autoBlockIp::Info ip class D.', { id, totalClickClassD });
+          logger.info('jobs::autoBlockIp::Info ip class D.', { id, totalClickClassD, autoBlockIpClassDByMaxClick, countMaxClickClassDInMinnutes });
           if(totalClickClassD >= autoBlockIpClassDByMaxClick)
           {
             logger.info('jobs::autoBlockIp::Block ip class D.', { id, ipInfo: JSON.stringify(countIpClassD) });

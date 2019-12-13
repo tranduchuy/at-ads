@@ -673,6 +673,43 @@ const onlyUnique = (value, index, self) => {
 	return self.indexOf(value) === index;
 };
 
+const mapIpInGetBlockedIpList = (entries) => {
+	logger.info('ReportService::mapIpInGetBlockedIpList::is called');
+	try{
+		entries.forEach(ip => {
+			console.log(ip._id);
+			const splitIp = ip._id.split('.');
+
+			if(splitIp.length > 1)
+			{
+				const classD = splitIp[3].split('/');
+
+				if(classD.length > 1)
+				{
+					switch ( classD[1] ) {
+						case '16':
+							const slideIpClassC = splitIp.slice(0,2);
+							ip._id = slideIpClassC.join('.') + ".*.*";
+							break;
+						case '24':
+							const slideIpClassD = splitIp.slice(0,3);
+							ip._id = slideIpClassD.join('.') + ".*";
+							break;
+						default:
+							break;
+					};
+				}
+			}
+		});
+
+		return entries;
+	}catch(e)
+	{
+		logger.error('ReportService::mapIpInGetBlockedIpList::error', e);
+		throw new Error(e);
+	}
+}
+
 module.exports = {
 	buildStageGetIPClicks,
 	buildStageGetDetailIPClick,
@@ -688,5 +725,6 @@ module.exports = {
 	getStatisticOfGoogleAdsErrorsNumber,
 	getRequestsOfGoogleNumber,
 	mapDateOfErrorGoogleAndDateOfRequest,
-	onlyUnique
+	onlyUnique,
+	mapIpInGetBlockedIpList
 };
