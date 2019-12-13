@@ -38,7 +38,7 @@ const getIPClicks = async (req, res, next) => {
 	logger.info('ReportController::getIPClicks is called\n', info);
 	try {
 
-		const { ip } = req.params;
+		let { ip } = req.params;
 		let { page, limit } = req.query;
 
 		if (!page) {
@@ -51,6 +51,65 @@ const getIPClicks = async (req, res, next) => {
 
 		page = Number(page);
 		limit = Number(limit);
+
+		const splitIp = ip.split('.');
+
+		if(splitIp.length != 4)
+		{
+			const response = {
+				status  : HttpStatus.OK,
+				messages: [messages.ResponseMessages.SUCCESS],
+				data    : {
+					meta : {
+						totalItems: 0,
+					},
+					items: [],
+					last: null
+				}
+			};
+	
+			return res.status(HttpStatus.OK).json(response);
+		}
+
+		if(splitIp[2] == '*' && splitIp[3] == '*')
+		{
+			ip = splitIp.slice(0,2).join('.') + ".0.0/16";
+			const result = await ReportService.getIpClickingClassC(ip, req.adsAccount.key, page, limit);
+
+			const response = {
+				status  : HttpStatus.OK,
+				messages: [messages.ResponseMessages.SUCCESS],
+				data    : {
+					meta : {
+						totalItems: result[0].meta.length > 0 ? result[0].meta[0].totalItems : 0,
+					},
+					items: result[0].entries,
+					last: result[0].entries.length > 0 ? result[0].entries[0] : null
+				}
+			};
+	
+			return res.status(HttpStatus.OK).json(response);
+		}
+
+		if(splitIp[3] == '*')
+		{
+			ip = splitIp.slice(0,3).join('.') + ".0/24";
+			const result = await ReportService.getIpClickingClassD(ip, req.adsAccount.key, page, limit);
+
+			const response = {
+				status  : HttpStatus.OK,
+				messages: [messages.ResponseMessages.SUCCESS],
+				data    : {
+					meta : {
+						totalItems: result[0].meta.length > 0 ? result[0].meta[0].totalItems : 0,
+					},
+					items: result[0].entries,
+					last: result[0].entries.length > 0 ? result[0].entries[0] : null
+				}
+			};
+	
+			return res.status(HttpStatus.OK).json(response);
+		}
 
 		const stages = ReportService.buildStageGetIPClicks({
 			ip        : ip,
