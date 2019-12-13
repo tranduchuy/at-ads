@@ -75,9 +75,13 @@ const getIPClicks = async (req, res, next) => {
 		{
 			ip = splitIp.slice(0,2).join('.') + ".0.0/16";
 			let result = await ReportService.getIpClickingClassC(ip, req.adsAccount.key, page, limit);
-			result[0].entries = result[0].entries.map(ipInfo => {
-				return { ...ipInfo.ipInfo };
-			})
+
+			if(result[0].meta.length > 0){
+				result[0].entries = result[0].entries.map(ipInfo => {
+					return { ...ipInfo.ipInfo };
+				})
+			}
+			
 			const response = {
 				status  : HttpStatus.OK,
 				messages: [messages.ResponseMessages.SUCCESS],
@@ -97,9 +101,12 @@ const getIPClicks = async (req, res, next) => {
 		{
 			ip = splitIp.slice(0,3).join('.') + ".0/24";
 			let result = await ReportService.getIpClickingClassD(ip, req.adsAccount.key, page, limit);
-			result[0].entries = result[0].entries.map(ipInfo => {
-				return { ...ipInfo.ipInfo };
-			})
+
+			if(result[0].meta.length > 0){
+				result[0].entries = result[0].entries.map(ipInfo => {
+					return { ...ipInfo.ipInfo };
+				})
+			}
 
 			const response = {
 				status  : HttpStatus.OK,
