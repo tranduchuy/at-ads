@@ -243,8 +243,8 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 		let { from, to, website } = req.query;
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::babRequest\n', info);
@@ -305,13 +305,13 @@ const getTrafficSourceLogs = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 		let { from, to, website } = req.query;
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 		let page = req.query.page || Paging.PAGE;
 		let limit = req.query.limit || Paging.LIMIT;
 		page = Number(page);
 		limit = Number(limit);
-		const twoWeek = moment(from).add(14, 'd').startOf('day');
+		const twoWeek = moment(from).add(14, 'd');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getTrafficSourceLogs::babRequest\n', info);
@@ -458,8 +458,8 @@ const statisticsOfGoogleErrorsAndNumberOfRequests = async (req, res, next) => {
 		}
 
 		let { from, to, timeZone } = req.query;
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 		timeZone = timeZone || '+07:00';
 		timeZone = timeZone.replace(" ", "+");
 

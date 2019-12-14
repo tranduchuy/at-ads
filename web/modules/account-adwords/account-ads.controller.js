@@ -1393,8 +1393,8 @@ const getReportForAccount = async (req, res, next) => {
 		page = Number(page);
 		limit = Number(limit);
 
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getReportForAccount::babRequest\n', info);
@@ -1469,7 +1469,7 @@ const getDailyClicking = async (req, res, next) => {
 
 		const accountKey = req.adsAccount.key;
 		const maxClick = req.adsAccount.setting.autoBlockByMaxClick;
-		let { page, limit } = req.query;
+		let { page, limit, from, to } = req.query;
 		const { isConnected } = req.adsAccount;
 
 		if (!page || !isConnected) {
@@ -1483,7 +1483,10 @@ const getDailyClicking = async (req, res, next) => {
 		page = Number(page);
 		limit = Number(limit);
 
-		const result = await AccountAdsService.getDailyClicking(accountKey, maxClick, page, limit);
+		const now = moment(Number(from))._d;
+		const tomorrow = moment((Number(to)))._d;
+
+		const result = await AccountAdsService.getDailyClicking(accountKey, maxClick, now, tomorrow, page, limit);
 		let entries = [];
 		let totalItems = 0;
 
@@ -1491,8 +1494,6 @@ const getDailyClicking = async (req, res, next) => {
 			entries = result[0].entries;
 			totalItems = !isConnected ? entries.length : result[0].meta[0].totalItems;
 			// get number click in a day
-			const now = moment().startOf('day')._d;
-			const tomorrow = moment(now).endOf('day')._d;
 			const ips = entries.map(log => log._id);
 			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, now, tomorrow, ips);
 			entries.forEach((item, index) => {
@@ -1581,8 +1582,8 @@ const getIpsInfoInClassD = async (req, res, next) => {
 		page = Number(page);
 		limit = Number(limit);
 
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getIpsInfoInClassD::babRequest\n', info);
@@ -1771,9 +1772,9 @@ const statisticUser = async (req, res, next) => {
 
 		let { limit, page, startDate, endDate } = req.query;
 
-		startDate = Number(startDate) ? moment(Number(startDate)).startOf('day') : moment().add(-7, 'd').startOf('day');
-		endDate = Number(endDate) ? moment(Number(endDate)).endOf('day') : moment().endOf('day');
-		const twoWeek = moment(startDate).add(14, 'd').endOf('day');
+		startDate = Number(startDate) ? moment(Number(startDate)) : moment().add(-7, 'd').startOf('day');
+		endDate = Number(endDate) ? moment(Number(endDate)) : moment().endOf('day');
+		const twoWeek = moment(startDate).add(14, 'd');
 
 		if (endDate.isBefore(startDate)) {
 			logger.info('UserBehaviorLogController::statisticUser::babRequest\n', info);
@@ -1856,8 +1857,8 @@ const detailUser = async (req, res, next) => {
 		const { id } = req.params;
 		limit = Number(limit) ? Number(limit) : Paging.LIMIT;
 		page = Number(page) ? Number(page) : Paging.PAGE;
-		startDate = Number(startDate) ? moment(Number(startDate)).startOf('day') : null;
-		endDate = Number(endDate) ? moment(Number(endDate)).endOf('day') : null;
+		startDate = Number(startDate) ? moment(Number(startDate)) : null;
+		endDate = Number(endDate) ? moment(Number(endDate)) : null;
 
 		const stages = UserBehaviorLogService.buildStageDetailUser({
 			uuid : id,
@@ -1915,8 +1916,8 @@ const getReportStatistic = async (req, res, next) => {
 		}
 
 		let { from, to, timeZone } = req.query;
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 		timeZone = timeZone || '+07:00';
 		timeZone = timeZone.replace(" ", "+");
 

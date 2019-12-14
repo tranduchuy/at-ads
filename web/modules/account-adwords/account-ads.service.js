@@ -763,21 +763,18 @@ const getReportStatistic = (accountKey, from, to, timeZone) => {
 };
 
 
-const getDailyClicking =  (accountKey, maxClick, page, limit) => {
-  logger.info('AccountAdsService::getDailyClicking::is called ', {accountKey, maxClick, page, limit});
+const getDailyClicking =  (accountKey, maxClick, from, to, page, limit) => {
+  logger.info('AccountAdsService::getDailyClicking::is called ', {accountKey, maxClick, from, to, page, limit});
 
   return new Promise(async (res, rej)=> {
     try{
-      const now = moment().startOf('day')._d;
-      const tomorrow = moment(now).endOf('day')._d;
-
       const matchStage = {
           $match: {
             accountKey,
             type: LOGGING_TYPES.CLICK,
             createdAt: {
-                $gte: now,
-                $lt: tomorrow
+                $gte: new Date(from),
+                $lt: new Date(to)
             }
         }
       };
