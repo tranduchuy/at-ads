@@ -677,7 +677,6 @@ const mapIpInGetBlockedIpList = (entries) => {
 	logger.info('ReportService::mapIpInGetBlockedIpList::is called');
 	try{
 		entries.forEach(ip => {
-			console.log(ip._id);
 			const splitIp = ip._id.split('.');
 
 			if(splitIp.length > 1)
@@ -708,6 +707,173 @@ const mapIpInGetBlockedIpList = (entries) => {
 		logger.error('ReportService::mapIpInGetBlockedIpList::error', e);
 		throw new Error(e);
 	}
+};
+
+const getIpClickingClassC = async (ip, accountKey, page, limit) => {
+	logger.info('ReportService::getIpClickingClassC::is called', {ip, accountKey, page, limit});
+	try{
+		const matchStage =  {
+			$match: {
+				accountKey
+			}  
+		};
+
+		const sortStage =  {
+			$sort: {
+				'createdAt': -1
+			}
+		};
+
+		const projectStage ={ $project: {
+			ipInfo: "$$ROOT",
+			ip1: { $split: ["$ip", "."]}}
+		};
+
+		const projectStage1 ={ $project: {
+			ipInfo: 1,
+			ip2: {$arrayElemAt: ["$ip1",0]},
+			ip3: {$arrayElemAt: ["$ip1",1]}}
+		};
+
+		const projectStage2 = { $project: {
+			ipInfo: 1,
+			ipClassC: { $concat: [ "$ip2", ".", "$ip3", ".0", ".0/16"]}}
+		};
+
+		const matchStage1 =  {
+			$match: {
+				"ipClassC": ip
+			}  
+		};
+
+		const groupStage = { $group: { 
+				_id: "$ipClassC",
+				ipInfo: {$push: "$ipInfo"}
+			}
+		};
+
+		const unwindStage = {
+			$unwind: "$ipInfo" 
+		};
+
+		const facetStage = {
+			$facet:
+				{
+					entries: [
+						{ $skip: (page - 1) * limit },
+						{ $limit: limit }
+					],
+					meta   : [
+						{ $group: { _id: null, totalItems: { $sum: 1 } } },
+					],
+				}
+		};
+
+		const query = [
+			matchStage,
+			sortStage,
+			projectStage,
+			projectStage1,
+			projectStage2,
+			matchStage1,
+			groupStage,
+			unwindStage,
+			facetStage
+		];
+
+		logger.info('jobs::getIpClickingClassC::query ', { key: accountKey, ip, query: JSON.stringify(query)});
+		const result = await UserBehaviorLogModel.aggregate(query);
+
+		logger.info('jobs::getIpClickingClassC::success ', {accountKey});
+		return result;
+	}catch(e){
+		logger.error('ReportService::getIpClickingClassC::error', e);
+		throw new Error(e);
+	}
+}
+
+const getIpClickingClassD = async (ip, accountKey, page, limit) => {
+	logger.info('ReportService::getIpClickingClassD::is called', {ip, accountKey, page, limit});
+	try{
+		const matchStage =  {
+			$match: {
+				accountKey
+			}  
+		};
+
+		const sortStage =  {
+			$sort: {
+				'createdAt': -1
+			}
+		};
+
+		const projectStage ={ $project: {
+			ipInfo: "$$ROOT",
+			ip1: { $split: ["$ip", "."]}}
+		};
+
+		const projectStage1 ={ $project: {
+			ipInfo: 1,
+			ip2: {$arrayElemAt: ["$ip1",0]},
+			ip3: {$arrayElemAt: ["$ip1",1]},
+			ip4: {$arrayElemAt: ["$ip1",2]}}
+		};
+
+		const projectStage2 = { $project: {
+			ipInfo: 1,
+			ipClassD: { $concat: [ "$ip2", ".", "$ip3", ".", "$ip4", ".0/24"]}}
+		};
+
+		const matchStage1 =  {
+			$match: {
+				"ipClassD": ip
+			}  
+		};
+
+		const groupStage = { $group: { 
+				_id: "$ipClassD",
+				ipInfo: {$push: "$ipInfo"}
+			}
+		};
+
+		const unwindStage = {
+			$unwind: "$ipInfo" 
+		};
+
+		const facetStage = {
+			$facet:
+				{
+					entries: [
+						{ $skip: (page - 1) * limit },
+						{ $limit: limit }
+					],
+					meta   : [
+						{ $group: { _id: null, totalItems: { $sum: 1 } } },
+					],
+				}
+		};
+
+		const query = [
+			matchStage,
+			sortStage,
+			projectStage,
+			projectStage1,
+			projectStage2,
+			matchStage1,
+			groupStage,
+			unwindStage,
+			facetStage
+		];
+
+		logger.info('jobs::getIpClickingClassD::query ', { key: accountKey, ip, query: JSON.stringify(query)});
+		const result = await UserBehaviorLogModel.aggregate(query);
+
+		logger.info('jobs::getIpClickingClassD::success ', {accountKey});
+		return result;
+	}catch(e){
+		logger.error('ReportService::getIpClickingClassD::error', e);
+		throw new Error(e);
+	}
 }
 
 module.exports = {
@@ -726,5 +892,7 @@ module.exports = {
 	getRequestsOfGoogleNumber,
 	mapDateOfErrorGoogleAndDateOfRequest,
 	onlyUnique,
-	mapIpInGetBlockedIpList
+	mapIpInGetBlockedIpList,
+	getIpClickingClassC,
+	getIpClickingClassD
 };

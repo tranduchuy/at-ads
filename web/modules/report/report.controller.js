@@ -38,7 +38,7 @@ const getIPClicks = async (req, res, next) => {
 	logger.info('ReportController::getIPClicks is called\n', info);
 	try {
 
-		const { ip } = req.params;
+		let { ip } = req.params;
 		let { page, limit } = req.query;
 
 		if (!page) {
@@ -51,6 +51,77 @@ const getIPClicks = async (req, res, next) => {
 
 		page = Number(page);
 		limit = Number(limit);
+
+		const splitIp = ip.split('.');
+
+		if(splitIp.length != 4)
+		{
+			const response = {
+				status  : HttpStatus.OK,
+				messages: [messages.ResponseMessages.SUCCESS],
+				data    : {
+					meta : {
+						totalItems: 0,
+					},
+					items: [],
+					last: null
+				}
+			};
+	
+			return res.status(HttpStatus.OK).json(response);
+		}
+
+		if(splitIp[2] == '*' && splitIp[3] == '*')
+		{
+			ip = splitIp.slice(0,2).join('.') + ".0.0/16";
+			let result = await ReportService.getIpClickingClassC(ip, req.adsAccount.key, page, limit);
+
+			if(result[0].meta.length > 0){
+				result[0].entries = result[0].entries.map(ipInfo => {
+					return { ...ipInfo.ipInfo };
+				})
+			}
+			
+			const response = {
+				status  : HttpStatus.OK,
+				messages: [messages.ResponseMessages.SUCCESS],
+				data    : {
+					meta : {
+						totalItems: result[0].meta.length > 0 ? result[0].meta[0].totalItems : 0,
+					},
+					items: result[0].entries,
+					last: result[0].entries.length > 0 ? result[0].entries[0] : null
+				}
+			};
+	
+			return res.status(HttpStatus.OK).json(response);
+		}
+
+		if(splitIp[3] == '*')
+		{
+			ip = splitIp.slice(0,3).join('.') + ".0/24";
+			let result = await ReportService.getIpClickingClassD(ip, req.adsAccount.key, page, limit);
+
+			if(result[0].meta.length > 0){
+				result[0].entries = result[0].entries.map(ipInfo => {
+					return { ...ipInfo.ipInfo };
+				})
+			}
+
+			const response = {
+				status  : HttpStatus.OK,
+				messages: [messages.ResponseMessages.SUCCESS],
+				data    : {
+					meta : {
+						totalItems: result[0].meta.length > 0 ? result[0].meta[0].totalItems : 0,
+					},
+					items: result[0].entries,
+					last: result[0].entries.length > 0 ? result[0].entries[0] : null
+				}
+			};
+	
+			return res.status(HttpStatus.OK).json(response);
+		}
 
 		const stages = ReportService.buildStageGetIPClicks({
 			ip        : ip,
@@ -172,8 +243,8 @@ const getTrafficSourceStatisticByDay = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 		let { from, to, website } = req.query;
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::babRequest\n', info);
@@ -234,13 +305,13 @@ const getTrafficSourceLogs = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 		let { from, to, website } = req.query;
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 		let page = req.query.page || Paging.PAGE;
 		let limit = req.query.limit || Paging.LIMIT;
 		page = Number(page);
 		limit = Number(limit);
-		const twoWeek = moment(from).add(14, 'd').startOf('day');
+		const twoWeek = moment(from).add(14, 'd');
 
 		if (to.isBefore(from)) {
 			logger.info('AccountAdsController::getTrafficSourceLogs::babRequest\n', info);
@@ -353,6 +424,7 @@ const getIpsInAutoBlackListOfAccount = async (req, res, next) => {
 			const gclidList = entries.map(log => log.gclid).filter(ReportService.onlyUnique);
 			const clickReport = await ClickReportService.getReportByGclId(gclidList);
 			entries = ClickReportService.mapCLickReportIntoUserLogs(clickReport, entries);
+			entries = ReportService.mapIpInGetBlockedIpList(entries);
 		}
 
 		logger.info('ReportController::getIpsInAutoBlackListOfAccount::success\n', info);
@@ -386,8 +458,8 @@ const statisticsOfGoogleErrorsAndNumberOfRequests = async (req, res, next) => {
 		}
 
 		let { from, to, timeZone } = req.query;
-		from = moment(Number(from)).startOf('day');
-		to = moment(Number(to)).endOf('day');
+		from = moment(Number(from));
+		to = moment(Number(to));
 		timeZone = timeZone || '+07:00';
 		timeZone = timeZone.replace(" ", "+");
 
