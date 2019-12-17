@@ -9,6 +9,7 @@ const checkRefreshToken = require('./schedule-jobs/check-refresh-token');
 const {updateNetworkCompany} = require('./schedule-jobs/update-network-company');
 const updateAdsName = require('./schedule-jobs/update-ads-name');
 const updateUrlTracking = require('./schedule-jobs/update-tracking-url-template');
+const syncIpsOnGoole = require('./schedule-jobs/sync-ips-on-google');
 
 // config log4js
 const log4js = require('log4js');
@@ -29,5 +30,6 @@ db(() => {
     checkRefreshToken();
     updateAdsName();
     updateUrlTracking();
+    syncIpsOnGoole();
   });
 });

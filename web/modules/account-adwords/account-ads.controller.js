@@ -763,7 +763,8 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 
 			if(campaignIdsAfterRemoveIdenticalElement.length > 0)
 			{
-				await AccountAdsService.backUpIpOnGoogleAds(req.adsAccount, campaignIdsAfterRemoveIdenticalElement);
+				req.adsAccount.syncIps = true;
+				await req.adsAccount.save();
 			}
 
 			logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
@@ -790,7 +791,8 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 
 			if(campaignIdsAfterRemoveIdenticalElement.length > 0)
 			{
-				await AccountAdsService.backUpIpOnGoogleAds(req.adsAccount, campaignIdsAfterRemoveIdenticalElement);
+				req.adsAccount.syncIps = true;
+				await req.adsAccount.save();
 			}
 
 			logger.info('AccountAdsController::addCampaignsForAAccountAds::success\n', info);
