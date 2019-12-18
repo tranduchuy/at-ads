@@ -10,6 +10,7 @@ const {updateNetworkCompany} = require('./schedule-jobs/update-network-company')
 const updateAdsName = require('./schedule-jobs/update-ads-name');
 const updateUrlTracking = require('./schedule-jobs/update-tracking-url-template');
 const syncIpsOnGoole = require('./schedule-jobs/sync-ips-on-google');
+const updatePackageForUser = require('./schedule-jobs/update-package-for-user');
 
 // config log4js
 const log4js = require('log4js');
@@ -23,13 +24,14 @@ db(() => {
       return console.error(err);
 
     console.log(`Server is listening on port ${port}`);
-    removeIp();
-    updateCampaignName();
-    updateNetworkCompany();
-    // getClickReport();
-    checkRefreshToken();
-    updateAdsName();
-    updateUrlTracking();
-    syncIpsOnGoole();
+    // removeIp();
+    // updateCampaignName();
+    // updateNetworkCompany();
+    // // getClickReport();
+    // checkRefreshToken();
+    // updateAdsName();
+    // updateUrlTracking();
+    // syncIpsOnGoole();
+    updatePackageForUser();
   });
 });
