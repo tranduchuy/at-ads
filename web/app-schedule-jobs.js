@@ -24,14 +24,14 @@ db(() => {
       return console.error(err);
 
     console.log(`Server is listening on port ${port}`);
-    // removeIp();
-    // updateCampaignName();
-    // updateNetworkCompany();
-    // // getClickReport();
-    // checkRefreshToken();
-    // updateAdsName();
-    // updateUrlTracking();
-    // syncIpsOnGoole();
+    removeIp();
+    updateCampaignName();
+    updateNetworkCompany();
+    // getClickReport();
+    checkRefreshToken();
+    updateAdsName();
+    updateUrlTracking();
+    syncIpsOnGoole();
     updatePackageForUser();
   });
 });
