@@ -1734,9 +1734,9 @@ const checkDomainHasTracking = async(websites, key) => {
       if (html !== null) {
         const script = AdAccountConstant.trackingScript.replace('{accountKey}', key);
         website.isValid = true;
-        website.isTracking = html.indexOf(script) !== -1;
+        website.isTracking = html.indexOf(script) !== -1 ? true : false;
         const splitHtml = html.split('\n');
-        website.isDuplicateScript = (splitHtml.filter(e => e.indexOf(trackingScript)!== -1 )).length > 1;
+        website.isDuplicateScript = (splitHtml.filter(e => e.indexOf(trackingScript)!== -1 )).length > 1 ? true : false;
       } else {
         website.isValid = false;
         website.isTracking = false;
