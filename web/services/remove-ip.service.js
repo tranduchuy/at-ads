@@ -112,7 +112,7 @@ const removeIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, 
       }).catch(async err => {
         logger.error('RemoveService::removeIp::error', err);
 
-        if (GoogleAdwordsService.getErrorCode(err) === 'USER_PERMISSION_DENIED')
+        if (GoogleAdwordsService.getErrorCode(err) === 'USER_PERMISSION_DENIED' && accountAds.connectType === AccountAdsConstant.connectType.byEmail)
         {
           await UserModel.updateOne({_id: accountAds.user}, {$set: {isRefreshTokenValid: false}});
         }

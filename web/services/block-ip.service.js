@@ -105,7 +105,7 @@ const blockIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, p
       }).catch( async e => {
         logger.error('BlockIpService::blockIp::Error', { error: GoogleAdwordsService.getErrorCode(e) });
 
-        if (GoogleAdwordsService.getErrorCode(e) === 'USER_PERMISSION_DENIED')
+        if (GoogleAdwordsService.getErrorCode(e) === 'USER_PERMISSION_DENIED' && accountAds.connectType === AccountAdsConstant.connectType.byEmail)
         {
           await UserModel.updateOne({_id: accountAds.user}, {$set: {isRefreshTokenValid: false}});
         }
