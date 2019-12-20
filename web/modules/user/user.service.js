@@ -14,7 +14,7 @@ const GlobalConstant = require('../../constants/global.constant');
 const logger = log4js.getLogger(GlobalConstant.LoggerTargets.Service);
 const messages = require('../../constants/messages');
 const UserTokenService = require('../userToken/userToken.service');
-
+const SendGridServices = require('../../services/send-grid.service');
 
 /**
  * Compare hash password with input plain text
@@ -213,6 +213,28 @@ const getAccountInfo = async (user, message) => {
   };
 };
 
+const sendMailWhenRefreshTokenExpired = async (user) => {
+  logger.info('UserService::sendMailWhenRefreshTokenExpired::is called', {userId: user._id});
+  try{
+    const dateOfMailing = user.dateOfMailing ? moment(user.dateOfMailing) : null;
+    const now = moment();
+
+    if(!dateOfMailing || now.isAfter(dateOfMailing))
+    {
+      logger.info('UserService::sendMailWhenRefreshTokenExpired::sending...');
+      user.dateOfMailing = moment().add(3, 'days').endOf('day');
+      await user.save();
+      await SendGridServices.sendRefreshTokenExpiredMessage(user.email);
+    }
+
+    logger.info('UserService::sendMailWhenRefreshTokenExpired::success');
+    return;
+  }catch(e){
+    logger.error('UserService::sendMailWhenRefreshTokenExpired::error', e);
+    throw new Error(e)
+  }
+}
+
 module.exports = {
   createUser,
   generateToken,
@@ -228,4 +250,5 @@ module.exports = {
   findUserByPasswordReminderToken,
   updateUser,
   getAccountInfo,
+  sendMailWhenRefreshTokenExpired
 };
