@@ -5,6 +5,7 @@ const getReportStatisticValidationSchema = Joi.object().keys({
     from: Joi.number().min(1).required(),
     to: Joi.number().min(1).required(),
     timeZone: Joi.string().regex(pattern).required(),
+    website: Joi.string()
 });
 
 module.exports = {
