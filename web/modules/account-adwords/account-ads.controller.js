@@ -1406,7 +1406,22 @@ const getReportForAccount = async (req, res, next) => {
 		}
 
 		const accountKey = req.adsAccount.key;
+		let websiteInfo = null;
 
+		if(website)
+		{
+			websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website), accountAd: req.adsAccount._id});
+		}
+
+		if(!websiteInfo && website)
+		{
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::website not found\n', info);
+			return res.status(HttpStatus.NOT_FOUND).json({
+				messages: ['Không tìm thấy website.']
+			});
+		}
+
+		website = websiteInfo ? websiteInfo.domain : null;
 		let result = await AccountAdsService.getReportForAccount(accountKey, from, to, website, page, limit);
 		let logs = [];
 		let totalItems = 0;
@@ -1487,7 +1502,22 @@ const getDailyClicking = async (req, res, next) => {
 
 		const now = moment(Number(from))._d;
 		const tomorrow = moment((Number(to)))._d;
+		let websiteInfo = null;
 
+		if(website)
+		{
+			websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website), accountAd: req.adsAccount._id});
+		}
+
+		if(!websiteInfo && website)
+		{
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::website not found\n', info);
+			return res.status(HttpStatus.NOT_FOUND).json({
+				messages: ['Không tìm thấy website.']
+			});
+		}
+
+		website = websiteInfo ? websiteInfo.domain : null;
 		const result = await AccountAdsService.getDailyClicking(accountKey, maxClick, now, tomorrow, website, page, limit);
 		let entries = [];
 		let totalItems = 0;
@@ -1930,7 +1960,22 @@ const getReportStatistic = async (req, res, next) => {
 			});
 		}
 		const accountKey = req.adsAccount.key;
+		let websiteInfo = null;
 
+		if(website)
+		{
+			websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website), accountAd: req.adsAccount._id});
+		}
+
+		if(!websiteInfo && website)
+		{
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::website not found\n', info);
+			return res.status(HttpStatus.NOT_FOUND).json({
+				messages: ['Không tìm thấy website.']
+			});
+		}
+
+		website = websiteInfo ? websiteInfo.domain : null;
 		let result = await AccountAdsService.getReportStatistic(accountKey, from, to, timeZone, website);
 		const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
 		const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
