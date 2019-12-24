@@ -419,7 +419,7 @@ const autoBlockIp = (req, res, next) => {
 
 			const actionHistory = {
 				userId : req.user._id,
-				content: `Cập nhật cấu hình chặn tự động ip: ${maxClick > 0 ? "maxclick = " + maxClick + ". " : ""} ${actionMessage} xóa ip hằng ngày. ${actionAutoBlockWithAiAndBigData} tự động chặn ip sử dụng AI và Big Data. Chặn ip đang click trong vòng ${countMaxClickInHours} giờ`,
+				content: `Cập nhật cấu hình chặn tự động ip: ${maxClick > 0 ? "maxclick = " + maxClick + ". " : ""} ${actionMessage} xóa ip hằng ngày. ${actionAutoBlockWithAiAndBigData} tự động chặn ip sử dụng AI và Big Data. Chặn ip đang click trong vòng ${countMaxClickInHours} phút`,
 				param  : { autoRemove, maxClick, autoBlockWithAiAndBigData, countMaxClickInHours }
 			};
 
