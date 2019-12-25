@@ -7,6 +7,7 @@ const AccountAdsModel = require('../modules/account-adwords/account-ads.model');
 const _ = require('lodash');
 const AccountAdsConstant = require('../modules/account-adwords/account-ads.constant');
 const BlockingCriterionsConstant = require('../modules/blocking-criterions/blocking-criterions.constant');
+const UserModel = require('../modules/user/user.model');
 
 const standardizedIps = (ips) => {
   let ipsArr = [];
@@ -108,8 +109,14 @@ const removeIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, 
           return rej(err);
         });
 
-      }).catch(err => {
+      }).catch(async err => {
         logger.error('RemoveService::removeIp::error', err);
+
+        if (GoogleAdwordsService.getErrorCode(err) === 'USER_PERMISSION_DENIED' && accountAds.connectType === AccountAdsConstant.connectType.byEmail)
+        {
+          await UserModel.updateOne({_id: accountAds.user}, {$set: {isRefreshTokenValid: false}});
+        }
+
         return rej(err);
       });
     }catch(e){

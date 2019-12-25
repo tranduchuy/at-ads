@@ -419,7 +419,7 @@ const autoBlockIp = (req, res, next) => {
 
 			const actionHistory = {
 				userId : req.user._id,
-				content: `Cập nhật cấu hình chặn tự động ip: ${maxClick > 0 ? "maxclick = " + maxClick + ". " : ""} ${actionMessage} xóa ip hằng ngày. ${actionAutoBlockWithAiAndBigData} tự động chặn ip sử dụng AI và Big Data. Chặn ip đang click trong vòng ${countMaxClickInHours} giờ`,
+				content: `Cập nhật cấu hình chặn tự động ip: ${maxClick > 0 ? "maxclick = " + maxClick + ". " : ""} ${actionMessage} xóa ip hằng ngày. ${actionAutoBlockWithAiAndBigData} tự động chặn ip sử dụng AI và Big Data. Chặn ip đang click trong vòng ${countMaxClickInHours} phút`,
 				param  : { autoRemove, maxClick, autoBlockWithAiAndBigData, countMaxClickInHours }
 			};
 
@@ -1380,7 +1380,7 @@ const getReportForAccount = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		let { from, to } = req.query;
+		let { from, to, website } = req.query;
 		let { page, limit } = req.query;
 		const { isConnected } = req.adsAccount;
 
@@ -1406,8 +1406,23 @@ const getReportForAccount = async (req, res, next) => {
 		}
 
 		const accountKey = req.adsAccount.key;
+		let websiteInfo = null;
 
-		let result = await AccountAdsService.getReportForAccount(accountKey, from, to, page, limit);
+		if(website)
+		{
+			websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website), accountAd: req.adsAccount._id});
+		}
+
+		if(!websiteInfo && website)
+		{
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::website not found\n', info);
+			return res.status(HttpStatus.NOT_FOUND).json({
+				messages: ['Không tìm thấy website.']
+			});
+		}
+
+		website = websiteInfo ? websiteInfo.domain : null;
+		let result = await AccountAdsService.getReportForAccount(accountKey, from, to, website, page, limit);
 		let logs = [];
 		let totalItems = 0;
 
@@ -1418,7 +1433,7 @@ const getReportForAccount = async (req, res, next) => {
 			const ips = logs.map(log => log.ip);
 			const clickReport = await ClickReportService.getReportByGclId(gclidList);
 			logs = ClickReportService.mapCLickReportIntoUserLogs(clickReport, logs);
-			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, from._d, to._d, ips);
+			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, from._d, to._d, website, ips);
 			logs.forEach((item, index) => {
 				logs[index].click = clickInDaysOfAccountKey[item.ip] || 0;
 			});
@@ -1471,7 +1486,7 @@ const getDailyClicking = async (req, res, next) => {
 
 		const accountKey = req.adsAccount.key;
 		const maxClick = req.adsAccount.setting.autoBlockByMaxClick;
-		let { page, limit, from, to } = req.query;
+		let { page, limit, from, to, website } = req.query;
 		const { isConnected } = req.adsAccount;
 
 		if (!page || !isConnected) {
@@ -1487,8 +1502,23 @@ const getDailyClicking = async (req, res, next) => {
 
 		const now = moment(Number(from))._d;
 		const tomorrow = moment((Number(to)))._d;
+		let websiteInfo = null;
 
-		const result = await AccountAdsService.getDailyClicking(accountKey, maxClick, now, tomorrow, page, limit);
+		if(website)
+		{
+			websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website), accountAd: req.adsAccount._id});
+		}
+
+		if(!websiteInfo && website)
+		{
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::website not found\n', info);
+			return res.status(HttpStatus.NOT_FOUND).json({
+				messages: ['Không tìm thấy website.']
+			});
+		}
+
+		website = websiteInfo ? websiteInfo.domain : null;
+		const result = await AccountAdsService.getDailyClicking(accountKey, maxClick, now, tomorrow, website, page, limit);
 		let entries = [];
 		let totalItems = 0;
 
@@ -1497,7 +1527,7 @@ const getDailyClicking = async (req, res, next) => {
 			totalItems = !isConnected ? entries.length : result[0].meta[0].totalItems;
 			// get number click in a day
 			const ips = entries.map(log => log._id);
-			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, now, tomorrow, ips);
+			const clickInDaysOfAccountKey = await AccountAdsService.getNoClickOfIps(accountKey, now, tomorrow, website, ips);
 			entries.forEach((item, index) => {
 				entries[index].click = clickInDaysOfAccountKey[item._id];
 			});
@@ -1917,7 +1947,7 @@ const getReportStatistic = async (req, res, next) => {
 			return requestUtil.joiValidationResponse(error, res);
 		}
 
-		let { from, to, timeZone } = req.query;
+		let { from, to, timeZone, website } = req.query;
 		from = moment(Number(from));
 		to = moment(Number(to));
 		timeZone = timeZone || '+07:00';
@@ -1930,8 +1960,23 @@ const getReportStatistic = async (req, res, next) => {
 			});
 		}
 		const accountKey = req.adsAccount.key;
+		let websiteInfo = null;
 
-		let result = await AccountAdsService.getReportStatistic(accountKey, from, to, timeZone);
+		if(website)
+		{
+			websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website), accountAd: req.adsAccount._id});
+		}
+
+		if(!websiteInfo && website)
+		{
+			logger.info('AccountAdsController::getTrafficSourceStatisticByDay::website not found\n', info);
+			return res.status(HttpStatus.NOT_FOUND).json({
+				messages: ['Không tìm thấy website.']
+			});
+		}
+
+		website = websiteInfo ? websiteInfo.domain : null;
+		let result = await AccountAdsService.getReportStatistic(accountKey, from, to, timeZone, website);
 		const totalSpamClick = result.reduce((total, ele) => total + ele.spamClick, 0);
 		const totalRealClick = result.reduce((total, ele) => total + ele.realClick, 0);
 

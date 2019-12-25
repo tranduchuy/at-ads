@@ -15,6 +15,7 @@ const userSchema = new Schema({
   tokenEmailConfirm: String,
   registerBy: Number,
   passwordReminderToken: String,
+  dateOfMailing: {type: Date, default: null},
   passwordReminderExpire: Date,
   googleId: String,
   googleRefreshToken: {

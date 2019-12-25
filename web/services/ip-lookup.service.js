@@ -19,6 +19,7 @@ const getNetworkCompanyByIP = async (ip) => {
         value: -1
       };
     }
+
     if(NetworkCompany[data.org])
     {
       return {
@@ -26,12 +27,13 @@ const getNetworkCompanyByIP = async (ip) => {
         value: NetworkCompany[data.org].value
       };
     }
+
     return {
       name: data.org,
       value: null
     };
   } catch (e) {
-    logger.error(`getIpInfo error: ${JSON.stringify(e)}. ip: ${JSON.stringify(ip)}`);
+    logger.error(`IPLookupService::getIpInfo error: ${JSON.stringify(e)}. ip: ${JSON.stringify(ip)}`);
     return null;
   }
 };

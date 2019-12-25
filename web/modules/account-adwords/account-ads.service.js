@@ -625,11 +625,11 @@ const saveSetUpCampaignsByOneDevice = async(accountAds, device, isEnabled) => {
   return await accountAds.save();
 };
 
-const getReportForAccount = (accountKey, from, to, page, limit) => {
-  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from: from._d, to: to._d, page, limit});
+const getReportForAccount = (accountKey, from, to, website, page, limit) => {
+  logger.info('AccountAdsService::getReportForAccount::is called ', {accountKey, from: from._d, to: to._d, website, page, limit});
   return new Promise(async (res, rej) => {
     try{
-      const matchStage =  {
+      let matchStage =  {
           $match: {
               accountKey,
               type: LOGGING_TYPES.CLICK,
@@ -639,6 +639,11 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
               }
           }  
       };
+
+      if(website)
+      {
+        matchStage.$match['domain'] = website;
+      }
 
       const sort =  {
           $sort: {
@@ -701,11 +706,11 @@ const getReportForAccount = (accountKey, from, to, page, limit) => {
   });
 };
 
-const getReportStatistic = (accountKey, from, to, timeZone) => {
-  logger.info('AccountAdsService::getReportStatistic::is called ', {accountKey, from: from._d, to: to._d, timeZone});
+const getReportStatistic = (accountKey, from, to, timeZone, website) => {
+  logger.info('AccountAdsService::getReportStatistic::is called ', {accountKey, from: from._d, to: to._d, timeZone, website});
   return new Promise(async (res, rej) => {
     try{
-      const matchStage =  {
+      let matchStage =  {
           $match: {
               accountKey,
               type: LOGGING_TYPES.CLICK,
@@ -715,6 +720,11 @@ const getReportStatistic = (accountKey, from, to, timeZone) => {
               }
           }  
       };
+
+      if(website)
+      {
+        matchStage.$match['domain'] = website;
+      }
 
       const sort =  {
           $sort: {
@@ -763,12 +773,12 @@ const getReportStatistic = (accountKey, from, to, timeZone) => {
 };
 
 
-const getDailyClicking =  (accountKey, maxClick, from, to, page, limit) => {
-  logger.info('AccountAdsService::getDailyClicking::is called ', {accountKey, maxClick, from, to, page, limit});
+const getDailyClicking =  (accountKey, maxClick, from, to, website, page, limit) => {
+  logger.info('AccountAdsService::getDailyClicking::is called ', {accountKey, maxClick, from, to, website, page, limit});
 
   return new Promise(async (res, rej)=> {
     try{
-      const matchStage = {
+      let matchStage = {
           $match: {
             accountKey,
             type: LOGGING_TYPES.CLICK,
@@ -778,6 +788,11 @@ const getDailyClicking =  (accountKey, maxClick, from, to, page, limit) => {
             }
         }
       };
+
+      if(website)
+      {
+        matchStage.$match['domain'] = website;
+      }
 
       const sortStage = {
         $sort: {
@@ -1551,30 +1566,37 @@ const getUnique = (arr, comp) => {
  * @param {Date} endTime
  * @return {Promise<void>}
  */
-const getNoClickOfIps = async (accountKey, startTime, endTime, ips) => {
-  logger.info('AccountAdService::getNoClickOfIps: is called\n', {accountKey, startTime, endTime, ips});
+const getNoClickOfIps = async (accountKey, startTime, endTime, website, ips) => {
+  logger.info('AccountAdService::getNoClickOfIps: is called\n', {accountKey, startTime, endTime, website, ips});
   try{
-    const stages = [
-      {
-        $match: {
-          accountKey,
-          ip: {
-            $in: ips
-          },
-          createdAt: {
-            $gt: startTime,
-            $lt: endTime
-          },
-          type: LOGGING_TYPES.CLICK
-        }
-      },
-      {
-        $group: {
-          _id: "$ip",
-          count: {$sum: 1}
-        }
+    let matchStage = {
+      $match: {
+        accountKey,
+        ip: {
+          $in: ips
+        },
+        createdAt: {
+          $gt: startTime,
+          $lt: endTime
+        },
+        type: LOGGING_TYPES.CLICK
       }
-    ];
+    };
+
+    if(website)
+    {
+      matchStage.$match['domain'] = website;
+    }
+
+    const groupStage = {
+      $group: {
+        _id: "$ip",
+        count: {$sum: 1}
+      }
+    }
+
+    const stages = [matchStage, groupStage];
+
     logger.info('AccountAdService::getNoClickOfIps::stages', JSON.stringify(stages));
     const results = await UserBehaviorLogsModel.aggregate(stages);
     const noClickOfIpsObj = {};

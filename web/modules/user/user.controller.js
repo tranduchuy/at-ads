@@ -664,6 +664,7 @@ const checkRefreshToken = async (req, res, next) => {
     {
       req.user.isRefreshTokenValid = false;
       await req.user.save();
+      await UserService.sendMailWhenRefreshTokenExpired(req.user);
 
       return res.status(HttpStatus.BAD_REQUEST).json({
         messages             : ["Refresh token hết hạn"],
@@ -675,6 +676,7 @@ const checkRefreshToken = async (req, res, next) => {
     .then(async result => {
 
       req.user.googleAccessToken = result.access_token;
+      req.user.isRefreshTokenValid = true;
       await req.user.save();
 
       return res.status(HttpStatus.OK).json({
@@ -685,6 +687,7 @@ const checkRefreshToken = async (req, res, next) => {
       logger.error('UserController::checkRefreshToken::error', error);
       req.user.isRefreshTokenValid = false;
       await req.user.save();
+      await UserService.sendMailWhenRefreshTokenExpired(req.user);
 
       return res.status(HttpStatus.BAD_REQUEST).json({
         messages             : ["Refresh token hết hạn"],

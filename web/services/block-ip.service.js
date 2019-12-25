@@ -7,6 +7,7 @@ const AccountAdsModel = require('../modules/account-adwords/account-ads.model');
 const _ = require('lodash');
 const AccountAdsConstant = require('../modules/account-adwords/account-ads.constant');
 const BlockingCriterionsConstant = require('../modules/blocking-criterions/blocking-criterions.constant');
+const UserModel = require('../modules/user/user.model');
 
 const standardizedIp = (ip) => {
   const splitIp = ip.split('.');
@@ -101,8 +102,14 @@ const blockIp = (accountAds, campaigns, ips, positionBlockInBlockingCriterion, p
           console.log(err);
           return rej(err);
         });
-      }).catch(e => {
+      }).catch( async e => {
         logger.error('BlockIpService::blockIp::Error', { error: GoogleAdwordsService.getErrorCode(e) });
+
+        if (GoogleAdwordsService.getErrorCode(e) === 'USER_PERMISSION_DENIED' && accountAds.connectType === AccountAdsConstant.connectType.byEmail)
+        {
+          await UserModel.updateOne({_id: accountAds.user}, {$set: {isRefreshTokenValid: false}});
+        }
+        
         console.log(e);
         return rej(e);
       });

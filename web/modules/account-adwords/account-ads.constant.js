@@ -8,7 +8,7 @@ module.exports = {
   },
   setting: {
     autoBlockByMaxClick: 2,
-    countMaxClickInHours: 24,
+    countMaxClickInHours: 60,
     countMaxClickClassCInMinnutes: 30,
     countMaxClickClassDInMinnutes: 15,
     autoBlockIpClassCByMaxClick: 20,

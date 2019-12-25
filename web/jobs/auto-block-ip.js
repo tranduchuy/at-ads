@@ -54,7 +54,7 @@ const checkNetWorkCompany = (log, accountAds) => {
 
 const countClickInLogs = async (ip, accountKey, countMaxClickInHours) => {
     try {
-        const timeSet = moment().subtract(countMaxClickInHours, 'hour');
+        const timeSet = moment().subtract(countMaxClickInHours, 'minutes');
         const now = moment();
 
         const countQuery = {

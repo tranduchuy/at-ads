@@ -28,21 +28,22 @@ const getRefreshToken = async (adwordId) => {
 
     const user = await UserModel.findOne({_id: adsAccount.user});
 
-	if(!user)
-	{
-		return null;
-	}
+		if(!user)
+		{
+			return null;
+		}
 
-	const now  = moment();
-	const tokenExpiresAt = user.expiryDateOfRefreshToken;
+		const now  = moment();
+		const tokenExpiresAt = user.expiryDateOfRefreshToken;
 
     if(user.googleRefreshToken == '' || !user.googleRefreshToken || !tokenExpiresAt || now.isAfter(moment(tokenExpiresAt)) || !user.isRefreshTokenValid)
     {
+			user.isRefreshTokenValid = false;
+			await user.save();
       return null;
     }
 
-	return user.googleRefreshToken;
-	
+		return user.googleRefreshToken;
 	}catch(e){
     logger.error('GoogleAdsService::getRefreshToken error.', e, {adwordId});
 		throw e;
