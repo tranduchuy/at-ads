@@ -273,7 +273,7 @@ const updatePopupForWebsite = async (req, res, next) => {
     };
 
     await websiteInfo.save();
-    return res.status(HttpStatus.BAD_REQUEST).json({
+    return res.status(HttpStatus.OK).json({
       messages: ["Cập nhật popup thành công."],
       data: websiteInfo
     });
