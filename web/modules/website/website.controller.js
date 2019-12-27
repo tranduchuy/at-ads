@@ -15,6 +15,8 @@ const { GetWebsitesValidationSchema } = require("./validations/get-websites.sche
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
 const { checkWebsiteByCodeValidationSchema } = require('./validations/check-website-by-code.schema');
 const { UpdatePopupForWebsiteValidateSchema } = require('./validations/update-popup-for-website.schema');
+const { UpdatePopupStatusForWebsiteValidateSchema } = require('./validations/update-popup-status-for-website.schema');
+const { CheckWebsiteByDomainValidateSchema } = require('./validations/check-website-by-domain.schema');
 
 const addDomainForAccountAds = async (req, res, next) => {
   logger.info('WebsiteController::addDomainForAccountAds is called, userId:', req.user._id);
@@ -229,11 +231,11 @@ const updatePopupForWebsite = async (req, res, next) => {
     supporterAvatar: req.body.supporterAvatar,
     supporterName: req.body.supporterName,
     supporterMajor: req.body.supporterMajor,
-    website: req.body.website,
+    website: req.params.website,
   }
   logger.info('WebsiteController::updatePopupForWebsite::is called\n', info);
   try{
-    const { error } = Joi.validate(req.body, UpdatePopupForWebsiteValidateSchema);
+    const { error } = Joi.validate(Object.assign({}, req.params, req.body), UpdatePopupForWebsiteValidateSchema);
 
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
@@ -243,7 +245,7 @@ const updatePopupForWebsite = async (req, res, next) => {
     let name = req.body.supporterName || null;
     let avatar = req.body.supporterAvatar || null;
     let major = req.body.supporterMajor || null;
-    let website = req.body.website;
+    let website = req.params.website;
 
     const websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website)});
 
@@ -281,7 +283,98 @@ const updatePopupForWebsite = async (req, res, next) => {
     logger.error('WebsiteController::updatePopupForWebsite::error', e, '\n', info);
     return next(e);
   }
-}
+};
+
+const updatePopupStatusOfWebsite = async (req, res, next) => {
+  const info = {
+    userId: req.user._id,
+    popupStatus: req.body.popupStatus,
+    website: req.params.website,
+  }
+  logger.info('WebsiteController::updatePopupStatusOfWebsite::is called\n', info);
+  try{
+    const { error } = Joi.validate(Object.assign({}, req.params, req.body), UpdatePopupStatusForWebsiteValidateSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let popupStatus = req.body.popupStatus;
+    let website = req.params.website;
+
+    const websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website)});
+
+    if(!websiteInfo)
+    {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ["Website không tồn tại."],
+      });
+    }
+
+    const accountAd = await AccountAdsModel.findOne({user: req.user._id, _id: websiteInfo.accountAd});
+
+    if(!accountAd)
+    {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ["Website không thuộc tài khoản này."],
+      });
+    }
+
+    websiteInfo.isPopupOpening = popupStatus;
+
+    await websiteInfo.save();
+    return res.status(HttpStatus.OK).json({
+      messages: ["Cập nhật popup thành công."],
+      data: websiteInfo
+    });
+  }catch(e){
+    logger.error('WebsiteController::updatePopupStatusOfWebsite::error', e, '\n', info);
+    return next(e);
+  }
+};
+
+const checkWebsiteByDomain = async (req, res, next) => {
+  const info = {
+    key: req.params.key,
+    domain: req.body.domain,
+  };
+  logger.info('WebsiteController::checkWebsiteByDomain::is called\n', info);
+  try{
+    const { error } = Joi.validate(Object.assign({}, req.params, req.body), CheckWebsiteByDomainValidateSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const key = req.params.key;
+    const domain = req.body.domain;
+    const accountAd = await AccountAdsModel.findOne({key});
+
+    if(!accountAd)
+    {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ["Không tìm thấy tài khoản GoogleAds."],
+      });
+    }
+
+    const website = await WebsiteModel.findOne({accountAd: accountAd._id, domain});
+
+    if(!website)
+    {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ["Không tìm thấy website."],
+      });
+    }
+
+    return res.status(HttpStatus.OK).json({
+      messages: ["Kiểm tra thành công."],
+      data: website
+    });
+  }catch(e){
+    logger.error('WebsiteController::checkWebsiteByDomain::error', e, '\n', info);
+    return next(e);
+  }
+};
 
 module.exports = {
   addDomainForAccountAds,
@@ -289,5 +382,7 @@ module.exports = {
   editDomain,
   deleteDomain,
   checkWebsiteByCode,
-  updatePopupForWebsite
+  updatePopupForWebsite,
+  updatePopupStatusOfWebsite,
+  checkWebsiteByDomain
 };

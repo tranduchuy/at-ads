@@ -9,6 +9,8 @@ router.get('/', CheckTokenMiddleware, WebsiteController.getWebsitesByAccountId);
 router.put('/:websiteId', CheckTokenMiddleware, WebsiteController.editDomain);
 router.delete('/:code', CheckTokenMiddleware, WebsiteController.deleteDomain);
 router.get('/:code', CheckTokenMiddleware, CheckUserAdminMiddleware, WebsiteController.checkWebsiteByCode);
-router.post('/popup', CheckTokenMiddleware, WebsiteController.updatePopupForWebsite);
+router.put('/:website/popup', CheckTokenMiddleware, WebsiteController.updatePopupForWebsite);
+router.put('/:website/status-popup', CheckTokenMiddleware, WebsiteController.updatePopupStatusOfWebsite);
+router.get('/:key/popup', WebsiteController.checkWebsiteByDomain);
 
 module.exports = router;
