@@ -9,7 +9,8 @@ const websiteSchema = new Schema({
   accountAd: Schema.Types.ObjectId,
   isTracking: { type: Boolean, default: false },
   isValid: { type: Boolean, default: false },
-  isDuplicateScript: { type: Boolean, default: false }
+  isDuplicateScript: { type: Boolean, default: false },
+  popupConfig: { type: Object, default: null }
 }, { timestamps: true });
 
 const WebsiteModel = mongoose.model('Website', websiteSchema, 'Websites');

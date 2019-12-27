@@ -47,6 +47,7 @@
   "request": "^2.88.0",
   "shortid": "^2.2.14",
   "socket.io": "^2.3.0",
+  "twilio": "^3.39.1",
   "ua-parser-js": "^0.7.20",
   "url-parse": "^1.4.7",
   "url-slug": "^2.0.0",

@@ -14,6 +14,7 @@ const { EditDomainValidationSchema } = require("./validations/edit-domain.schema
 const { GetWebsitesValidationSchema } = require("./validations/get-websites.schema");
 const { AddDomainForAccountAdsValidationSchema } = require('./validations/add-domain.schema');
 const { checkWebsiteByCodeValidationSchema } = require('./validations/check-website-by-code.schema');
+const { UpdatePopupForWebsiteValidateSchema } = require('./validations/update-popup-for-website.schema');
 
 const addDomainForAccountAds = async (req, res, next) => {
   logger.info('WebsiteController::addDomainForAccountAds is called, userId:', req.user._id);
@@ -221,10 +222,72 @@ const checkWebsiteByCode = async (req, res, next) => {
   }
 };
 
+const updatePopupForWebsite = async (req, res, next) => {
+  const info = {
+    userId: req.user._id,
+    themeColor: req.body.themeColor,
+    supporterAvatar: req.body.supporterAvatar,
+    supporterName: req.body.supporterName,
+    supporterMajor: req.body.supporterMajor,
+    website: req.body.website,
+  }
+  logger.info('WebsiteController::updatePopupForWebsite::is called\n', info);
+  try{
+    const { error } = Joi.validate(req.body, UpdatePopupForWebsiteValidateSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    let themeColor = req.body.themeColor || null;
+    let name = req.body.supporterName || null;
+    let avatar = req.body.supporterAvatar || null;
+    let major = req.body.supporterMajor || null;
+    let website = req.body.website;
+
+    const websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website)});
+
+    if(!websiteInfo)
+    {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ["Website không tồn tại."],
+      });
+    }
+
+    const accountAd = await AccountAdsModel.findOne({user: req.user._id, _id: websiteInfo.accountAd});
+
+    if(!accountAd)
+    {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ["Website không thuộc tài khoản này."],
+      });
+    }
+
+    websiteInfo.popupConfig = {
+      themeColor,
+      supporter: {
+        name,
+        avatar,
+        major
+      }
+    };
+
+    await websiteInfo.save();
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      messages: ["Cập nhật popup thành công."],
+      data: websiteInfo
+    });
+  }catch(e){
+    logger.error('WebsiteController::updatePopupForWebsite::error', e, '\n', info);
+    return next(e);
+  }
+}
+
 module.exports = {
   addDomainForAccountAds,
   getWebsitesByAccountId,
   editDomain,
   deleteDomain,
-  checkWebsiteByCode
+  checkWebsiteByCode,
+  updatePopupForWebsite
 };
