@@ -231,6 +231,7 @@ const updatePopupForWebsite = async (req, res, next) => {
     supporterAvatar: req.body.supporterAvatar,
     supporterName: req.body.supporterName,
     supporterMajor: req.body.supporterMajor,
+    supporterPhone: req.body.supporterPhone,
     website: req.params.website,
   }
   logger.info('WebsiteController::updatePopupForWebsite::is called\n', info);
@@ -245,6 +246,7 @@ const updatePopupForWebsite = async (req, res, next) => {
     let name = req.body.supporterName || null;
     let avatar = req.body.supporterAvatar || null;
     let major = req.body.supporterMajor || null;
+    let phone = req.body.supporterPhone || null;
     let website = req.params.website;
 
     const websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website)});
@@ -270,7 +272,8 @@ const updatePopupForWebsite = async (req, res, next) => {
       supporter: {
         name,
         avatar,
-        major
+        major,
+        phone
       }
     };
 
@@ -340,14 +343,14 @@ const checkWebsiteByDomain = async (req, res, next) => {
   };
   logger.info('WebsiteController::checkWebsiteByDomain::is called\n', info);
   try{
-    const { error } = Joi.validate(Object.assign({}, req.params, req.body), CheckWebsiteByDomainValidateSchema);
+    const { error } = Joi.validate(Object.assign({}, req.params, req.query), CheckWebsiteByDomainValidateSchema);
 
     if (error) {
       return requestUtil.joiValidationResponse(error, res);
     }
 
     const key = req.params.key;
-    const domain = req.body.domain;
+    const domain = req.query.domain;
     const accountAd = await AccountAdsModel.findOne({key});
 
     if(!accountAd)
