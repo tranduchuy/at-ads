@@ -2,7 +2,8 @@ const UserBehaviorLogConstant = require('../user-behavior-log/user-behavior-log.
 const UserBehaviorLogModel    = require('../user-behavior-log/user-behavior-log.model');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const GoogleAdsErrorModel     = require('../google-ads-error/google-ads-error.model');
-const CountRequestGoogleModel      = require('../count-request-google/count-request-google.model');
+const CountRequestGoogleModel = require('../count-request-google/count-request-google.model');
+const CustomerInfomationModel = require('../customer-infomation/customer-infomation.model');
 const Async = require('async');
 
 const log4js = require('log4js');
@@ -874,7 +875,48 @@ const getIpClickingClassD = async (ip, accountKey, page, limit) => {
 		logger.error('ReportService::getIpClickingClassD::error', e);
 		throw new Error(e);
 	}
-}
+};
+
+const mapCustomerInfoIntoUserBehaviorLogs = async (result, key) => {
+	logger.info('ReportService::mapCustomerInfoIntoUserBehaviorLogs::Is called', { key });
+	try{
+		const uuids = result[0].entries.map(userBehaviorLog => userBehaviorLog.uuid).filter(onlyUnique);
+
+		if(uuids.length > 0)
+		{
+			const customerInfo = await CustomerInfomationModel.find({uuid: {$in: uuids}, key});
+			const mapCustomerInfo = await customerInfo.map(customer => {
+				return { uuid: customer.uuid, phoneNumber: customer.customerInfo.length ? customer.customerInfo[customer.customerInfo.length - 1] : null }
+			});
+
+			result[0].entries = result[0].entries.map(user => {
+				let temp = null;
+
+				mapCustomerInfo.map(customer => {
+					if(user.uuid == customer.uuid)
+					{
+						temp = { ...user, customerInfo: customer.phoneNumber };
+					}
+					else
+					{
+						temp = { ...user, customerInfo: null };
+					}
+				});
+
+				return temp;
+			});
+
+			logger.info('ReportService::mapCustomerInfoIntoUserBehaviorLogs::success');
+			return result;
+		}
+
+		logger.info('ReportService::mapCustomerInfoIntoUserBehaviorLogs::success');
+		return result;
+	}catch(e){
+		logger.error('ReportService::mapCustomerInfoIntoUserBehaviorLogs::error', e);
+		throw new Error(e);
+	}
+};
 
 module.exports = {
 	buildStageGetIPClicks,
@@ -894,5 +936,6 @@ module.exports = {
 	onlyUnique,
 	mapIpInGetBlockedIpList,
 	getIpClickingClassC,
-	getIpClickingClassD
+	getIpClickingClassD,
+	mapCustomerInfoIntoUserBehaviorLogs
 };

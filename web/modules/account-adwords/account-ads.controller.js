@@ -5,6 +5,7 @@ const HttpStatus = require('http-status-codes');
 const AccountAdsModel = require('./account-ads.model');
 const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
+const CustomerInfomationsModel = require('../customer-infomation/customer-infomation.model');
 const messages = require("../../constants/messages");
 const ActionConstant = require('../../constants/action.constant');
 const mongoose = require('mongoose');
@@ -1891,6 +1892,8 @@ const detailUser = async (req, res, next) => {
 		page = Number(page) ? Number(page) : Paging.PAGE;
 		startDate = Number(startDate) ? moment(Number(startDate)) : null;
 		endDate = Number(endDate) ? moment(Number(endDate)) : null;
+		const key = req.adsAccount.key;
+		console.log(key);
 
 		const stages = UserBehaviorLogService.buildStageDetailUser({
 			uuid : id,
@@ -1902,6 +1905,15 @@ const detailUser = async (req, res, next) => {
 		logger.info('UserController::detailUser::query', {query: JSON.stringify(stages)});
 
 		const result = await UserBehaviorLogModel.aggregate(stages);
+		let customerInfo = await CustomerInfomationsModel.findOne({key, uuid: id});
+		
+		if(customerInfo)
+		{
+			if(customerInfo.customerInfo)
+			{
+				customerInfo.customerInfo.reverse();
+			}
+		}
 		
 		// get last log
 		const lastLog = await UserBehaviorLogModel.findOne({
@@ -1920,7 +1932,8 @@ const detailUser = async (req, res, next) => {
 					totalItems: result[0].meta[0] ? result[0].meta[0].totalItems : 0
 				},
 				logs: result[0].entries,
-				last: lastLog
+				last: lastLog,
+				customerInfo
 			}
 		};
 

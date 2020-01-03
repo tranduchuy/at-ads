@@ -6,6 +6,7 @@ const moment = require('moment');
 const mongoose = require('mongoose');
 
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
+const CustomerInfomationModel = require('../customer-infomation/customer-infomation.model');
 const WebsiteModel = require('../website/website.model');
 
 const { getDetailIpClickValidationSchema } = require('./validations/get-detail-ip-click.schema');
@@ -40,6 +41,7 @@ const getIPClicks = async (req, res, next) => {
 
 		let { ip } = req.params;
 		let { page, limit } = req.query;
+		const key = req.adsAccount.key;
 
 		if (!page) {
 			page = Paging.PAGE;
@@ -81,6 +83,8 @@ const getIPClicks = async (req, res, next) => {
 					return { ...ipInfo.ipInfo };
 				})
 			}
+
+			result = await ReportService.mapCustomerInfoIntoUserBehaviorLogs(result, key);
 			
 			const response = {
 				status  : HttpStatus.OK,
@@ -108,6 +112,8 @@ const getIPClicks = async (req, res, next) => {
 				})
 			}
 
+			result = await ReportService.mapCustomerInfoIntoUserBehaviorLogs(result, key);
+
 			const response = {
 				status  : HttpStatus.OK,
 				messages: [messages.ResponseMessages.SUCCESS],
@@ -129,15 +135,9 @@ const getIPClicks = async (req, res, next) => {
 		}, page, limit);
 
 		logger.info('ReportController::getIPClicks::stages ', JSON.stringify(stages));
-		const result = await UserBehaviorLogModel.aggregate(stages);
-		const last = await UserBehaviorLogModel
-			.findOne({
-				ip        : ip,
-				accountKey: req.adsAccount.key
-			})
-			.sort({
-				createdAt: -1
-			});
+		let result = await UserBehaviorLogModel.aggregate(stages);
+
+		result = await ReportService.mapCustomerInfoIntoUserBehaviorLogs(result, key);
 
 		const response = {
 			status  : HttpStatus.OK,
@@ -147,7 +147,7 @@ const getIPClicks = async (req, res, next) => {
 					totalItems: result[0].meta.length > 0 ? result[0].meta[0].totalItems : 0,
 				},
 				items: result[0].entries,
-				last
+				last: result[0].entries.length > 0 ? result[0].entries[0] : null
 			}
 		};
 
