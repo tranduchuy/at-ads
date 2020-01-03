@@ -12,6 +12,7 @@ const mongoose = require('mongoose');
 
 const CriterionIdOfDevice = require('../../constants/criterionIdOfDevice.constant')
 const userActionHistoryService = require('../user-action-history/user-action-history.service');
+const ReportServices = require('../report/report.service');
 const AdAccountConstant = require('./account-ads.constant');
 const AccountAdsService = require("./account-ads.service");
 const { checkIpsInWhiteList } = require('../../services/check-ip-in-white-list.service');
@@ -1834,8 +1835,9 @@ const statisticUser = async (req, res, next) => {
 
 		logger.info('UserBehaviorLogController::query', JSON.stringify(stages));
 
-		const result = await UserBehaviorLogModel.aggregate(stages);
-		const entries = result[0].entries.map(user => {
+		let result = await UserBehaviorLogModel.aggregate(stages);
+		result = await ReportServices.mapCustomerInfoIntoUserBehaviorLogs(result, req.adsAccount.key);
+		let entries = result[0].entries.map(user => {
 			if (user._id) {
 				user._id = '*' + user._id.slice(-12) + '*';
 			}
