@@ -10,7 +10,7 @@ const websiteSchema = new Schema({
   isTracking: { type: Boolean, default: false },
   isValid: { type: Boolean, default: false },
   isDuplicateScript: { type: Boolean, default: false },
-  popupConfig: { type: Object, default: null },
+  popupConfig: { type: Object, default: WebsiteConstant.popupConfig },
   isPopupOpening: { type: Boolean, default: false },
 }, { timestamps: true });
 

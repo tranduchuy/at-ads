@@ -609,7 +609,7 @@ const getLoggedInInfo = async (req, res, next) => {
     {
       packageType = userLicence.packageId ? userLicence.packageId.type : null;
       packageName = userLicence.packageId ? userLicence.packageId.name : null;
-      expiredAt = moment(userLicence.expiredAt);
+      expiredAt = userLicence.expiredAt ? moment(userLicence.expiredAt) : null;
     }
 
     const userInfoResponse = {
