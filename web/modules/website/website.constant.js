@@ -23,15 +23,15 @@ module.exports = {
     aYear: 12
   },
   popupConfig: {
-    "themeColor" : "#2196f3",
-    "popupPosition": 2,
-    "autoShowPopupRepeatTime": 0,
-    "autoShowPopup": false,
-		"supporter" : {
-			"name" : "Nguyễn Thị A",
-			"avatar" : "http://vaytienkhongthechap.net.vn/wp-content/uploads/2016/04/telephone_skills.jpg",
-			"major" : "Hỗ trợ viên",
-			"phone" : "0999999999"
+    themeColor : "#2196f3",
+    popupPosition: 2,
+    autoShowPopupRepeatTime: 0,
+    autoShowPopup: false,
+		supporter : {
+			name : "Nguyễn Thị A",
+			avatar : "http://vaytienkhongthechap.net.vn/wp-content/uploads/2016/04/telephone_skills.jpg",
+			major : "Hỗ trợ viên",
+			phone : "0999999999"
 		}
   }
 };

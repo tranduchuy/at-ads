@@ -10,7 +10,18 @@ const websiteSchema = new Schema({
   isTracking: { type: Boolean, default: false },
   isValid: { type: Boolean, default: false },
   isDuplicateScript: { type: Boolean, default: false },
-  popupConfig: { type: Object, default: WebsiteConstant.popupConfig },
+  popupConfig: { 
+    themeColor : {type: String, default: WebsiteConstant.popupConfig.themeColor},
+    popupPosition: {type: Number, default: WebsiteConstant.popupConfig.popupPosition},
+    autoShowPopupRepeatTime: {type: Number, default: WebsiteConstant.popupConfig.autoShowPopupRepeatTime},
+    autoShowPopup: {type: Boolean, default: WebsiteConstant.popupConfig.autoShowPopup},
+		supporter : {
+			name : {type: String, default: WebsiteConstant.popupConfig.supporter.name},
+			avatar : {type: String, default: WebsiteConstant.popupConfig.supporter.avatar},
+			major : {type: String, default: WebsiteConstant.popupConfig.supporter.major},
+			phone : {type: String, default: WebsiteConstant.popupConfig.supporter.phone}
+		}
+  },
   isPopupOpening: { type: Boolean, default: false },
 }, { timestamps: true });
 
