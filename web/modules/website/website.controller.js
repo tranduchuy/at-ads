@@ -267,15 +267,11 @@ const updatePopupForWebsite = async (req, res, next) => {
       });
     }
 
-    websiteInfo.popupConfig = {
-      themeColor,
-      supporter: {
-        name,
-        avatar,
-        major,
-        phone
-      }
-    };
+    websiteInfo.popupConfig.themeColor = themeColor; 
+    websiteInfo.popupConfig.supporter.name = name;
+    websiteInfo.popupConfig.supporter.avatar = avatar;
+    websiteInfo.popupConfig.supporter.major = major;
+    websiteInfo.popupConfig.supporter.phone = phone;
 
     await websiteInfo.save();
     return res.status(HttpStatus.OK).json({
