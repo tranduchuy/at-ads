@@ -267,15 +267,11 @@ const updatePopupForWebsite = async (req, res, next) => {
       });
     }
 
-    websiteInfo.popupConfig = {
-      themeColor,
-      supporter: {
-        name,
-        avatar,
-        major,
-        phone
-      }
-    };
+    websiteInfo.popupConfig.themeColor = themeColor; 
+    websiteInfo.popupConfig.supporter.name = name;
+    websiteInfo.popupConfig.supporter.avatar = avatar;
+    websiteInfo.popupConfig.supporter.major = major;
+    websiteInfo.popupConfig.supporter.phone = phone;
 
     await websiteInfo.save();
     return res.status(HttpStatus.OK).json({
@@ -302,7 +298,7 @@ const updatePopupStatusOfWebsite = async (req, res, next) => {
       return requestUtil.joiValidationResponse(error, res);
     }
 
-    let popupStatus = req.body.popupStatus;
+    let {popupStatus, popupPosition, autoShowPopupRepeatTime, autoShowPopup} = req.body;
     let website = req.params.website;
 
     const websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(website)});
@@ -311,6 +307,13 @@ const updatePopupStatusOfWebsite = async (req, res, next) => {
     {
       return res.status(HttpStatus.NOT_FOUND).json({
         messages: ["Website không tồn tại."],
+      });
+    }
+
+    if(!websiteInfo.popupConfig)
+    {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ["Popup chưa được thiết lập."],
       });
     }
 
@@ -323,7 +326,25 @@ const updatePopupStatusOfWebsite = async (req, res, next) => {
       });
     }
 
-    websiteInfo.isPopupOpening = popupStatus;
+    if(popupStatus == false || popupStatus == true)
+    {
+      websiteInfo.isPopupOpening = popupStatus;
+    }
+
+    if(popupPosition)
+    {
+      websiteInfo.popupConfig.popupPosition = popupPosition;
+    }
+
+    if(autoShowPopupRepeatTime)
+    {
+      websiteInfo.popupConfig.autoShowPopupRepeatTime = autoShowPopupRepeatTime;
+    }
+
+    if(autoShowPopup == false || autoShowPopup == true)
+    {
+      websiteInfo.popupConfig.autoShowPopup = autoShowPopup;
+    }
 
     await websiteInfo.save();
     return res.status(HttpStatus.OK).json({
