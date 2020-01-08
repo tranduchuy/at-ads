@@ -11,7 +11,8 @@ const LogTrackingBehaviorValidationSchema = Joi.object().keys({
   location: Joi.object(),
   screenResolution: Joi.object(),
   browserResolution: Joi.object(),
-  createdAt: Joi.number().required()
+  createdAt: Joi.number().required(),
+  msisdn: Joi.string(),
   }
 );
 

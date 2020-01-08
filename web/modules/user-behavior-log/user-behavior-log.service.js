@@ -26,7 +26,7 @@ const createUserBehaviorLog = async (inputData) => {
       ip, utmMedium, utmSource, utmCampaign, type,
       referrer, userAgent, browser, engine, isPrivateBrowsing,
       device, os, cpu, domain, pathname, uuid, accountKey, location,
-      browserResolution, screenResolution, keyword, matchType, page, position, campaignType, gclid, href, localIp, trafficSource
+      browserResolution, screenResolution, keyword, matchType, page, position, campaignType, gclid, href, localIp, trafficSource, msisdn
     } = inputData;
     const company = await IPLookupService.getNetworkCompanyByIP(ip);
 
@@ -60,7 +60,8 @@ const createUserBehaviorLog = async (inputData) => {
       engine: engine || null,
       device: device || null,
       os: os || null,
-      cpu: cpu || null
+      cpu: cpu || null,
+      msisdn: msisdn || null
     });
 
     return await newUserBehaviorLog.save();
