@@ -1895,7 +1895,6 @@ const detailUser = async (req, res, next) => {
 		startDate = Number(startDate) ? moment(Number(startDate)) : null;
 		endDate = Number(endDate) ? moment(Number(endDate)) : null;
 		const key = req.adsAccount.key;
-		console.log(key);
 
 		const stages = UserBehaviorLogService.buildStageDetailUser({
 			uuid : id,
