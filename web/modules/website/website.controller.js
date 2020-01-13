@@ -360,7 +360,7 @@ const updatePopupStatusOfWebsite = async (req, res, next) => {
 const checkWebsiteByDomain = async (req, res, next) => {
   const info = {
     key: req.params.key,
-    domain: req.body.domain,
+    domain: req.query.domain,
   };
   logger.info('WebsiteController::checkWebsiteByDomain::is called\n', info);
   try{
