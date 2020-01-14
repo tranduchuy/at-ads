@@ -885,26 +885,29 @@ const mapCustomerInfoIntoUserBehaviorLogs = async (result, key) => {
 		if(uuids.length > 0)
 		{
 			const customerInfo = await CustomerInfomationModel.find({uuid: {$in: uuids}, key});
-			const mapCustomerInfo = await customerInfo.map(customer => {
-				return { uuid: customer.uuid, phoneNumber: customer.customerInfo.length ? customer.customerInfo[customer.customerInfo.length - 1] : null }
-			});
-
-			result[0].entries = result[0].entries.map(user => {
-				let temp = null;
-
-				mapCustomerInfo.map(customer => {
-					if(user.uuid == customer.uuid)
-					{
-						temp = { ...user, customerInfo: customer.phoneNumber };
-					}
-					else
-					{
-						temp = { ...user, customerInfo: null };
-					}
+			if(customerInfo.length > 0)
+			{
+				const mapCustomerInfo = await customerInfo.map(customer => {
+					return { uuid: customer.uuid, phoneNumber: customer.customerInfo.length ? customer.customerInfo[customer.customerInfo.length - 1] : null }
 				});
-
-				return temp;
-			});
+	
+				result[0].entries = result[0].entries.map(user => {
+					let temp = null;
+	
+					mapCustomerInfo.map(customer => {
+						if(user.uuid == customer.uuid)
+						{
+							temp = { ...user, customerInfo: customer.phoneNumber };
+						}
+						else
+						{
+							temp = { ...user, customerInfo: null };
+						}
+					});
+	
+					return temp;
+				});
+			}
 
 			logger.info('ReportService::mapCustomerInfoIntoUserBehaviorLogs::success');
 			return result;
