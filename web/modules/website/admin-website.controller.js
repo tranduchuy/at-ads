@@ -58,7 +58,6 @@ const checkAttachTrackingScript = async (req, res, next) => {
 			});
 		}
 
-		console.log(website);
 		const adAccount = await AccountAdModel.findOne({_id: website.accountAd}).lean();
 		if (!adAccount) {
 			return res.status(HttpStatus.BAD_REQUEST).json({
