@@ -16,6 +16,7 @@ const SocketService = require('../../services/socket.service');
 const AdAccountModel = require('../account-adwords/account-ads.model');
 
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
+const WebsiteModel = require('../website/website.model');
 const WebsiteService = require('../website/website.service');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 const Config = require('config');
@@ -29,9 +30,15 @@ const logTrackingBehavior = async (req, res, next) => {
     const hrefURL = new Url(href);
     const hrefOrigin = hrefURL.origin;
     const accountOfKey = await AdAccountModel.findOne({key}).lean();
-    const website = await WebsiteService.getWebsiteByDomain(hrefOrigin);
 
-    if (!website || !accountOfKey || website.accountAd.toString() !== accountOfKey._id.toString()) {
+    if(!accountOfKey)
+    {
+      key = '';
+    }
+
+    const website = await WebsiteModel.findOne({domain: hrefOrigin, accountAd: accountOfKey._id }).lean();
+
+    if (!website) {
       key = '';
     }
 
