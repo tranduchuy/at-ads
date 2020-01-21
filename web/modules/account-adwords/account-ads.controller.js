@@ -66,12 +66,24 @@ const addAccountAds = async (req, res, next) => {
 		const { adWordId } = req.body;
 		const duplicateAdWordId = await AccountAdsModel.findOne({ adsId: adWordId });
 
-		if (duplicateAdWordId) {
-			if (duplicateAdWordId.user.toString() !== req.user._id.toString()) {
-				const result = {
-					messages: [messages.ResponseMessages.AccountAds.Register.ADWORDS_ID_BELONG_TO_ANOTHER_USER],
-				};
-				return res.status(HttpStatus.BAD_REQUEST).json(result);
+		if (duplicateAdWordId) 
+		{
+			if(!duplicateAdWordId.isDeleted)
+			{
+				if (duplicateAdWordId.user.toString() !== req.user._id.toString()) {
+					const result = {
+						messages: [messages.ResponseMessages.AccountAds.Register.ADWORDS_ID_BELONG_TO_ANOTHER_USER],
+					};
+					return res.status(HttpStatus.BAD_REQUEST).json(result);
+				}
+
+				return res.status(HttpStatus.OK).json({
+					messages: ['Kết nối tài khoản thành công'],
+					data    : {
+						account  : duplicateAdWordId,
+						isRefresh: true
+					}
+				});
 			}
 
 			GoogleAdwordsService.sendManagerRequest(adWordId)
@@ -84,6 +96,7 @@ const addAccountAds = async (req, res, next) => {
 						});
 					}
 
+					duplicateAdWordId.user = req.user._id;
 					duplicateAdWordId.isDeleted = false;
 					duplicateAdWordId.isConnected = false;
 					duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
@@ -106,6 +119,7 @@ const addAccountAds = async (req, res, next) => {
 								});
 							}
 
+							duplicateAdWordId.user = req.user._id;
 							duplicateAdWordId.isDeleted = false;
 							duplicateAdWordId.isConnected = true;
 							duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
@@ -120,6 +134,7 @@ const addAccountAds = async (req, res, next) => {
 								}
 							});
 						case 'ALREADY_INVITED_BY_THIS_MANAGER':
+							duplicateAdWordId.user = req.user._id;
 							duplicateAdWordId.isDeleted = false;
 							duplicateAdWordId.isConnected = false;
 							duplicateAdWordId.connectType = AdAccountConstant.connectType.byId;
@@ -2067,16 +2082,27 @@ const connectGoogleAdsByEmail = async(req, res, next) => {
 
 		const { adWordId, adsName } = req.body;
 		const adWord = await AccountAdsModel.findOne({adsId: adWordId});
-
+	
 		if(adWord)
 		{
-		    if (adWord.user.toString() !== req.user._id.toString()) {
-		        return res.status(HttpStatus.BAD_REQUEST).json({
-    				messages: ["Tài khoản đã được quản lý bởi tài khoản khác."],
-    			});
-		    }
+			if(!adWord.isDeleted)
+			{
+				if (adWord.user.toString() !== req.user._id.toString()) {
+						return res.status(HttpStatus.BAD_REQUEST).json({
+						messages: ["Tài khoản đã được quản lý bởi tài khoản khác."],
+					});
+				}
+
+				return res.status(HttpStatus.OK).json({
+					messages: ["Bạn đã kết nối thành công GoogleAds này: " + adWordId],
+					data: {
+						account: adWord
+					}
+				});
+			}
 			
 			adWord.adsName = adsName;
+			adWord.user = req.user._id;
 			adWord.isConnected = true;
 			adWord.isDeleted = false;
 			adWord.connectType = AdAccountConstant.connectType.byEmail;
