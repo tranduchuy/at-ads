@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const websiteSchema = new Schema({
   code: { type : String , unique : true, required : true, dropDups: true },
   status: { type: Number, default: StatusConstant.Status.ACTIVE},
-  domain: {type: String, unique: true},
+  domain: {type: String},
   accountAd: Schema.Types.ObjectId,
   isTracking: { type: Boolean, default: false },
   isValid: { type: Boolean, default: false },
