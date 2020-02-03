@@ -16,7 +16,7 @@ const initPackages = async (packagesModel) => {
     },
     [PackagesConstant.packageTypes.VIP1]: {
       name: 'Vip1',
-      price: 5e5,
+      price: 1e6,
       numOfMonths: 1,
       type: PackagesConstant.packageTypes.VIP1
     },

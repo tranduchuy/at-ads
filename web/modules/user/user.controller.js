@@ -356,7 +356,6 @@ const login = async (request, res, next) => {
       const package = await PackageModel.findOne({type: PackageConstant.packageTypes.FREE});
       if(package)
       {
-        console.log('dô nè');
         userLicence = new UserLicencesModel({
           userId,
           packageId: package,
