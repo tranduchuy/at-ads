@@ -17,6 +17,7 @@ const { checkWebsiteByCodeValidationSchema } = require('./validations/check-webs
 const { UpdatePopupForWebsiteValidateSchema } = require('./validations/update-popup-for-website.schema');
 const { UpdatePopupStatusForWebsiteValidateSchema } = require('./validations/update-popup-status-for-website.schema');
 const { CheckWebsiteByDomainValidateSchema } = require('./validations/check-website-by-domain.schema');
+const { UpdateFakeCustomerForWebsiteValidationSchema } = require('./validations/update-fake-customer-for-website.schema');
 
 const addDomainForAccountAds = async (req, res, next) => {
   logger.info('WebsiteController::addDomainForAccountAds is called, userId:', req.user._id);
@@ -400,6 +401,46 @@ const checkWebsiteByDomain = async (req, res, next) => {
   }
 };
 
+const updateFakeCustomerForWebsite = async (req, res, next) => {
+  try{
+    logger.info('WebsiteController::updateFakeCustomerForWebsite::is called');
+    const { error } = Joi.validate(Object.assign({}, req.params, req.body), UpdateFakeCustomerForWebsiteValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const websiteId = req.params.website;
+    let websiteInfo = await WebsiteModel.findOne({_id: mongoose.Types.ObjectId(websiteId)});
+
+    if(!websiteInfo)
+    {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        messages: ["Website không tồn tại."],
+      });
+    }
+
+    const accountAd = await AccountAdsModel.findOne({user: req.user._id, _id: websiteInfo.accountAd});
+
+    if(!accountAd)
+    {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        messages: ["Website không thuộc tài khoản này."],
+      });
+    }
+
+    websiteInfo = await WebsiteService.filterFakeCustomerData(req, websiteInfo);
+
+    return res.status(HttpStatus.OK).json({
+      messages: ["Thành công."],
+      website: websiteInfo
+    });
+  }catch(e){
+    logger.error('WebsiteController::updateFakeCustomerForWebsite::error', e);
+    return next(e);
+  }
+}
+
 module.exports = {
   addDomainForAccountAds,
   getWebsitesByAccountId,
@@ -408,5 +449,6 @@ module.exports = {
   checkWebsiteByCode,
   updatePopupForWebsite,
   updatePopupStatusOfWebsite,
-  checkWebsiteByDomain
+  checkWebsiteByDomain,
+  updateFakeCustomerForWebsite
 };

@@ -4,9 +4,9 @@ const PackageModel = require('./packages.model');
 const log4js = require('log4js');
 const Joi = require('@hapi/joi');
 const logger = log4js.getLogger('Controllers');
-const { UpdatePriceForPackageValidationSchema } = require("./validations/update-price-for-package.schema");
+const { UpdateElementOfPackageValidationSchema } = require("./validations/update-element-of-package.schema");
 const mongoose = require('mongoose');
-const PackageConstant = require('./packages.constant');
+const PackageServices = require('./packages.service');
 
 const getListPackages = async (req, res, next) => {
   try{
@@ -27,60 +27,37 @@ const getListPackages = async (req, res, next) => {
   }
 };
 
-const updatePriceForPackage = async(req, res, next) => {
+const updateElementOfPackage = async(req, res, next) => {
   try{
-    logger.info('AdminPackagesController::UpdatePriceForPackage::is called', { packageId: req.params.packageId, price: req.body.price });
-    const { error } = Joi.validate(Object.assign({}, req.params, req.body) , UpdatePriceForPackageValidationSchema);
+    logger.info('AdminPackagesController::updateElementOfPackage::is called', { packageId: req.params.packageId, price: req.body.price });
+    const { error } = Joi.validate(Object.assign({}, req.params, req.body) , UpdateElementOfPackageValidationSchema);
 
 		if (error) {
 			return requestUtil.joiValidationResponse(error, res);
     }
 
     const packageId = req.params.packageId;
-    const price = req.body.price;
-    const package = await PackageModel.findOne({_id: mongoose.Types.ObjectId(packageId)});
+    let package = await PackageModel.findOne({_id: mongoose.Types.ObjectId(packageId)});
 
     if(!package){
-      logger.info('AdminPackagesController::UpdatePriceForPackage::package not found');
+      logger.info('AdminPackagesController::updateElementOfPackage::package not found');
       return res.status(HttpStatus.NOT_FOUND).json({
         messages: ['Gói này không tồn tại.']
       });
     }
 
-    if(package.type == PackageConstant.packageTypes.FREE)
-    {
-      logger.info('AdminPackagesController::UpdatePriceForPackage::package type is free');
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        messages: ['Không thể điều chỉnh giá cho gói này.']
-      });
-    }
-
-    if(package.type == PackageConstant.packageTypes.VIP1 && price == 0)
-    {
-      logger.info('AdminPackagesController::UpdatePriceForPackage::price of package type Vip is zero');
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        messages: ['Giá của các gói phải lớn hơn 0.']
-      });
-    }
-
-    package.price = price;
-    await package.save();
+    const info = await PackageServices.filterDataUpdatePackage(req, package);
     
-    logger.info('AdminPackagesController::UpdatePriceForPackage::success');
-		return res.status(HttpStatus.OK).json({
-			messages: ['Thành công'],
-			data: {
-				package
-			}
-		});
+    logger.info('AdminPackagesController::updateElementOfPackage::success');
+		return res.status(info.status).json(info.info);
   }catch(e){
-    logger.error('AdminPackagesController::UpdatePriceForPackage::error', e);
+    logger.error('AdminPackagesController::updateElementOfPackage::error', e);
     return next(e);
   }
 };
 
 module.exports = {
   getListPackages,
-  updatePriceForPackage
+  updateElementOfPackage
 }
 

@@ -6,7 +6,8 @@ const packagesSchema = new Schema({
   name: String,
   type: String,
   numOfMonths: Number,
-  price: Number
+  price: Number,
+  interests: Array
 }, { timestamps: true });
 
 const packagesModel = mongoose.model('Package', packagesSchema, 'Packages');

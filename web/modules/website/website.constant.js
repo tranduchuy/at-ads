@@ -33,5 +33,17 @@ module.exports = {
 			major : "Hỗ trợ viên",
 			phone : "0999999999"
 		}
+  },
+  fakeCustomerConfig: {
+    isEnable: false,
+    runningDevices: [1, 2, 3],    // 1. Desktop, 2. Mobile, 3. Tablet
+    positionOnPage: 2,            // 1. Bottom left, 2. Bottom right, 3. Top left, 4. Top right
+    autoDisplayTime: [10, 90],          // Seconds in [10, 90]
+    avatarType: 1,
+    title: 'Mới mua hàng!',
+    body: 'Khách hàng #fake_email vừa mới mua hàng thành công!',
+    pageUrl: 'https://x2.com.vn',
+    themeColor: '#039be5',
+    shape: 1         
   }
 };
