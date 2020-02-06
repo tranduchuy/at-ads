@@ -346,7 +346,7 @@ const filterFakeCustomerData = async (req, websiteInfo) => {
 
     if(isEnabled == true || isEnabled == false)
     {
-      websiteInfo.fakeCustomerConfig['isEnable'] = isEnable;
+      websiteInfo.fakeCustomerConfig['isEnabled'] = isEnabled;
     }
 
     if(runningDevices)
