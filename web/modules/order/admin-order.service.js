@@ -27,6 +27,12 @@ const getOrderList = async (status, code, limit, page) => {
       };
     }
 
+    const sortStage =  {
+			$sort: {
+				'createdAt': -1
+			}
+		};
+
     const facetStage = {
       $facet: {
         entries: [{ $skip: (page - 1) * limit }, { $limit: limit }],
@@ -34,7 +40,7 @@ const getOrderList = async (status, code, limit, page) => {
       }
     };
 
-    const query = status || code ? [matchStage, facetStage] : [facetStage];
+    const query = status || code ? [matchStage, sortStage, facetStage] : [sortStage, facetStage];
     console.log(query);
     logger.info(
       'AdminOrderService::getOrderList::query',
