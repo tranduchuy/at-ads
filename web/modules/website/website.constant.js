@@ -35,7 +35,7 @@ module.exports = {
 		}
   },
   fakeCustomerConfig: {
-    isEnable: false,
+    isEnabled: false,
     runningDevices: [1, 2, 3],    // 1. Desktop, 2. Mobile, 3. Tablet
     positionOnPage: 2,            // 1. Bottom left, 2. Bottom right, 3. Top left, 4. Top right
     autoDisplayTime: [10, 90],          // Seconds in [10, 90]

@@ -24,7 +24,7 @@ const websiteSchema = new Schema({
   },
   isPopupOpening: { type: Boolean, default: false },
   fakeCustomerConfig: {
-    isEnable: { type: Boolean, default: WebsiteConstant.fakeCustomerConfig.isEnable },
+    isEnabled: { type: Boolean, default: WebsiteConstant.fakeCustomerConfig.isEnabled },
     runningDevices: { type: Array, default: WebsiteConstant.fakeCustomerConfig.runningDevices },
     positionOnPage: { type: Number, default: WebsiteConstant.fakeCustomerConfig.positionOnPage },
     autoDisplayTime: { type: Array, default: WebsiteConstant.fakeCustomerConfig.autoDisplayTime },
