@@ -386,6 +386,7 @@ const login = async (request, res, next) => {
       licence: {
         type: userLicence.packageId ? userLicence.packageId.type : null, 
         name: userLicence.packageId ? userLicence.packageId.name : null,
+        interests: userLicence.packageId ? userLicence.packageId.interests : null,
         expiredAt: moment(userLicence.expiredAt)
       }
     };
