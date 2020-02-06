@@ -333,7 +333,7 @@ const mapUserListIntoWebsiteList = (websitesList, usersList) => {
 const filterFakeCustomerData = async (req, websiteInfo) => {
   try{
     logger.info('WebsiteServices::filterFakeCustomerData::is called');
-    const isEnable = req.body.isEnable;
+    const isEnabled = req.body.isEnabled;
     const runningDevices = req.body.runningDevices;
     const positionOnPage = req.body.positionOnPage;
     const autoDisplayTime = req.body.autoDisplayTime;
@@ -344,7 +344,7 @@ const filterFakeCustomerData = async (req, websiteInfo) => {
     const themeColor = req.body.themeColor;
     const shape = req.body.shape;
 
-    if(isEnable == true || isEnable == false)
+    if(isEnabled == true || isEnabled == false)
     {
       websiteInfo.fakeCustomerConfig['isEnable'] = isEnable;
     }

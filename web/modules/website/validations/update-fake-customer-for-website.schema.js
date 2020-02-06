@@ -2,7 +2,7 @@ const Joi = require('@hapi/joi');
 
 const UpdateFakeCustomerForWebsiteValidationSchema = Joi.object().keys({
     website: Joi.string().required(),
-    isEnable: Joi.boolean(),
+    isEnabled: Joi.boolean(),
     runningDevices: Joi.array().items(Joi.number().valid([1, 2, 3])).unique(),
     positionOnPage: Joi.number().valid([1,2,3,4]),
     autoDisplayTime: Joi.array().items(Joi.number().min(10).max(90)).length(2),
