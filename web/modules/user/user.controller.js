@@ -603,12 +603,14 @@ const getLoggedInInfo = async (req, res, next) => {
     let packageType = null;
     let packageName = null;
     let expiredAt = null;
+    let interests = null;
 
     if(userLicence)
     {
       packageType = userLicence.packageId ? userLicence.packageId.type : null;
       packageName = userLicence.packageId ? userLicence.packageId.name : null;
       expiredAt = userLicence.expiredAt ? moment(userLicence.expiredAt) : null;
+      interests = userLicence.packageId ? userLicence.packageId.interests : null;
     }
 
     const userInfoResponse = {
@@ -624,7 +626,8 @@ const getLoggedInInfo = async (req, res, next) => {
       licence: {
         type: packageType,
         name: packageName,
-        expiredAt
+        expiredAt,
+        interests
       }
     };
 
