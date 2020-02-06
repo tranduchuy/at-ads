@@ -197,6 +197,7 @@ const getAccountInfo = async (user, message) => {
     licence: {
       type: user.userLicence.packageId ? user.userLicence.packageId.type : null, 
       name: user.userLicence.packageId ? user.userLicence.packageId.name : null,
+      interests: user.userLicence.packageId ? user.userLicence.packageId.interests : null,
       expiredAt: moment(user.userLicence.expiredAt)
     }
   };
