@@ -33,6 +33,12 @@ const getUsersListForAdminPage = (email, name, page, limit) => {
         };
       }
 
+      const sortStage =  {
+        $sort: {
+          'createdAt': -1
+        }
+      };
+
       const facetStage = {
         $facet: {
           entries: [{ $skip: (page - 1) * limit }, { $limit: limit }],
@@ -40,7 +46,7 @@ const getUsersListForAdminPage = (email, name, page, limit) => {
         }
       };
 
-      const query = email || name ? [matchStage, facetStage] : [facetStage];
+      const query = email || name ? [matchStage, sortStage, facetStage] : [sortStage, facetStage];
 
       logger.info(
         'Admin/UserService::getUsersListForAdminPage::query\n',
