@@ -439,7 +439,7 @@ const updateFakeCustomerForWebsite = async (req, res, next) => {
     logger.error('WebsiteController::updateFakeCustomerForWebsite::error', e);
     return next(e);
   }
-}
+};
 
 module.exports = {
   addDomainForAccountAds,

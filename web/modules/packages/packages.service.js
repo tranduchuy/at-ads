@@ -76,6 +76,8 @@ const filterDataUpdatePackage = async (req, package) => {
     const price = req.body.price;
     const name = req.body.name;
     const interests = req.body.interests;
+    const isContactPrice = req.body.isContactPrice;
+    const discountMonths = req.body.discountMonths;
     
     if(price || price == 0)
     {
@@ -90,17 +92,6 @@ const filterDataUpdatePackage = async (req, package) => {
         };
       }
 
-      if(package.type == PackagesConstant.packageTypes.VIP1 && price == 0)
-      {
-        logger.info('packagesServices::filterDataUpdatePackage::price of package type Vip is zero');
-        return { 
-          status: HttpStatus.BAD_REQUEST,
-          info: { 
-            messages: ['Giá của các gói phải lớn hơn 0.']
-          }
-        };
-      }
-
       package.price = price;
     }
 
@@ -110,6 +101,16 @@ const filterDataUpdatePackage = async (req, package) => {
 
     if(interests){
       package.interests = interests;
+    }
+
+    if(isContactPrice == true || isContactPrice == false)
+    {
+      package.isContactPrice = isContactPrice;
+    }
+
+    if(discountMonths)
+    {
+      package.discountMonths = discountMonths;
     }
 
     logger.info('packagesServices::filterDataUpdatePackage::success');
