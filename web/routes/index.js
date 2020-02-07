@@ -15,6 +15,7 @@ router.use('/admin/account-ads', require('../modules/account-adwords/admin-accou
 router.use('/admin/user-licences', require('../modules/user-licences/admin-user-licences.route'));
 router.use('/admin', require('../modules/admin/admin.route'));
 router.use('/admin/order', require('../modules/order/admin.route'));
+router.use('/admin/packages', require('../modules/packages/admin.route'));
 router.use('/customer-infomation', require('../modules/customer-infomation/customer-infomation.route'));
 
 module.exports = router;

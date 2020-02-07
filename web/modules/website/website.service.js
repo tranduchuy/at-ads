@@ -6,6 +6,7 @@ const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
 const Mongoose = require('mongoose');
 const UserModel = require('../../modules/user/user.model');
+const WebsiteConstant = require('./website.constant');
 
 const moment = require('moment');
 
@@ -329,6 +330,94 @@ const mapUserListIntoWebsiteList = (websitesList, usersList) => {
   return websitesList;
 };
 
+const filterFakeCustomerData = async (req, websiteInfo) => {
+  try{
+    logger.info('WebsiteServices::filterFakeCustomerData::is called');
+    const isEnabled = req.body.isEnabled;
+    const runningDevices = req.body.runningDevices;
+    const positionOnPage = req.body.positionOnPage;
+    const autoDisplayTime = req.body.autoDisplayTime;
+    const avatarType = req.body.avatarType;
+    const title = req.body.title;
+    const body = req.body.body;
+    const pageUrl = req.body.pageUrl;
+    const themeColor = req.body.themeColor;
+    const shape = req.body.shape;
+
+    if(isEnabled == true || isEnabled == false)
+    {
+      websiteInfo.fakeCustomerConfig['isEnabled'] = isEnabled;
+    }
+
+    if(runningDevices)
+    {
+      websiteInfo.fakeCustomerConfig['runningDevices'] = runningDevices;
+    }
+
+    if(positionOnPage)
+    {
+      websiteInfo.fakeCustomerConfig['positionOnPage'] = positionOnPage;
+    }
+
+    if(autoDisplayTime)
+    {
+      websiteInfo.fakeCustomerConfig['autoDisplayTime'] = autoDisplayTime;
+    }
+
+    if(avatarType)
+    {
+      websiteInfo.fakeCustomerConfig['avatarType'] = avatarType;
+    }
+
+    if(title)
+    {
+      websiteInfo.fakeCustomerConfig['title'] = title;
+    }
+
+    if(title == "")
+    {
+      websiteInfo.fakeCustomerConfig['title'] = WebsiteConstant.fakeCustomerConfig.title;
+    }
+
+    if(body)
+    {
+      websiteInfo.fakeCustomerConfig['body'] = body;
+    }
+
+    if(body == "")
+    {
+      websiteInfo.fakeCustomerConfig['body'] = WebsiteConstant.fakeCustomerConfig.body;
+    }
+
+    if(pageUrl)
+    {
+      websiteInfo.fakeCustomerConfig['pageUrl'] = pageUrl;
+    }
+
+    if(pageUrl == "")
+    {
+      websiteInfo.fakeCustomerConfig['pageUrl'] = "";
+    }
+
+    if(themeColor)
+    {
+      websiteInfo.fakeCustomerConfig['themeColor'] = themeColor;
+    }
+
+    if(shape)
+    {
+      websiteInfo.fakeCustomerConfig['shape'] = shape;
+    }
+    
+    await websiteInfo.save();
+    logger.info('WebsiteServices::filterFakeCustomerData::success');
+    return websiteInfo;
+  }catch(e){
+    logger.error('WebsiteServices::filterFakeCustomerData::error', e);
+    throw new Error(e);
+  }
+}
+
 module.exports = {
   createDomain,
   getWebsitesByAccountId,
@@ -337,5 +426,6 @@ module.exports = {
   getWebsiteByDomain,
   findWebsite,
   getWebsitesForAdminPage,
-  getWebsiteInfoforAdminPage
+  getWebsiteInfoforAdminPage,
+  filterFakeCustomerData
 };

@@ -14,7 +14,7 @@ const getListPackages = async (req, res, next) => {
 			data: {
 				packages
 			}
-		})
+		});
 	} catch (e) {
 		logger.error('PackageController::getListPackages::error', e);
 		return next(e);

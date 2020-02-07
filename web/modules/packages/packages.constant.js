@@ -31,5 +31,11 @@ module.exports = {
     THREE: 3,
     SIX: 6,  
     TWELVE: 12
-  }
+  },
+  discountArray: [
+    0,
+    0,
+    0,
+    0
+  ]
 };

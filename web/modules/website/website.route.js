@@ -12,5 +12,6 @@ router.get('/:code', CheckTokenMiddleware, CheckUserAdminMiddleware, WebsiteCont
 router.put('/:website/popup', CheckTokenMiddleware, WebsiteController.updatePopupForWebsite);
 router.put('/:website/status-popup', CheckTokenMiddleware, WebsiteController.updatePopupStatusOfWebsite);
 router.get('/:key/popup', WebsiteController.checkWebsiteByDomain);
+router.put('/:website/fake-customer', CheckTokenMiddleware, WebsiteController.updateFakeCustomerForWebsite);
 
 module.exports = router;
