@@ -11,7 +11,8 @@ const packagesSchema = new Schema({
   interests: Array,
   isContactPrice: { type: Boolean, default: false },
   discountMonths: {type: Array, default: PackageConstant.discountArray},
-  contact: {type: String, default: null}
+  contact: {type: String, default: null},
+  isDiscount: {type: Boolean, default: false}
 }, { timestamps: true });
 
 const packagesModel = mongoose.model('Package', packagesSchema, 'Packages');
