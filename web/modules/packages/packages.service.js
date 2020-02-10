@@ -78,6 +78,7 @@ const filterDataUpdatePackage = async (req, package) => {
     const interests = req.body.interests;
     const isContactPrice = req.body.isContactPrice;
     const discountMonths = req.body.discountMonths;
+    const contact = req.body.contact;
     
     if(price || price == 0)
     {
@@ -111,6 +112,11 @@ const filterDataUpdatePackage = async (req, package) => {
     if(discountMonths)
     {
       package.discountMonths = discountMonths;
+    }
+
+    if(contact)
+    {
+      package.contact = contact;
     }
 
     logger.info('packagesServices::filterDataUpdatePackage::success');
