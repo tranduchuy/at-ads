@@ -10,7 +10,9 @@ const packagesSchema = new Schema({
   price: Number,
   interests: Array,
   isContactPrice: { type: Boolean, default: false },
-  discountMonths: {type: Array, default: PackageConstant.discountArray}
+  discountMonths: {type: Array, default: PackageConstant.discountArray},
+  contact: {type: String, default: null},
+  isDiscount: {type: Boolean, default: false}
 }, { timestamps: true });
 
 const packagesModel = mongoose.model('Package', packagesSchema, 'Packages');
