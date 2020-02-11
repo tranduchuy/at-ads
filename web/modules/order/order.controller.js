@@ -8,6 +8,7 @@ const OrderModel = require('../order/order.model');
 const OrderConstant = require('../order/order.constant');
 const PackagesModel = require('../packages/packages.model');
 const requestUtil = require('../../utils/RequestUtil');
+const PackagesConstant = require('../packages/packages.constant');
 
 const {
   CreatedOrderWhenRegisterPackageValidationSchema
@@ -42,6 +43,8 @@ const createdOrderWhenRegisterPackage = async (req, res, next) => {
       packageId: package._id
     };
     let order = await OrderModel.findOne(query);
+    let isDiscount = package.isDiscount || false;
+    let discount = package.discountMonths || PackagesConstant.discountArray;
 
     if (!order) {
       const code = await OrderService.createCode();
@@ -51,14 +54,14 @@ const createdOrderWhenRegisterPackage = async (req, res, next) => {
         code,
         packageId: package._id,
         numOfMonths,
-        price: OrderService.discount(numOfMonths, package.price)
+        price: OrderService.discount(numOfMonths, package.price, isDiscount, discount)
       });
     } else {
       order.numOfMonths =
-        order.numOfMonths != numOfMonths
-          ? Number(numOfMonths)
-          : order.numOfMonths;
-      order.price = OrderService.discount(numOfMonths, package.price)
+      order.numOfMonths != numOfMonths
+        ? Number(numOfMonths)
+        : order.numOfMonths;
+      order.price = OrderService.discount(numOfMonths, package.price, isDiscount, discount)
     }
 
     await order.save();

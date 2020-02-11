@@ -115,7 +115,7 @@ const filterDataUpdatePackage = async (req, package) => {
       package.discountMonths = discountMonths;
     }
 
-    if(contact)
+    if(contact || contact == '')
     {
       package.contact = contact;
     }
@@ -142,7 +142,36 @@ const filterDataUpdatePackage = async (req, package) => {
   }
 };
 
+const sortPackage = (packages) => {
+  try{
+    logger.info('packagesServices::sortPackage::is called');
+    let packagesAfterSort = [];
+
+		packages.forEach(package => {
+			if(package.type == PackagesConstant.packageTypes.FREE)
+			{
+				packagesAfterSort[0] = package;
+				return;
+			}
+
+			if(package.type == PackagesConstant.packageTypes.VIP1)
+			{
+				packagesAfterSort[1] = package;
+				return;
+			}
+
+			packagesAfterSort[2] = package;
+    });
+    
+    return packagesAfterSort;
+  }catch(e){
+    logger.error('packagesServices::sortPackage::error', e);
+    throw new Error(e);
+  }
+}
+
 module.exports = {
   initPackages,
-  filterDataUpdatePackage
+  filterDataUpdatePackage,
+  sortPackage
 };

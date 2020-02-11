@@ -387,6 +387,10 @@ const login = async (request, res, next) => {
         type: userLicence.packageId ? userLicence.packageId.type : null, 
         name: userLicence.packageId ? userLicence.packageId.name : null,
         interests: userLicence.packageId ? userLicence.packageId.interests : null,
+        contact: userLicence.packageId ? userLicence.packageId.contact : null,
+        discountMonths: userLicence.packageId ? userLicence.packageId.discountMonths : null,
+        isDiscount: userLicence.packageId ? userLicence.packageId.isDiscount : null,
+        isContactPrice: userLicence.packageId ? userLicence.packageId.isContactPrice : null,
         expiredAt: moment(userLicence.expiredAt)
       }
     };
@@ -605,6 +609,10 @@ const getLoggedInInfo = async (req, res, next) => {
     let packageName = null;
     let expiredAt = null;
     let interests = null;
+    let contact = null;
+    let discountMonths = null;
+    let isDiscount = null;
+    let isContactPrice = null;
 
     if(userLicence)
     {
@@ -612,6 +620,10 @@ const getLoggedInInfo = async (req, res, next) => {
       packageName = userLicence.packageId ? userLicence.packageId.name : null;
       expiredAt = userLicence.expiredAt ? moment(userLicence.expiredAt) : null;
       interests = userLicence.packageId ? userLicence.packageId.interests : null;
+      contact = userLicence.packageId ? userLicence.packageId.contact : null;
+      discountMonths = userLicence.packageId ? userLicence.packageId.discountMonths : null;
+      isDiscount = userLicence.packageId ? userLicence.packageId.isDiscount : null;
+      isContactPrice = userLicence.packageId ? userLicence.packageId.isContactPrice : null;
     }
 
     const userInfoResponse = {
@@ -628,7 +640,11 @@ const getLoggedInInfo = async (req, res, next) => {
         type: packageType,
         name: packageName,
         expiredAt,
-        interests
+        interests,
+        contact,
+        isContactPrice,
+        isDiscount,
+        discountMonths
       }
     };
 

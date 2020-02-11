@@ -198,6 +198,10 @@ const getAccountInfo = async (user, message) => {
       type: user.userLicence.packageId ? user.userLicence.packageId.type : null, 
       name: user.userLicence.packageId ? user.userLicence.packageId.name : null,
       interests: user.userLicence.packageId ? user.userLicence.packageId.interests : null,
+      contact: user.userLicence.packageId ? user.userLicence.packageId.contact : null,
+      discountMonths: user.userLicence.packageId ? user.userLicence.packageId.discountMonths : null,
+      isDiscount: user.userLicence.packageId ? user.userLicence.packageId.isDiscount : null,
+      isContactPrice: user.userLicence.packageId ? user.userLicence.packageId.isContactPrice : null,
       expiredAt: moment(user.userLicence.expiredAt)
     }
   };
