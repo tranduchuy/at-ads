@@ -278,7 +278,11 @@ const getWebsitesForAdminPage = (accountIds, page, limit) => {
           }
         }
       };
-
+      const sortStage = {
+        $sort: {
+          'createdAt': -1
+        }
+      };
       const facetStage = {
         $facet: {
           entries: [{ $skip: (page - 1) * limit }, { $limit: limit }],
@@ -287,7 +291,7 @@ const getWebsitesForAdminPage = (accountIds, page, limit) => {
       };
 
       const query =
-        accountIds.length > 0 ? [matchStage, facetStage] : [facetStage];
+        accountIds.length > 0 ? [matchStage, sortStage, facetStage] : [sortStage, facetStage];
 
       const websitesList = await WebsiteModel.aggregate(query);
 
