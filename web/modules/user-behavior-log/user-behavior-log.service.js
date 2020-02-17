@@ -26,7 +26,7 @@ const createUserBehaviorLog = async (inputData) => {
       ip, utmMedium, utmSource, utmCampaign, type,
       referrer, userAgent, browser, engine, isPrivateBrowsing,
       device, os, cpu, domain, pathname, uuid, accountKey, location,
-      browserResolution, screenResolution, keyword, matchType, page, position, campaignType, gclid, href, localIp, trafficSource, msisdn
+      browserResolution, screenResolution, keyword, matchType, page, position, campaignType, adGroupId, gclid, href, localIp, trafficSource, msisdn
     } = inputData;
     const company = await IPLookupService.getNetworkCompanyByIP(ip);
 
@@ -51,6 +51,7 @@ const createUserBehaviorLog = async (inputData) => {
       page,
       position,
       campaignType,
+      adGroupId,
       trafficSource,
       gclid: gclid || null,
       utmCampaign: utmCampaign || null,
@@ -380,37 +381,40 @@ const getDataForIntroPage = () => {
   });
 };
 
-const filterReason = (website, accountOfKey) => {
-  let reason = {};
-
+const filterReason = (website, accountOfKey, key) => {
   if(!website)
   {
-    reason = { 
+    return { 
       message: UserBehaviorLogConstant.MESSAGE.websiteNotFound
     };
   }
-  else if(!accountOfKey)
+
+  if(!accountOfKey)
   {
-    reason = { 
+    return { 
       message: UserBehaviorLogConstant.MESSAGE.accountNotFound
     };
   }
-  else if(website.accountAd.toString() !== accountOfKey._id.toString())
+
+  if(website.accountAd.toString() !== accountOfKey._id.toString())
   {
-    reason = { 
+    return { 
       message: UserBehaviorLogConstant.MESSAGE.userIdOfWebsiteNotMatchUserIdOfaccount,
       websiteId: website._id,
       accountAdId: accountOfKey._id
     };
   }
-  else
+
+  if(!key)
   {
-    reason = {
-      message: UserBehaviorLogConstant.MESSAGE.unKnow
+    return { 
+      message: UserBehaviorLogConstant.MESSAGE.otherAdword
     };
   }
-
-  return reason;
+  
+  return {
+    message: UserBehaviorLogConstant.MESSAGE.unKnow
+  };
 };
 
 const detectKeyWord = (query) => {
@@ -422,6 +426,7 @@ const detectKeyWord = (query) => {
 		let page = null;
     let position = null;
     let campaignType = null;
+    let adGroupId = null;
 
     if(query.click_matchtype) {
       switch (query.click_matchtype) {
@@ -468,8 +473,13 @@ const detectKeyWord = (query) => {
     {
       keyword = query.click_keyword;
     }
+
+    if(query.click_adgroupid)
+    {
+      adGroupId = query.click_adgroupid;
+    }
     
-    return { keyword, matchtype, page, position, campaignType };
+    return { keyword, matchtype, page, position, campaignType, adGroupId };
   }catch(e){
     logger.error('UserBihaviorLogService::detectKeyWord::Error', e);
     throw new Error(e);

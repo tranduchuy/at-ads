@@ -29,6 +29,7 @@ const userBehaviorLogSchema = new Schema({
   page: String,
   position: String,
   campaignType: String,
+  adGroupId: {type: String, default: null},
   utmMedium: String,
   utmSource: String,
   utmCampaign: String,

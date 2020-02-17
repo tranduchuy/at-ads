@@ -239,7 +239,8 @@ const MESSAGE = {
   websiteNotFound: 'Không tìm thấy website',
   userIdOfWebsiteNotMatchUserIdOfaccount: 'Website không thuộc quyền quản lý của account này.',
   unKnow: 'Không xác định.',
-  isTrack: 'Không phải là click'
+  isTrack: 'Không phải là click',
+  otherAdword: 'click hướng về một tài khoản khác đang quản lý chung website'
 }
 
 module.exports = {
