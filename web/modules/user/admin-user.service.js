@@ -77,16 +77,19 @@ const getAccountsListForAdminPage = (userIds, page, limit) => {
           }
         }
       };
-
+      const sortStage = {
+        $sort: {
+          'createdAt': -1
+        }
+      };
       const facetStage = {
         $facet: {
           entries: [{ $skip: (page - 1) * limit }, { $limit: limit }],
           meta: [{ $group: { _id: null, totalItems: { $sum: 1 } } }]
         }
       };
-
       const query =
-        userIds.length > 0 ? [matchStage, facetStage] : [facetStage];
+        userIds.length > 0 ? [matchStage, sortStage, facetStage] : [sortStage, facetStage];
 
       const accountsList = await AccountAdsModel.aggregate(query);
 

@@ -33,7 +33,7 @@ const addDomainForAccountAds = async (req, res, next) => {
     const duplicateDomain = await WebsiteModel.findOne({ domain: domain, accountAd: mongoose.Types.ObjectId(accountId) });
     if (duplicateDomain !== null) {
       const result = {
-        messages: [messages.ResponseMessages.Website.Register.DOMAIN_DUPLICATE],
+        messages: ['Tên miền này đã tồn tại trong tài khoản.'],
         data: {}
       };
 

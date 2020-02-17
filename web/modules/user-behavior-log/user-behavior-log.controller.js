@@ -66,6 +66,15 @@ const logTrackingBehavior = async (req, res, next) => {
     const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
     const ua = parser(userAgent);
     const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
+
+    // if(detectKeyWord.adGroupId)
+    // {
+    //   if(!accountOfKey || detectKeyWord.adGroupId != accountOfKey.adsId)
+    //   {
+    //     key = '';
+    //   }
+    // }
+
     const data = {
       uuid,
       ip,
@@ -90,6 +99,7 @@ const logTrackingBehavior = async (req, res, next) => {
       matchType: detectKeyWord.matchtype,
       position: detectKeyWord.position,
       campaignType: detectKeyWord.campaignType,
+      adGroupId: detectKeyWord.adGroupId,
       trafficSource,
       msisdn,
       ...ua
@@ -104,7 +114,7 @@ const logTrackingBehavior = async (req, res, next) => {
     {
       if(hrefQuery.gclid)
       {
-        if(website && accountOfKey && website.accountAd.toString() === accountOfKey._id.toString())
+        if(key && website && accountOfKey && website.accountAd.toString() === accountOfKey._id.toString())
         {
           await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
           const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
@@ -113,9 +123,9 @@ const logTrackingBehavior = async (req, res, next) => {
         }
         else
         {
-          log.reason = UserBehaviorLogService.filterReason(website, accountOfKey);
+          log.reason = UserBehaviorLogService.filterReason(website, accountOfKey, key);
           await log.save();
-        }   
+        }
       }
       else
       {
