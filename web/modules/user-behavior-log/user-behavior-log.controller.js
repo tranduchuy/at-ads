@@ -67,13 +67,7 @@ const logTrackingBehavior = async (req, res, next) => {
     const ua = parser(userAgent);
     const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
 
-    // if(detectKeyWord.adGroupId)
-    // {
-    //   if(!accountOfKey || detectKeyWord.adGroupId != accountOfKey.adsId)
-    //   {
-    //     key = '';
-    //   }
-    // }
+    key = await UserBehaviorLogService.detectCampaignId(key, accountOfKey, detectKeyWord);
 
     const data = {
       uuid,

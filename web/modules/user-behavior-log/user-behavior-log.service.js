@@ -9,6 +9,7 @@ const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 const TRAFFIC_SOURCE_TYPES = UserBehaviorLogConstant.TRAFFIC_SOURCE_TYPES;
 const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
 const FireBaseTokensModel = require('../fire-base-tokens/fire-base-tokens.model');
+const BlockingCriterionModel = require('../blocking-criterions/blocking-criterions.model');
 const config = require('config');
 const FireBaseConfig = config.get('fireBase');
 const { TOPIC } = require('../fire-base-tokens/fire-base-tokens.constant');
@@ -484,7 +485,39 @@ const detectKeyWord = (query) => {
     logger.error('UserBihaviorLogService::detectKeyWord::Error', e);
     throw new Error(e);
   }
-}
+};
+
+const detectCampaignId = async(key, accountOfKey, detectKeyWord) => {
+  logger.info('UserBihaviorLogService::detectCampaignId::Is called');
+  try{
+    if(detectKeyWord.campaignId)
+    {
+      if(!accountOfKey)
+      {
+        return key = '';
+      }
+    
+      const campaign = await BlockingCriterionModel.findOne({campaignId: detectKeyWord.campaignId});
+
+      if(!campaign)
+      {
+        return key = '';
+      }
+      
+      if(accountOfKey._id.toString() != campaign.accountId.toString())
+      {
+        return key = '';
+      }
+
+      return key;
+    }
+
+    return key;
+  }catch(e){
+    logger.error('UserBihaviorLogService::detectCampaignId::error', e);
+    throw new Error(e);
+  }
+};
 
 module.exports = {
   createUserBehaviorLog,
@@ -495,5 +528,6 @@ module.exports = {
   getInfoSend,
   getDataForIntroPage,
   filterReason,
-  detectKeyWord
+  detectKeyWord,
+  detectCampaignId
 };
