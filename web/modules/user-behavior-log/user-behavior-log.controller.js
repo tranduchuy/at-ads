@@ -99,7 +99,7 @@ const logTrackingBehavior = async (req, res, next) => {
       matchType: detectKeyWord.matchtype,
       position: detectKeyWord.position,
       campaignType: detectKeyWord.campaignType,
-      adGroupId: detectKeyWord.adGroupId,
+      campaignId: detectKeyWord.campaignId,
       trafficSource,
       msisdn,
       ...ua
