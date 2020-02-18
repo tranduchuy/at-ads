@@ -29,7 +29,7 @@ module.exports = {
     autoShowPopup: false,
 		supporter : {
 			name : "Nguyễn Thị A",
-			avatar : "http://vaytienkhongthechap.net.vn/wp-content/uploads/2016/04/telephone_skills.jpg",
+			avatar : "//w.cokhach.com/assets/images/background/popup-bg-11.jpg",
 			major : "Hỗ trợ viên",
 			phone : "0999999999"
 		}
