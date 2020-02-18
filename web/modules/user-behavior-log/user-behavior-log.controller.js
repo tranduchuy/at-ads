@@ -14,7 +14,7 @@ const UserBehaviorLogService = require('./user-behavior-log.service');
 const SocketService = require('../../services/socket.service');
 
 const AdAccountModel = require('../account-adwords/account-ads.model');
-
+const BlockingCriterionModel = require('../blocking-criterions/blocking-criterions.model');
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
 const WebsiteModel = require('../website/website.model');
 const WebsiteService = require('../website/website.service');
@@ -67,13 +67,7 @@ const logTrackingBehavior = async (req, res, next) => {
     const ua = parser(userAgent);
     const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
 
-    // if(detectKeyWord.adGroupId)
-    // {
-    //   if(!accountOfKey || detectKeyWord.adGroupId != accountOfKey.adsId)
-    //   {
-    //     key = '';
-    //   }
-    // }
+    key = await UserBehaviorLogService.detectCampaignId(key, accountOfKey, detectKeyWord);
 
     const data = {
       uuid,
