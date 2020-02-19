@@ -6,6 +6,7 @@ const AccountAdsModel = require('../account-adwords/account-ads.model');
 const GoogleAdsErrorModel = require('../google-ads-error/google-ads-error.model');
 const UserLicencesModel = require('../user-licences/user-licences.model');
 const WebsiteModel = require('../website/website.model');
+const PackagesModel = require('../packages/packages.model');
 
 const Mongoose = require('mongoose');
 
@@ -255,11 +256,73 @@ const getUserLicences = async userIds => {
   }
 };
 
+const mapUserLicenceIntoUser = async (entries) => {
+  logger.info('Admin/UserService::mapUserLicenceIntoUser::is called');
+  try{
+    const userIds = entries.map(user => user._id);
+    let userLicences = await UserLicencesModel.find({userId: {$in: userIds}});
+    const userLicenceDefault = {
+      "_id": null,
+      "userId": null,
+      "packageId" : null,
+      "histories": [],
+      "limitGoogleAd": null,
+      "expiredAt": null,
+      "createdAt": null,
+      "updatedAt": null,
+      "__v": null
+    };
+    const packagesDefault = {
+      "interests": [],
+      "isContactPrice": null,
+      "discountMonths": [],
+      "contact": null,
+      "isDiscount": null,
+      "name": null,
+      "price": null,
+      "type": null,
+      "numOfMonths": null,
+    };
+    const packages = await PackagesModel.find({});
+    entries = entries.map(user => {
+      let userLicence = userLicences.filter(userLicence => user._id.toString() == userLicence.userId.toString());
+      let package = packagesDefault;
+
+      if(userLicence.length > 0)
+      {
+        package = packages.filter(package => package._id.toString() == userLicence[0].packageId.toString())
+                          .map(package => { return { interests: package.interests,
+                                                    isContactPrice: package.isContactPrice,
+                                                    discountMonths: package.discountMonths,
+                                                    contact: package.contact,
+                                                    isDiscount: package.isDiscount,
+                                                    name: package.name,
+                                                    price: package.price,
+                                                    type: package.type,
+                                                    numOfMonths: package.numOfMonths
+                                                  }});
+
+        package = package[0];
+      }
+      
+      user['licence'] = userLicence.length > 0 ? {...JSON.parse(JSON.stringify(package)), ...JSON.parse(JSON.stringify(userLicence[0]))} : {...JSON.parse(JSON.stringify(package)), ...JSON.parse(JSON.stringify(userLicenceDefault))};                                         
+      return user;
+    });
+
+    logger.info('Admin/UserService::mapUserLicenceIntoUser::success');
+    return entries;
+  }catch(e){
+    logger.error('Admin/UserService::mapUserLicenceIntoUser::error', e);
+    throw new Error(e);
+  }
+}
+
 module.exports = {
   getUsersListForAdminPage,
   getAccountsListForAdminPage,
   onlyUnique,
   mapAdsAccountWithUserAccount,
   getAccountInfoforAdminPage,
-  getUserLicences
+  getUserLicences,
+  mapUserLicenceIntoUser
 };

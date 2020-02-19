@@ -157,6 +157,8 @@ buildStageDetailUser = (queryCondition) => {
   const matchStage = {};
 
   matchStage['uuid'] = queryCondition.uuid;
+  matchStage['accountKey'] = queryCondition.key;
+  
   if (queryCondition.startDate) {
     matchStage.createdAt = {
       $gte: new Date(queryCondition.startDate)
