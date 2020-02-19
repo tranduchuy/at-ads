@@ -1913,6 +1913,7 @@ const detailUser = async (req, res, next) => {
 
 		const stages = UserBehaviorLogService.buildStageDetailUser({
 			uuid : id,
+			key,
 			limit: parseInt((limit || 10).toString()),
 			page : parseInt((page || 1).toString()),
 			startDate,

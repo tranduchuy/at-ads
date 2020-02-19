@@ -6,11 +6,7 @@ const HttpStatus = require('http-status-codes');
 const logger = log4js.getLogger('Controllers');
 const {convertObjectToQueryString} = require('../../utils/RequestUtil');
 const requestUtil = require('../../utils/RequestUtil');
-const UserModel = require('./user.model');
-const AdsAccountModel = require('../account-adwords/account-ads.model');
-const WebsiteModel = require('../website/website.model');
 const UserService = require('./user.service');
-const UserConstants = require('./user.constant');
 const UserTokenService = require('../userToken/userToken.service');
 const { Paging } = require('../account-adwords/account-ads.constant');
 const AdminUserService = require('./admin-user.service');
@@ -117,15 +113,8 @@ const getUsersListForAdminPage = async (req, res, next) => {
     if(data[0].entries.length > 0)
     {
       entries = data[0].entries;
-      totalItems = data[0].meta[0].totalItems
-
-      const userIds = entries.map(user => user._id);
-      const userLicences = await AdminUserService.getUserLicences(userIds);
-      entries = entries.map(user => {
-        const userLicence = userLicences.filter(userLicence => user._id.toString() == userLicence.userId.toString());
-        user['licence'] = userLicence.length > 0 ? userLicence[0] : {};
-        return user;
-      })
+      totalItems = data[0].meta[0].totalItems;
+      entries = await AdminUserService.mapUserLicenceIntoUser(entries);
     }
 
     logger.info('Admin/UserController::getUsersListForAdminPage::success\n');
