@@ -16,6 +16,7 @@ const { MESSAGE } = require('../modules/user-behavior-log/user-behavior-log.cons
 const BlockIpServices = require('../services/block-ip.service');
 const RemoveIpsServices = require('../services/remove-ip.service');
 const BlockingCriterionsConstant = require('../modules/blocking-criterions/blocking-criterions.constant');
+const UserModel = require('../modules/user/user.model');
 
 const updateIsSpamStatus = async (id, message) => {
     logger.info('jobs::updateIsSpamStatus::is called', { id });
@@ -456,6 +457,19 @@ module.exports = async (channel, msg) => {
             {
                 message = MESSAGE.privateBrowser;
             }
+        }
+
+        const user = await UserModel.findOne({'_id': accountAds.user});
+
+        if(!user || accountAds.connectType == AccountAdsConstant.connectType.byEmail && !user.isRefreshTokenValid)
+        {
+            logger.info('jobs::autoBlockIp::user permissionDenied.', { id });
+            log.reason = {
+                message: MESSAGE.userPermissionDenied,
+            };
+            await log.save();
+            channel.ack(msg);
+            return;
         }
 
         return await saveIpIntoDB(isConnected, accountAds, ip, key, id, message, log, channel, msg);

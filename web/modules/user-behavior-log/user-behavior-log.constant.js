@@ -239,8 +239,12 @@ const MESSAGE = {
   websiteNotFound: 'Không tìm thấy website',
   userIdOfWebsiteNotMatchUserIdOfaccount: 'Website không thuộc quyền quản lý của account này.',
   unKnow: 'Không xác định.',
-  isTrack: 'Không phải là click',
-  otherAdword: 'click hướng về một tài khoản khác đang quản lý chung website'
+  isTrack: 'Không phải là click.',
+  otherAdword: 'click hướng về một tài khoản khác đang quản lý chung website.',
+  accountHasBeenDeleted: 'Tài khoản này đã bị xóa.',
+  accountIsNotConnected: 'Tài khoản này chưa được kết nối.',
+  accountIsCurrentlyDisabled: 'Tài khoản đang bị vô hiệu hóa.',
+  userPermissionDenied:  'Tài khoản hiện chưa cấp quyền.'
 }
 
 module.exports = {
