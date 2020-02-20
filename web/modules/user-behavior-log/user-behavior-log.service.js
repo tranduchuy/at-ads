@@ -399,6 +399,20 @@ const filterReason = (website, accountOfKey, key) => {
     };
   }
 
+  if(!accountOfKey.isConnected)
+  {
+    return {
+      message: UserBehaviorLogConstant.MESSAGE.accountIsNotConnected
+    };
+  }
+
+  if(accountOfKey.isDeleted)
+  {
+    return {
+      message: UserBehaviorLogConstant.MESSAGE.accountHasBeenDeleted
+    };
+  }
+
   if(website.accountAd.toString() !== accountOfKey._id.toString())
   {
     return { 

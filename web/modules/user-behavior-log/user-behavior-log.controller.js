@@ -31,7 +31,7 @@ const logTrackingBehavior = async (req, res, next) => {
     const hrefOrigin = hrefURL.origin;
     const accountOfKey = await AdAccountModel.findOne({key}).lean();
 
-    if(!accountOfKey)
+    if(!accountOfKey || !accountOfKey.isConnected || accountOfKey.isDeleted)
     {
       key = '';
     }

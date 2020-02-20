@@ -7,6 +7,7 @@ const GoogleAdsService = require('../services/GoogleAds.service');
 const RemoveIpsService = require('../services/remove-ip.service');
 const BlockingCriterionsConstant = require('../modules/blocking-criterions/blocking-criterions.constant');
 const AdsAccountConstant = require('../modules/account-adwords/account-ads.constant');
+const UserModel = require('../modules/user/user.model');
 
 const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
     const info = {
@@ -49,19 +50,39 @@ const deleteIpInAutoBlackListOfAccountAds = (accountAds, cb) => {
           }
 
           const campaignIds = campaigns.map(campaign => campaign.campaignId);
+
           if(accountAds.setting.autoBlackListIp.length == 0)
           {
             logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::ip in auto blackList is empty.', info);
             return cb();
           }
 
-          RemoveIpsService.removeIp(accountAds, campaignIds, accountAds.setting.autoBlackListIp, BlockingCriterionsConstant.positionBlockIp.AUTO_BLACKLIST, AdsAccountConstant.positionBlockIp.AUTO_BLACKLIST)
-          .then(result => {
-            logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::success.', info);
-            return cb();
-          }).catch(err => {
-            logger.error('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::error.', err, info);
-            return cb();
+          UserModel.findOne({'_id': accountAds.user}).exec((error, user) => {
+            if(error)
+            {
+              logger.error('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::error query.\n', error);
+              return cb();
+            }
+
+            if(!user)
+            {
+              logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::user not found.\n', info);
+              return cb();
+            }
+
+            if(accountAds.connectType == AdsAccountConstant.connectType.byEmail && !user.isRefreshTokenValid){
+              logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::user Permission denied.\n', info);
+              return cb();
+            }
+
+            RemoveIpsService.removeIp(accountAds, campaignIds, accountAds.setting.autoBlackListIp, BlockingCriterionsConstant.positionBlockIp.AUTO_BLACKLIST, AdsAccountConstant.positionBlockIp.AUTO_BLACKLIST)
+            .then(result => {
+              logger.info('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::success.', info);
+              return cb();
+            }).catch(err => {
+              logger.error('scheduleJobsService::deleteIpInAutoBlackListOfAccountAds::error.', err, info);
+              return cb();
+            });
           });
       });
     }catch(e){
