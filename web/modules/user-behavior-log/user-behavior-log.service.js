@@ -413,6 +413,13 @@ const filterReason = (website, accountOfKey, key) => {
     };
   }
 
+  if(accountOfKey.isDisabled)
+  {
+    return {
+      message: UserBehaviorLogConstant.MESSAGE.accountIsCurrentlyDisabled
+    };
+  }
+
   if(website.accountAd.toString() !== accountOfKey._id.toString())
   {
     return { 

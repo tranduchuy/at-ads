@@ -174,6 +174,7 @@ const getAccountsAdsByUserId = async (userId) => {
         configStep: account.configStep,
         createdAt: account.createdAt,
         isConnected: account.isConnected,
+        isDisabled: account.isDisabled,
         connectType: account.connectType,
         websites,
         key: account.key,

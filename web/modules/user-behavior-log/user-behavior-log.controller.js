@@ -58,14 +58,14 @@ const logTrackingBehavior = async (req, res, next) => {
     const referrerURL = new Url(referrer);
     let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
     const hrefQuery = queryString.parse(hrefURL.query);
+    const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
   
-    if(googleUrls.includes(referrerURL.hostname.replace('www.', '')) && hrefQuery.gclid || !referrerURL.hostname && hrefQuery.gclid){
+    if(hrefQuery.gclid || detectKeyWord.campaignId || detectKeyWord.campaignType || detectKeyWord.keyword || detectKeyWord.matchtype || detectKeyWord.page || detectKeyWord.position){
       type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
     }
 
     const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
     const ua = parser(userAgent);
-    const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
 
     key = await UserBehaviorLogService.detectCampaignId(key, accountOfKey, detectKeyWord);
 
@@ -106,7 +106,7 @@ const logTrackingBehavior = async (req, res, next) => {
 
     if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
     {
-      if(hrefQuery.gclid)
+      if(hrefQuery.gclid || detectKeyWord.campaignId || detectKeyWord.campaignType || detectKeyWord.keyword || detectKeyWord.matchtype || detectKeyWord.page || detectKeyWord.position)
       {
         if(key && website && accountOfKey && website.accountAd.toString() === accountOfKey._id.toString())
         {

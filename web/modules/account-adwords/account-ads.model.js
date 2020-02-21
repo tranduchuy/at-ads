@@ -17,6 +17,7 @@ const accountAdsSchema = new Schema(
     key: String,
     isConnected: { type: Boolean, default: AccountAdsConstant.isConnected },
     isDeleted: { type: Boolean, default: false },
+    isDisabled: {type : Boolean, default: false},
     setting: {
       maxIps: { type: Number, default: AccountAdsConstant.setting.maxIps },
       countMaxClickInHours: {
