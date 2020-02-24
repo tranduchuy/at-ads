@@ -8,6 +8,7 @@ const Async = require('async');
 const config = require('config');
 const timeUpdatePackageForUser = config.get('appScheduleJobs').timeUpdatePackageForUser;
 const moment = require('moment');
+const AdsAccountModel = require('../modules/account-adwords/account-ads.model');
 
 module.exports = () => {
   schedule.scheduleJob(timeUpdatePackageForUser, async() => {
@@ -63,8 +64,30 @@ module.exports = () => {
             return callback();
           }
 
-          logger.info('Schedulejobs::Update package for user::success', {userId: user.userId});
-          return callback();
+          AdsAccountModel.countDocuments({user: user.userId}).exec((err, numOfAccount) => {
+            if(err)
+            {
+              logger.error('Schedulejobs::Update package for user::count account::Error.', err);
+              return callback();
+            }
+
+            if(numOfAccount < 2)
+            {
+              logger.info('Schedulejobs::Update package for user::num of account lt 2.', {userId: user.userId});
+              return callback();
+            }
+
+            AdsAccountModel.updateMany({user: user.userId}, {$set: {isDisabled: true}}).exec(err=> {
+              if(err)
+              {
+                logger.error('Schedulejobs::Update package for user::update isDisabled for account::Error.', err);
+                return callback();
+              }
+  
+              logger.info('Schedulejobs::Update package for user::success', {userId: user.userId});
+              return callback();
+            });
+          });
         });
       }, err => {
         if(err)

@@ -12,6 +12,8 @@ const OrderService = require('../order/order.service');
 const OrderModel = require('../order/order.model');
 const OrderConstant = require('../order/order.constant');
 const AdminUserLicencesService = require('./admin-user-licences.service');
+const PackageConstant = require('../packages/packages.constant');
+const AdsAccountModel = require('../account-adwords/account-ads.model');
 
 const {
   UpdatePackageForUserValidationSchema
@@ -81,9 +83,29 @@ const updatePackageForUser = async (req, res, next) => {
       expiredAtOfUserLicence
     });
 
+    if(package.type == PackageConstant.packageTypes.FREE)
+    {
+      userLicences.expiredAt = null;
+
+      if(package._id.toString() != userLicences.packageId.toString())
+      {
+        const numOfAccount = await AdsAccountModel.countDocuments({'user': userLicences.userId});
+
+        if(numOfAccount > 1)
+        {
+          await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: true}});
+        }
+      }
+    }
+    else
+    {
+      userLicences.expiredAt = expiredAt;
+      await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: false}});
+    }
+
     userLicences.histories = history;
-    userLicences.expiredAt = expiredAt;
     userLicences.packageId = package._id;
+
     await userLicences.save();
     const code = await OrderService.createCode();
     const newOrder = new OrderModel({

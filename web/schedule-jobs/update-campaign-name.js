@@ -113,7 +113,7 @@ module.exports =  () => {
     schedule.scheduleJob(timeUpdateCampaignName, async() => {
         logger.info('scheduleJobs::updateCampaignName is called');
         try{
-            const allAccountAds = await AccountAdsModel.find({isConnected : true, isDeleted: false});
+            const allAccountAds = await AccountAdsModel.find({isConnected : true, isDeleted: false, isDisabled: false});
 
             if(allAccountAds.length === 0)
             {

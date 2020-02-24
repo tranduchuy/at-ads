@@ -67,7 +67,7 @@ module.exports = () => {
       }
 
       const userIds = users.map(user => user._id);
-      const accountAds = await AccountAdsModel.find({user: { $in: userIds }, isConnected : true, isDeleted: false});
+      const accountAds = await AccountAdsModel.find({user: { $in: userIds }, isConnected : true, isDeleted: false, isDisabled: false});
 
       if(accountAds.length <= 0)
       {
