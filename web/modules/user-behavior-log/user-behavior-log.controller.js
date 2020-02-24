@@ -61,7 +61,20 @@ const logTrackingBehavior = async (req, res, next) => {
     const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
   
     if(hrefQuery.gclid || detectKeyWord.campaignId || detectKeyWord.campaignType || detectKeyWord.keyword || detectKeyWord.matchtype || detectKeyWord.page || detectKeyWord.position){
-      type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
+      if(detectKeyWord.campaignType == 'Google search')
+      {
+        if(googleUrls.includes(referrerURL.hostname.replace('www.', '')))
+        {
+          type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
+        }
+      }
+      else
+      {
+        if(referrerURL.hostname)
+        {
+          type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
+        }
+      }
     }
 
     const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
