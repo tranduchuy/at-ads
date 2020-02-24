@@ -2272,7 +2272,6 @@ const updateDisableStatusForAccount = async (req, res, next) => {
 		await req.adsAccount.save();
 
 		let accountList = await AccountAdsService.getAccountsAdsByUserId(req.user._id);
-		accountList.sort((a,b) => {return a.isDisabled - b.isDisabled});
 
 		return res.status(HttpStatus.OK).json({
 			messages: ["Thiết lập thành công."],
