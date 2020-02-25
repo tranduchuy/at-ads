@@ -2264,11 +2264,7 @@ const updateDisableStatusForAccount = async (req, res, next) => {
 
 		if(numOfAccountsEnabled > 0){
 			return res.status(HttpStatus.BAD_REQUEST).json({
-<<<<<<< Updated upstream
 				messages: ["Thao tác không hợp lệ."]
-=======
-				messages: ["Đã có tài khoản liên kết trước đó."]
->>>>>>> Stashed changes
 			});
 		}
 
@@ -2276,10 +2272,6 @@ const updateDisableStatusForAccount = async (req, res, next) => {
 		await req.adsAccount.save();
 
 		let accountList = await AccountAdsService.getAccountsAdsByUserId(req.user._id);
-<<<<<<< Updated upstream
-=======
-		accountList.sort((a,b) => {return a.isDisabled - b.isDisabled});
->>>>>>> Stashed changes
 
 		return res.status(HttpStatus.OK).json({
 			messages: ["Thiết lập thành công."],
