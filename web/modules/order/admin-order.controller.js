@@ -119,14 +119,14 @@ const updateOrder = async (req, res, next) => {
       });
     }
 
+    const numOfAccount = await AdsAccountModel.countDocuments({'user': userLicence.userId});
+
     if(package.type == PackageConstant.packageTypes.FREE)
     {
       userLicence.expiredAt = null;
 
       if(package._id != userLicence.packageId)
-      {
-        const numOfAccount = await AdsAccountModel.countDocuments({'user': userLicence.userId});
-        
+      { 
         if(numOfAccount > 1)
         {
           await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': true}});
@@ -159,7 +159,22 @@ const updateOrder = async (req, res, next) => {
       }
 
       userLicence.expiredAt = expiredAt;
-      await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': false}});
+
+      if(package.type == PackageConstant.packageTypes.VIP1)
+      {
+        if(numOfAccount > 1)
+        {
+          await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': true}});
+        }
+        else
+        {
+          await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': false}});
+        }
+      }
+      else
+      {
+        await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': false}});
+      }
     }
 
     let history = userLicence.histories || [];

@@ -77,11 +77,7 @@ const updatePackageForUser = async (req, res, next) => {
       price: package.price,
       createdAt: new Date()
     });
-    const expiredAt = AdminUserLicencesService.filterExpiredAt({
-      userLicences,
-      package,
-      expiredAtOfUserLicence
-    });
+    const numOfAccount = await AdsAccountModel.countDocuments({'user': userLicences.userId});
 
     if(package.type == PackageConstant.packageTypes.FREE)
     {
@@ -89,8 +85,6 @@ const updatePackageForUser = async (req, res, next) => {
 
       if(package._id.toString() != userLicences.packageId.toString())
       {
-        const numOfAccount = await AdsAccountModel.countDocuments({'user': userLicences.userId});
-
         if(numOfAccount > 1)
         {
           await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: true}});
@@ -99,8 +93,27 @@ const updatePackageForUser = async (req, res, next) => {
     }
     else
     {
+      const expiredAt = AdminUserLicencesService.filterExpiredAt({
+        userLicences,
+        package,
+        expiredAtOfUserLicence
+      });
       userLicences.expiredAt = expiredAt;
-      await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: false}});
+
+      if(package.type == PackageConstant.packageTypes.VIP1)
+      {
+        if(numOfAccount > 1)
+        {
+          await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: true}});
+        }
+        else{
+          await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: false}});
+        }
+      }
+      else
+      {
+        await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: false}});
+      }
     }
 
     userLicences.histories = history;
