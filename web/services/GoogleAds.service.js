@@ -1114,13 +1114,55 @@ const setUrlTrackingTemplateForAccount = (accountAdsId) => {
 		};
 
 		const user = new AdwordsUser(authConfig);
+		const hostApi = config.get('hostApi');;
 		const customerService = user.getService('CustomerService', adwordConfig.version);
 		const customer = {
 			'autoTaggingEnabled': true,
-			'trackingUrlTemplate': UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE
+			'parallelTrackingEnabled': true,
+			'trackingUrlTemplate': `${hostApi}user-behaviors/${UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE}`,
+			'finalUrlSuffix': 'gclid={gclid}'
 		};
 
 		customerService.mutate({customer}, (error, result) => {
+			if (error) {
+				logger.error('GoogleAdsService::setUrlTrackingTemplateForAccount::error', error);
+				GoogleAdsErrorService.createLogError({
+					authConfig,
+					params: customer,
+					functionName  : 'GoogleAdsService::setUrlTrackingTemplateForAccount',
+					error,
+					serviceVersion: adwordConfig.version,
+					serviceName   : 'CustomerService',
+					moduleName    : 'AdwordsUser'
+				});
+				return reject(error);
+			}
+
+			logger.info('GoogleAdsService::setUrlTrackingTemplateForAccount::result', result);
+			return resolve(result);
+		});
+	});
+};
+
+const getInfoCustomer = (accountAdsId) => {
+	return new Promise(async (resolve, reject) => {
+		// await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
+
+		logger.info('GoogleAdsService::setUrlTrackingTemplateForAccount', accountAdsId);
+		const googleRefreshToken = await getRefreshToken(accountAdsId);
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
+			clientCustomerId: accountAdsId,
+		};
+
+		const user = new AdwordsUser(authConfig);
+		const customerService = user.getService('CustomerService', adwordConfig.version);
+
+		customerService.getCustomers({}, (error, result) => {
 			if (error) {
 				logger.error('GoogleAdsService::setUrlTrackingTemplateForAccount::error', error);
 				GoogleAdsErrorService.createLogError({
@@ -1163,5 +1205,6 @@ module.exports = {
 	addIpBlackListToCampaigns,
 	getIpOnGoogleFilteredByCampaignsAndIps,
 	removeIpBlackListToCampaigns,
-	setUrlTrackingTemplateForAccount
+	setUrlTrackingTemplateForAccount,
+	getInfoCustomer
 };

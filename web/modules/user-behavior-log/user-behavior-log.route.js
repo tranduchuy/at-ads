@@ -7,6 +7,6 @@ router.put('/log/:id/scroll-percentage', UserBehaviorLogController.scrollPercent
 router.post('/log', UserBehaviorLogController.logTrackingBehavior);
 router.get('/log', UserBehaviorLogController.getlogTrackingBehavior);
 router.get('/log/intro-page', UserBehaviorLogController.getLogForIntroPage);
-
+router.get('/', UserBehaviorLogController.getInfoTracking);
 
 module.exports = router;
