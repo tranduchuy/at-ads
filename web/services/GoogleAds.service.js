@@ -884,7 +884,7 @@ const setTrackingUrlTemplateForCampaign = (adwordId, campaignIds) => {
 				operator: 'SET',
 				operand : {
 					id                 : campaignId,
-					trackingUrlTemplate: UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE
+					trackingUrlTemplate: ''
 				}
 			});
 		});
@@ -1098,6 +1098,49 @@ const removeIpBlackListToCampaigns = (adwordId, campaignsInfo) => {
 	});
 };
 
+const setUrlTrackingTemplateForAccount = (accountAdsId) => {
+	return new Promise(async (resolve, reject) => {
+		await RabbitMQService.sendMessages(RabbitChannels.COUNT_REQUEST_GOOGLE, { count: COUNT.notReport, number: 1 });
+
+		logger.info('GoogleAdsService::setUrlTrackingTemplateForAccount', accountAdsId);
+		const googleRefreshToken = await getRefreshToken(accountAdsId);
+		const authConfig = {
+			developerToken  : adwordConfig.developerToken,
+			userAgent       : adwordConfig.userAgent,
+			client_id       : adwordConfig.client_id,
+			client_secret   : adwordConfig.client_secret,
+			refresh_token   : googleRefreshToken || adwordConfig.refresh_token,
+			clientCustomerId: accountAdsId,
+		};
+
+		const user = new AdwordsUser(authConfig);
+		const customerService = user.getService('CustomerService', adwordConfig.version);
+		const customer = {
+			'autoTaggingEnabled': true,
+			'trackingUrlTemplate': UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE
+		};
+
+		customerService.mutate({customer}, (error, result) => {
+			if (error) {
+				logger.error('GoogleAdsService::setUrlTrackingTemplateForAccount::error', error);
+				GoogleAdsErrorService.createLogError({
+					authConfig,
+					params: customer,
+					functionName  : 'GoogleAdsService::setUrlTrackingTemplateForAccount',
+					error,
+					serviceVersion: adwordConfig.version,
+					serviceName   : 'CustomerService',
+					moduleName    : 'AdwordsUser'
+				});
+				return reject(error);
+			}
+
+			logger.info('GoogleAdsService::setUrlTrackingTemplateForAccount::result', result);
+			return resolve(result);
+		});
+	});
+};
+
 module.exports = {
   sendManagerRequest,
   getListCampaigns,
@@ -1119,5 +1162,6 @@ module.exports = {
 	setTrackingUrlTemplateForCampaign,
 	addIpBlackListToCampaigns,
 	getIpOnGoogleFilteredByCampaignsAndIps,
-	removeIpBlackListToCampaigns
+	removeIpBlackListToCampaigns,
+	setUrlTrackingTemplateForAccount
 };

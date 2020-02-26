@@ -121,7 +121,7 @@ const logTrackingBehavior = async (req, res, next) => {
     {
       if(hrefQuery.gclid || detectKeyWord.campaignId || detectKeyWord.campaignType || detectKeyWord.keyword || detectKeyWord.matchtype || detectKeyWord.page || detectKeyWord.position)
       {
-        if(key && website && accountOfKey && website.accountAd.toString() === accountOfKey._id.toString())
+        if(key && website && accountOfKey && !accountOfKey.isDisabled && website.accountAd.toString() === accountOfKey._id.toString())
         {
           await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
           const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);

@@ -36,7 +36,7 @@ module.exports = () => {
   schedule.scheduleJob(timeSyncIpsOnGoole, async() => {
     try{
       logger.info('Schedulejobs::Sync ips on google::Is called.');
-      const accountAds = await AccountAdsModel.find({ isConnected : true, isDeleted: false, syncIps : true });
+      const accountAds = await AccountAdsModel.find({ isConnected : true, isDeleted: false, syncIps : true, isDisabled: false });
 
       if(accountAds.length <= 0)
       {

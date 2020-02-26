@@ -13,6 +13,8 @@ const PackageModel = require('../packages/packages.model');
 const OrderConstant = require('../order/order.constant');
 const requestUtil = require('../../utils/RequestUtil');
 const { Paging } = require('../account-adwords/account-ads.constant');
+const PackageConstant = require('../packages/packages.constant');
+const AdsAccountModel = require('../account-adwords/account-ads.model');
 
 const {
   GetOrderListValidationSchema
@@ -117,34 +119,64 @@ const updateOrder = async (req, res, next) => {
       });
     }
 
-    const packageType = userLicence.packageId ? userLicence.packageId.type : '';
-    let expiredAt = userLicence.expiredAt
-      ? moment(userLicence.expiredAt)
-      : moment();
-    console.log(expiredAt._d);
-    console.log(packageType);
-    console.log(package.type);
-    console.log(order.numOfMonths);
+    const numOfAccount = await AdsAccountModel.countDocuments({'user': userLicence.userId});
 
-    if (
-      !userLicence.packageId ||
-      packageType != package.type ||
-      expiredAt.isBefore(moment())
-    ) {
-      expiredAt = order.numOfMonths
-        ? moment()
-            .add(order.numOfMonths, 'M')
-            .endOf('day')
-        : moment()
-            .add(package.numOfMonths, 'M')
-            .endOf('day');
-    } else {
-      expiredAt = order.numOfMonths
-        ? expiredAt.add(order.numOfMonths, 'M').endOf('day')
-        : expiredAt.add(package.numOfMonths, 'M').endOf('day');
+    if(package.type == PackageConstant.packageTypes.FREE)
+    {
+      userLicence.expiredAt = null;
+
+      if(package._id != userLicence.packageId)
+      { 
+        if(numOfAccount > 1)
+        {
+          await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': true}});
+        }
+      }
+    }
+    else
+    {
+      const packageType = userLicence.packageId ? userLicence.packageId.type : '';
+      let expiredAt = userLicence.expiredAt
+        ? moment(userLicence.expiredAt)
+        : moment();
+
+      if (
+        !userLicence.packageId ||
+        packageType != package.type ||
+        expiredAt.isBefore(moment())
+      ) {
+        expiredAt = order.numOfMonths
+          ? moment()
+              .add(order.numOfMonths, 'M')
+              .endOf('day')
+          : moment()
+              .add(package.numOfMonths, 'M')
+              .endOf('day');
+      } else {
+        expiredAt = order.numOfMonths
+          ? expiredAt.add(order.numOfMonths, 'M').endOf('day')
+          : expiredAt.add(package.numOfMonths, 'M').endOf('day');
+      }
+
+      userLicence.expiredAt = expiredAt;
+
+      if(package.type == PackageConstant.packageTypes.VIP1)
+      {
+        if(numOfAccount > 1)
+        {
+          await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': true}});
+        }
+        else
+        {
+          await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': false}});
+        }
+      }
+      else
+      {
+        await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': false}});
+      }
     }
 
-    userLicence.expiredAt = expiredAt;
     let history = userLicence.histories || [];
     history.push({
       packageId: package._id,
@@ -158,7 +190,6 @@ const updateOrder = async (req, res, next) => {
     order.status = OrderConstant.status.SUCCESS;
     await order.save();
 
-    console.log(expiredAt._d);
     return res.status(HttpStatus.OK).json({
       messages: ['Cập nhật thành công.'],
       data: {

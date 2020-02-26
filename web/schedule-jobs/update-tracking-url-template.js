@@ -57,17 +57,7 @@ module.exports = () => {
   schedule.scheduleJob(timeUpdateTrackingUrl, async() => {
     try{
       logger.info('Schedulejobs::UpdateTimeUpdateTrackingUrl::Is called.');
-
-      const users = await UserModel.find({ isRefreshTokenValid : true });
-
-      if(users.length <= 0)
-      {
-        logger.info('Schedulejobs::UpdateTimeUpdateTrackingUrl::User is empty.');
-        return;
-      }
-
-      const userIds = users.map(user => user._id);
-      const accountAds = await AccountAdsModel.find({user: { $in: userIds }, isConnected : true, isDeleted: false});
+      const accountAds = await AccountAdsModel.find({isConnected : true, isDeleted: false, isDisabled: false});
 
       if(accountAds.length <= 0)
       {

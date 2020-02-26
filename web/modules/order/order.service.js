@@ -33,20 +33,20 @@ const discount = (month, price, isDiscount, discount) => {
    {
     if(month >= PackageConstant.month.TWELVE)
     {
-      return (month * price) - ((month * price) * (discount[3]/100));
+      return (month * price) - ((month * price) * discount[3]);
     }
  
     if(month < PackageConstant.month.TWELVE && month >= PackageConstant.month.SIX)
     {
-      return (month * price) - ((month * price) * (discount[2]/100));
+      return (month * price) - ((month * price) * discount[2]);
     }
  
     if(month < PackageConstant.month.SIX && month >= PackageConstant.month.THREE)
     {
-      return (month * price) - ((month * price) * (discount[1]/100));
+      return (month * price) - ((month * price) * discount[1]);
     }
  
-    return (month * price) - ((month * price) * (discount[0]/100));
+    return (month * price) - ((month * price) * discount[0]);
    }
 
    return month * price;

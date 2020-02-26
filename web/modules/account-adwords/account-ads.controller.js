@@ -239,6 +239,13 @@ const handleManipulationGoogleAds = async (req, res, next) => {
 		});
 	}
 
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
+		});
+	}
+
 	logger.info('AccountAdsController::handleManipulationGoogleAds is called\n', info);
 	try {
 
@@ -400,6 +407,13 @@ const autoBlockIp = (req, res, next) => {
 		});
 	}
 
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
+		});
+	}
+
 	logger.info('AccountAdsController::autoBlockIp is called\n', info);
 	try {
 		const { error } = Joi.validate(req.body, AutoBlockingIpValidationSchema);
@@ -472,6 +486,13 @@ const autoBlockingRangeIp = (req, res, next) => {
 		});
 	}
 
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
+		});
+	}
+
 	logger.info('AccountAdsController::autoBlockingRangeIp is called\n', info);
 	try {
 		const { error } = Joi.validate(req.body, AutoBlockingRangeIpValidationSchema);
@@ -532,6 +553,13 @@ const blockByPrivateBrowser = (req, res, next) => {
 		});
 	}
 
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
+		});
+	}
+
 	logger.info('AccountAdsController::blockByPrivateBrowser is called\n', info);
 	try {
 		const { error } = Joi.validate(req.body, BlockByPrivateBrowserValidationSchema);
@@ -588,6 +616,13 @@ const autoBlocking3g4g = (req, res, next) => {
 		logger.info('AccountAdsController::autoBlocking3g4g::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
+		});
+	}
+
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
 		});
 	}
 
@@ -652,6 +687,13 @@ const updateWhiteList = async (req, res, next) => {
 		logger.info('AccountAdsController::updateWhiteList::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
+		});
+	}
+
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
 		});
 	}
 
@@ -729,6 +771,13 @@ const addCampaignsForAAccountAds = async (req, res, next) => {
 		logger.info('AccountAdsController::addCampaignsForAAccountAds::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
+		});
+	}
+
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
 		});
 	}
 
@@ -937,6 +986,13 @@ const getReportOnDevice = async (req, res, next) => {
 		});
 	}
 
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
+		});
+	}
+
 	logger.info('AccountAdsController::getReportOnDevice is called\n', info);
 	try {
 		const query = {
@@ -1004,6 +1060,13 @@ const setUpCampaignsByOneDevice = async (req, res, next) => {
 		logger.info('AccountAdsController::setUpCampaignsByOneDevice::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
+		});
+	}
+
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
 		});
 	}
 
@@ -1093,6 +1156,13 @@ const blockSampleIp = (req, res, next) => {
 		logger.info('AccountAdsController::blockSampleIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
+		});
+	}
+
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
 		});
 	}
 
@@ -1196,6 +1266,13 @@ const unblockSampleIp = (req, res, next) => {
 		logger.info('AccountAdsController::unblockSampleIp::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
+		});
+	}
+
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
 		});
 	}
 
@@ -1305,6 +1382,13 @@ const getCampaignsInDB = (req, res, next) => {
 		logger.info('AccountAdsController::getCampaignsInDB::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
+		});
+	}
+
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
 		});
 	}
 
@@ -1811,6 +1895,13 @@ const statisticUser = async (req, res, next) => {
 		});
 	}
 
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
+		});
+	}
+
 	logger.info('UserBehaviorLogController::statisticUser is called\n', info);
 	try {
 		const { error } = Joi.validate(req.query, CheckDate);
@@ -1891,6 +1982,13 @@ const detailUser = async (req, res, next) => {
 		logger.info('UserBehaviorLogController::detailUser::accountAdsNotConnected\n', info);
 		return res.status(HttpStatus.BAD_REQUEST).json({
 			messages: ['Tài khoản chưa được kết nối với Google Ads']
+		});
+	}
+
+	if (req.adsAccount.isDisabled) {
+		logger.info('AccountAdsController::handleManipulationGoogleAds::accountAdsIsDisabled\n', info);
+		return res.status(HttpStatus.BAD_REQUEST).json({
+			messages: ['Tài khoản đã bị vô hiệu hóa.']
 		});
 	}
 
@@ -2159,6 +2257,32 @@ const updateConfigStep = async (req, res, next) => {
 	}
 };
 
+const updateDisableStatusForAccount = async (req, res, next) => {
+	logger.info('AccountAdsController::updateDisableStatusForAccount::is called');
+	try{
+		const numOfAccountsEnabled = await AccountAdsModel.countDocuments({'user': req.user._id, 'isDisabled': false});
+
+		if(numOfAccountsEnabled > 0){
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				messages: ["Thao tác không hợp lệ."]
+			});
+		}
+
+		req.adsAccount.isDisabled = false;
+		await req.adsAccount.save();
+
+		let accountList = await AccountAdsService.getAccountsAdsByUserId(req.user._id);
+
+		return res.status(HttpStatus.OK).json({
+			messages: ["Thiết lập thành công."],
+			accounts: accountList
+		});
+	}catch(e){
+		logger.error('AccountAdsController::updateDisableStatusForAccount::Error\n', e);
+		return next(e);
+	}
+};
+
 module.exports = {
 	addAccountAds,
 	handleManipulationGoogleAds,
@@ -2192,6 +2316,7 @@ module.exports = {
 	detailUser,
 	getListGoogleAdsOfUser,
 	ConnectGoogleAdsByEmail: connectGoogleAdsByEmail,
-	updateConfigStep
+	updateConfigStep,
+	updateDisableStatusForAccount
 };
 

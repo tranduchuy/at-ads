@@ -519,6 +519,11 @@ const detectCampaignId = async(key, accountOfKey, detectKeyWord) => {
       {
         return key = '';
       }
+
+      if(!Number(detectKeyWord.campaignId))
+      {
+        return key;
+      }
     
       const campaign = await BlockingCriterionModel.findOne({campaignId: detectKeyWord.campaignId});
 

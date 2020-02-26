@@ -1657,20 +1657,8 @@ const getListOriginalCampaigns = (req) => {
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
       const processCampaignList = filterTheCampaignInfoInTheCampaignList(result);
 
-      const campaignNotSetUrl = processCampaignList.filter(cp => !cp.trackingUrlTemplate || cp.trackingUrlTemplate.indexOf(UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE) < 0).map(cp => cp.id);
-
-      if(campaignNotSetUrl.length <= 0)
-      {
-        logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
-        return resolve({
-          status    : HttpStatus.OK,
-          messages  : ["Lấy danh sách chiến dịch thành công."],
-          data      : { campaignList: processCampaignList }
-        });
-      }
-
       logger.info('AccountAdService::getListOriginalCampaigns::setUrlTrackingTemplate\n', info);
-      GoogleAdwordsService.setTrackingUrlTemplateForCampaign(req.adsAccount.adsId, campaignNotSetUrl)
+      GoogleAdwordsService.setUrlTrackingTemplateForAccount(req.adsAccount.adsId)
       .then(result => {
         logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
         return resolve({
