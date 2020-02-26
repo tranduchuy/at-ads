@@ -1656,15 +1656,37 @@ const getListOriginalCampaigns = (req) => {
     try {
       const result = await GoogleAdwordsService.getListCampaigns(req.adsAccount.adsId);
       const processCampaignList = filterTheCampaignInfoInTheCampaignList(result);
+      const campaignSetUrl = processCampaignList.filter(cp => cp.trackingUrlTemplate).map(cp => cp.id);
 
       logger.info('AccountAdService::getListOriginalCampaigns::setUrlTrackingTemplate\n', info);
       GoogleAdwordsService.setUrlTrackingTemplateForAccount(req.adsAccount.adsId)
       .then(result => {
-        logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
-        return resolve({
-          status    : HttpStatus.OK,
-          messages  : ["Lấy danh sách chiến dịch thành công."],
-          data      : { campaignList: processCampaignList }
+        if(campaignSetUrl.length <= 0)
+        {
+          logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
+          return resolve({
+            status    : HttpStatus.OK,
+            messages  : ["Lấy danh sách chiến dịch thành công."],
+            data      : { campaignList: processCampaignList }
+          });
+        }
+
+        logger.info('AccountAdService::getListOriginalCampaigns::setUrlTrackingTemplate\n', info);
+        GoogleAdwordsService.setTrackingUrlTemplateForCampaign(req.adsAccount.adsId, campaignSetUrl)
+        .then(result => {
+          logger.info('AccountAdService::getListOriginalCampaigns::success\n', info);
+          return resolve({
+            status    : HttpStatus.OK,
+            messages  : ["Lấy danh sách chiến dịch thành công."],
+            data      : { campaignList: processCampaignList }
+          });
+        }).catch(err => {
+          logger.error('AccountAdService::getOriginalCampaigns::error', err, '\n', info);
+          return resolve({
+            status    : HttpStatus.OK,
+            messages  : ["Lấy danh sách chiến dịch thành công."],
+            data      : { campaignList: processCampaignList }
+          });
         });
       }).catch(err => {
         logger.error('AccountAdService::getOriginalCampaigns::error', err, '\n', info);

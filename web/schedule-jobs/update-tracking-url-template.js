@@ -16,24 +16,8 @@ const updateTrackingUrlForCampaignAccountAds = (accountAds) => {
       const temp = { adsAccount: ads };
       AccountAdsService.getListOriginalCampaigns(temp)
       .then(result => {
-        let campaignIds = [];
-
-        if(result.data.campaignList.length <= 0)
-        {
-          logger.info('Schedulejobs::UpdateTimeUpdateTrackingUrl::updateTrackingUrlForCampaignAccountAds::campaign is empty.');
-          return callback();
-        }
-
-        campaignIds = result.data.campaignList.map(campaign => campaign.id);
-        console.log(campaignIds);
-        GoolgeAdsService.setTrackingUrlTemplateForCampaign(ads.adsId, campaignIds)
-        .then(result => {
-          logger.info('Schedulejobs::UpdateTimeUpdateTrackingUrl::updateTrackingUrlForCampaignAccountAds::called google success.');
-          return callback();
-        }).catch(e => {
-          logger.error('Schedulejobs::UpdateTimeUpdateTrackingUrl::updateTrackingUrlForCampaignAccountAds::Error.', e);
-          return callback();
-        })
+        logger.info('Schedulejobs::UpdateTimeUpdateTrackingUrl::updateTrackingUrlForCampaignAccountAds::campaign is empty.');
+        return callback();
       }).catch(error => {
         logger.error('Schedulejobs::UpdateTimeUpdateTrackingUrl::updateTrackingUrlForCampaignAccountAds::Error.', error);
         return callback();

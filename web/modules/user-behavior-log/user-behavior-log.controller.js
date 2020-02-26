@@ -243,10 +243,33 @@ const scrollPercentage = async (req, res, next) => {
   }
 };
 
+const TrackingModel = require('../tracking/tracking.model');
+const getInfoTracking = async (req, res, next) => {
+  logger.info('UserBehaviorController::scrollPercentage::called');
+  try{
+    const info = {
+      query: JSON.stringify(req.query),
+      params: JSON.stringify(req.params),
+      body: JSON.stringify(req.body),
+      url: JSON.stringify(req.url)
+    }
+    const newTracking = new TrackingModel({info});
+    await newTracking.save();
+
+    return res.status(HttpStatus.OK).json({
+      messages: ['Success']
+    });
+  }catch(e){
+    logger.error('UserBehaviorController::getInfoTracking::error', e);
+    return next(e);
+  }
+};
+
 module.exports = {
   logTrackingBehavior,
   getlogTrackingBehavior,
   getLogForIntroPage,
   updateTimeOutOfPage,
   scrollPercentage,
+  getInfoTracking
 };
