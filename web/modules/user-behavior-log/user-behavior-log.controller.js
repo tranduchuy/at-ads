@@ -244,8 +244,9 @@ const scrollPercentage = async (req, res, next) => {
 };
 
 const TrackingModel = require('../tracking/tracking.model');
+const TrackingServices = require('../tracking/tracking.service');
 const getInfoTracking = async (req, res, next) => {
-  logger.info('UserBehaviorController::scrollPercentage::called');
+  logger.info('UserBehaviorController::getInfoTracking::called');
   try{
     const info = {
       query: JSON.stringify(req.query),
@@ -253,9 +254,16 @@ const getInfoTracking = async (req, res, next) => {
       body: JSON.stringify(req.body),
       url: JSON.stringify(req.url)
     }
-    const newTracking = new TrackingModel({info});
+    const ipInfo = await TrackingServices.getGeoIp();
+    const newTracking = new TrackingModel({
+      info,
+      ip: ipInfo.ip,
+      location: ipInfo.userLocation,
+      userAgent: req.useragent
+    });
     await newTracking.save();
 
+    logger.info('UserBehaviorController::getInfoTracking::success');
     return res.status(HttpStatus.OK).json({
       messages: ['Success']
     });

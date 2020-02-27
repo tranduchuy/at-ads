@@ -7,6 +7,7 @@ const logger = require('morgan');
 const cors = require('cors');
 const HttpStatus = require('http-status-codes');
 const fs = require('fs');
+const useragent = require('express-useragent');
 
 // create logs folder
 if (!fs.existsSync('./logs')) {
@@ -23,6 +24,8 @@ const corsOptionsDelegate = function (req, callback) {
   corsOptions = { origin: true, credentials: true }; // reflect (enable) the requested origin in the CORS response
   callback(null, corsOptions) // callback expects two parameters: error and options
 };
+
+app.use(useragent.express());
 app.use(cors(corsOptionsDelegate));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
