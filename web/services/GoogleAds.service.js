@@ -1120,7 +1120,7 @@ const setUrlTrackingTemplateForAccount = (accountAdsId) => {
 			'autoTaggingEnabled': true,
 			'parallelTrackingEnabled': true,
 			'trackingUrlTemplate': `${hostApi}user-behaviors/${UrlTrackingTemplateConstant.URL_TRACKING_TEMPLATE}`,
-			'finalUrlSuffix': 'gclid={gclid}'
+			'finalUrlSuffix': ''
 		};
 
 		customerService.mutate({customer}, (error, result) => {

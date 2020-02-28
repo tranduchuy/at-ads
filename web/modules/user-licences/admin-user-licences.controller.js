@@ -77,18 +77,23 @@ const updatePackageForUser = async (req, res, next) => {
       price: package.price,
       createdAt: new Date()
     });
-    const numOfAccount = await AdsAccountModel.countDocuments({'user': userLicences.userId});
+    const accounts = await AdsAccountModel.find({'user': userLicences.userId});
+    const accountEnabled = accounts.filter(account => !account.isDisabled);
 
     if(package.type == PackageConstant.packageTypes.FREE)
     {
       userLicences.expiredAt = null;
 
-      if(package._id.toString() != userLicences.packageId.toString())
+      if(userLicence.packageId.type == PackageConstant.packageTypes.VIP1 || userLicence.packageId.type == PackageConstant.packageTypes.FREE)
       {
-        if(numOfAccount > 1)
+        if(accountEnabled.length != 1)
         {
-          await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: true}});
+          await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': true}});
         }
+      }
+      else
+      {
+        await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': true}});
       }
     }
     else
@@ -102,12 +107,22 @@ const updatePackageForUser = async (req, res, next) => {
 
       if(package.type == PackageConstant.packageTypes.VIP1)
       {
-        if(numOfAccount > 1)
+        if(userLicence.packageId.type == PackageConstant.packageTypes.FREE || userLicence.packageId.type == PackageConstant.packageTypes.VIP1)
         {
-          await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: true}});
+          if(accountEnabled.length != 1){
+            await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': true}});
+          }
         }
-        else{
-          await AdsAccountModel.updateMany({'user': userLicences.userId},{'$set': {isDisabled: false}});
+        else
+        {
+          if(accounts.length > 1 )
+          {
+            await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': true}});
+          }
+          else
+          {
+            await AdsAccountModel.updateMany({'user': userLicence.userId},{'$set': {'isDisabled': false}});
+          }
         }
       }
       else

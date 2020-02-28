@@ -248,25 +248,45 @@ const TrackingServices = require('../tracking/tracking.service');
 const getInfoTracking = async (req, res, next) => {
   logger.info('UserBehaviorController::getInfoTracking::called');
   try{
+    const detectAdsInfo = TrackingServices.detectAdsInfo(req);
     const info = {
-      query: JSON.stringify(req.query),
+      query: detectAdsInfo,
       params: JSON.stringify(req.params),
       body: JSON.stringify(req.body),
       url: JSON.stringify(req.url)
     }
-    const ipInfo = await TrackingServices.getGeoIp();
+    const ipInfo = TrackingServices.getGeoIp(req);
     const newTracking = new TrackingModel({
       info,
       ip: ipInfo.ip,
-      location: ipInfo.userLocation,
+      location: ipInfo.location,
       userAgent: req.useragent
     });
     await newTracking.save();
 
     logger.info('UserBehaviorController::getInfoTracking::success');
+    if(detectAdsInfo.url)
+    {
+      if(detectAdsInfo['url'].indexOf('//www.google.com/asnc') < 0)
+      {
+        if(detectAdsInfo['url'].indexOf('https://') >= 0 || detectAdsInfo['url'].indexOf('http://') >= 0)
+        {
+          return res.redirect(302, detectAdsInfo['url']);
+        }
+        return res.status(HttpStatus.OK).json({
+          messages: ['Success']
+        });
+      }
+
+      return res.status(HttpStatus.OK).json({
+        messages: ['Success']
+      });
+    }
+    
     return res.status(HttpStatus.OK).json({
       messages: ['Success']
     });
+
   }catch(e){
     logger.error('UserBehaviorController::getInfoTracking::error', e);
     return next(e);
