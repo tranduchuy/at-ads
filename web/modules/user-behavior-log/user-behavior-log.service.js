@@ -4,6 +4,7 @@ const moment = require('moment');
 const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
 const Url = require('url-parse');
+const parser = require('ua-parser-js');
 const queryString = require('query-string');
 const UserBehaviorLogConstant = require('./user-behavior-log.constant');
 const TRAFFIC_SOURCE_TYPES = UserBehaviorLogConstant.TRAFFIC_SOURCE_TYPES;
@@ -547,6 +548,31 @@ const detectCampaignId = async(key, accountOfKey, detectKeyWord) => {
   }
 };
 
+const createdUserBehaviorLogForTracking = async (data) => {
+  logger.info('UserBihaviorLogService::createdUserBehaviorLogForTracking::is called');
+  try{
+    const userAgent = data.userAgent;
+    const ua = parser(userAgent);
+    const company = await IPLookupService.getNetworkCompanyByIP(data.ip);
+    const hrefURL = new Url(data.href);
+    
+    data['domain'] = hrefURL.origin,
+    data['pathname'] = hrefURL.pathname,
+    data['networkCompany'] = company || null;
+    data['browser'] = ua.browser || null;
+    data['engine'] = ua.engine || null;
+    data['device'] = ua.device || null;
+    data['os'] = ua.os || null;
+    data['cpu'] = ua.cpu || null;
+
+    const newUserBehaviorLog = new UserBehaviorLogModel(data);
+    return await newUserBehaviorLog.save();
+  }catch(e){
+    logger.error('UserBihaviorLogService::createdUserBehaviorLogForTracking::error', e);
+    throw new Error(e);
+  }
+};
+
 module.exports = {
   createUserBehaviorLog,
   buildStageStatisticUser,
@@ -557,5 +583,6 @@ module.exports = {
   getDataForIntroPage,
   filterReason,
   detectKeyWord,
-  detectCampaignId
+  detectCampaignId,
+  createdUserBehaviorLogForTracking
 };

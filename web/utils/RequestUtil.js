@@ -34,8 +34,33 @@ const joiValidationResponse = (err, res) => {
   return res.status(HttpStatus.BAD_REQUEST).json(result);
 };
 
+const redirectResquestwhenTrackingAds = (detectAdsInfo, res) => {
+  if(detectAdsInfo.url)
+  {
+    if(detectAdsInfo['url'].indexOf('//www.google.com/asnc') < 0)
+    {
+      if(detectAdsInfo['url'].indexOf('https://') >= 0 || detectAdsInfo['url'].indexOf('http://') >= 0)
+      {
+        return res.redirect(302, detectAdsInfo['url']);
+      }
+      return res.status(HttpStatus.OK).json({
+        messages: ['Success']
+      });
+    }
+
+    return res.status(HttpStatus.OK).json({
+      messages: ['Success']
+    });
+  }
+  
+  return res.status(HttpStatus.OK).json({
+    messages: ['Success']
+  });
+}
+
 module.exports = {
   extractPaginationCondition,
   extractUserAgent,
-  joiValidationResponse
+  joiValidationResponse,
+  redirectResquestwhenTrackingAds
 };

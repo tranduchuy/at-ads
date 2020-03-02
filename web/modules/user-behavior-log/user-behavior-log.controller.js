@@ -243,49 +243,63 @@ const scrollPercentage = async (req, res, next) => {
   }
 };
 
-const TrackingModel = require('../tracking/tracking.model');
 const TrackingServices = require('../tracking/tracking.service');
+const BlockingCriterions = require('../blocking-criterions/blocking-criterions.model');
 const getInfoTracking = async (req, res, next) => {
   logger.info('UserBehaviorController::getInfoTracking::called');
   try{
     const detectAdsInfo = TrackingServices.detectAdsInfo(req);
-    const info = {
-      query: detectAdsInfo,
-      params: JSON.stringify(req.params),
-      body: JSON.stringify(req.body),
-      url: JSON.stringify(req.url)
+
+    if(detectAdsInfo.gclid && detectAdsInfo != '{gclid}')
+    {
+      const campaign = await BlockingCriterions.findOne({'campaignId': detectAdsInfo.campaignId});
+
+      if(campaign)
+      {
+        const adAccount = await AdAccountModel.findOne({'_id': campaign.accountId});
+
+        if(adAccount)
+        {
+          const ipInfo = TrackingServices.getGeoIp(req);
+          let localIp = req.ip; // trust proxy sets ip to the remote client (not to the ip of the last reverse proxy server)
+
+          if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
+            localIp = localIp.substr(7);
+          }
+
+          let data = {
+            ip: ipInfo.ip,
+            localIp,
+            campaignId: detectAdsInfo.campaignId,
+            accountKey: adAccount.key,
+            type: 1,
+            href: detectAdsInfo.url,
+            userAgent: req.useragent.source,
+            location: {
+              country_code : ipInfo.location ? ipInfo.location.country : null,
+              country_name : null,
+              city : ipInfo.location ? ipInfo.location.city : null,
+              postal : null,
+              latitude : ipInfo.location ? ipInfo.location.ll.length == 2 ? ipInfo.location.ll[0] : null : null,
+              longitude : ipInfo.location ? ipInfo.location.ll.length == 2 ? ipInfo.location.ll[1] : null : null,
+              state : ipInfo.location ? ipInfo.location.region : null
+            },
+            matchType : detectAdsInfo.matchType,
+            keyword: detectAdsInfo.keyword,
+            page : detectAdsInfo.page,
+            position : detectAdsInfo.position,
+            campaignType : detectAdsInfo.campaignType,
+            gclid : detectAdsInfo.gclid,
+          };
+         
+          const log = await UserBehaviorLogService.createdUserBehaviorLogForTracking(data);
+          await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+        }
+      }
     }
-    const ipInfo = TrackingServices.getGeoIp(req);
-    const newTracking = new TrackingModel({
-      info,
-      ip: ipInfo.ip,
-      location: ipInfo.location,
-      userAgent: req.useragent
-    });
-    await newTracking.save();
 
     logger.info('UserBehaviorController::getInfoTracking::success');
-    if(detectAdsInfo.url)
-    {
-      if(detectAdsInfo['url'].indexOf('//www.google.com/asnc') < 0)
-      {
-        if(detectAdsInfo['url'].indexOf('https://') >= 0 || detectAdsInfo['url'].indexOf('http://') >= 0)
-        {
-          return res.redirect(302, detectAdsInfo['url']);
-        }
-        return res.status(HttpStatus.OK).json({
-          messages: ['Success']
-        });
-      }
-
-      return res.status(HttpStatus.OK).json({
-        messages: ['Success']
-      });
-    }
-    
-    return res.status(HttpStatus.OK).json({
-      messages: ['Success']
-    });
+    return requestUtil.redirectResquestwhenTrackingAds(detectAdsInfo, res);
 
   }catch(e){
     logger.error('UserBehaviorController::getInfoTracking::error', e);

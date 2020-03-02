@@ -2,8 +2,8 @@ const log4js = require('log4js');
 const logger = log4js.getLogger('Services');
 const CustomerInfomationsModel = require('./customer-infomation.model');
 
-const createdCustomerInfo = async({uuid, name, splitNumber, email, domain, key}) => {
-  logger.info("CustomerInfomationServices::createdCustomerInfo::is called", {uuid, name, splitNumber, email, domain, key});
+const createdCustomerInfo = async({uuid, name, splitNumber, email, domain, key, gclid}) => {
+  logger.info("CustomerInfomationServices::createdCustomerInfo::is called", {uuid, name, splitNumber, email, domain, key, gclid});
   try{
     const newCustomer = new CustomerInfomationsModel({
       uuid,
@@ -13,6 +13,7 @@ const createdCustomerInfo = async({uuid, name, splitNumber, email, domain, key})
         phoneNumber: splitNumber,
         email,
         domain,
+        gclid,
         createdAt: new Date()
       }]
     });
