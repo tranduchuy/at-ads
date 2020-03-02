@@ -25,139 +25,147 @@ const rabbitChannels = Config.get('rabbitChannels');
 const logTrackingBehavior = async (req, res, next) => {
   logger.info('UserBehaviorController::logTrackingBehavior::is called');
   try {
-    const href = req.body.href;
-    let { key, uuid } = req.body;
-    const hrefURL = new Url(href);
-    const hrefOrigin = hrefURL.origin;
-    const accountOfKey = await AdAccountModel.findOne({key}).lean();
-
-    if(!accountOfKey || !accountOfKey.isConnected || accountOfKey.isDeleted)
-    {
-      key = '';
-    }
-
-    const website = await WebsiteModel.findOne({domain: hrefOrigin, accountAd: accountOfKey._id }).lean();
-
-    if (!website) {
-      key = '';
-    }
-
-    const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
-
-    if (error) {
-      return requestUtil.joiValidationResponse(error, res);
-    }
-
-    let localIp = req.ip; // trust proxy sets ip to the remote client (not to the ip of the last reverse proxy server)
-    if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
-      localIp = localIp.substr(7);
-    }
-
-    const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
-    const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer, msisdn} = req.body;
-    const referrerURL = new Url(referrer);
-    let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
-    const hrefQuery = queryString.parse(hrefURL.query);
-    const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
-  
-    if(hrefQuery.gclid || detectKeyWord.campaignId || detectKeyWord.campaignType || detectKeyWord.keyword || detectKeyWord.matchtype || detectKeyWord.page || detectKeyWord.position){
-      if(detectKeyWord.campaignType == 'Google search')
-      {
-        if(googleUrls.includes(referrerURL.hostname.replace('www.', '')))
-        {
-          type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
-        }
-      }
-      else
-      {
-        if(referrerURL.hostname)
-        {
-          type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
-        }
-      }
-    }
-
-    const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
-    const ua = parser(userAgent);
-
-    key = await UserBehaviorLogService.detectCampaignId(key, accountOfKey, detectKeyWord);
-
-    const data = {
-      uuid,
-      ip,
-      href,
-      referrer,
-      type,
-      screenResolution,
-      browserResolution,
-      userAgent,
-      location: location,
-      accountKey: key,
-      localIp,
-      isPrivateBrowsing,
-      domain: hrefURL.origin,
-      pathname: hrefURL.pathname,
-      gclid: hrefQuery.gclid || null,
-      utmCampaign: hrefQuery.utm_campaign || null,
-      utmMedium: hrefQuery.utm_medium || null,
-      utmSource: hrefQuery.utm_source || null,
-      keyword: detectKeyWord.keyword,
-      page: detectKeyWord.page,
-      matchType: detectKeyWord.matchtype,
-      position: detectKeyWord.position,
-      campaignType: detectKeyWord.campaignType,
-      campaignId: detectKeyWord.campaignId,
-      trafficSource,
-      msisdn,
-      ...ua
-    };
-
-    const log = await UserBehaviorLogService.createUserBehaviorLog(data);
-    logger.info('UserBehaviorController::logTrackingBehavior::log', JSON.stringify(log));
-
-    RabbitMQService.detectSession(log._id);
-
-    if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
-    {
-      if(hrefQuery.gclid || detectKeyWord.campaignId || detectKeyWord.campaignType || detectKeyWord.keyword || detectKeyWord.matchtype || detectKeyWord.page || detectKeyWord.position)
-      {
-        if(key && website && accountOfKey && !accountOfKey.isDisabled && website.accountAd.toString() === accountOfKey._id.toString())
-        {
-          await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
-          const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
-          SocketService.sendDashboardLog(sendData);
-          // await RabbitMQService.sendMessages(rabbitChannels.SEND_INFO_DASHBOARD, JSON.stringify(sendData));
-        }
-        else
-        {
-          log.reason = UserBehaviorLogService.filterReason(website, accountOfKey, key);
-          await log.save();
-        }
-      }
-      else
-      {
-        log.reason = { 
-          message: UserBehaviorLogConstant.MESSAGE.gclidNotFound
-        };
-  
-        await log.save();
-      }
-    }
-    else{
-      log.reason = { 
-        message: UserBehaviorLogConstant.MESSAGE.isTrack
-      };
-  
-      await log.save();
-    }
-
     return res.json({
       status: HttpStatus.OK,
       data: {
-        logId: log._id ? log._id.toString() : null
+        logId: null
       },
       messages: [messages.ResponseMessages.SUCCESS]
     });
+
+    // const href = req.body.href;
+    // let { key, uuid } = req.body;
+    // const hrefURL = new Url(href);
+    // const hrefOrigin = hrefURL.origin;
+    // const accountOfKey = await AdAccountModel.findOne({key}).lean();
+
+    // if(!accountOfKey || !accountOfKey.isConnected || accountOfKey.isDeleted)
+    // {
+    //   key = '';
+    // }
+
+    // const website = await WebsiteModel.findOne({domain: hrefOrigin, accountAd: accountOfKey._id }).lean();
+
+    // if (!website) {
+    //   key = '';
+    // }
+
+    // const { error } = Joi.validate(req.body, LogTrackingBehaviorValidationSchema);
+
+    // if (error) {
+    //   return requestUtil.joiValidationResponse(error, res);
+    // }
+
+    // let localIp = req.ip; // trust proxy sets ip to the remote client (not to the ip of the last reverse proxy server)
+    // if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
+    //   localIp = localIp.substr(7);
+    // }
+
+    // const googleUrls = UserBehaviorLogConstant.GOOGLE_URLs;
+    // const {ip, userAgent, isPrivateBrowsing, screenResolution, browserResolution, location, referrer, msisdn} = req.body;
+    // const referrerURL = new Url(referrer);
+    // let type = UserBehaviorLogConstant.LOGGING_TYPES.TRACK;
+    // const hrefQuery = queryString.parse(hrefURL.query);
+    // const detectKeyWord = UserBehaviorLogService.detectKeyWord(hrefQuery);
+  
+    // if(hrefQuery.gclid || detectKeyWord.campaignId || detectKeyWord.campaignType || detectKeyWord.keyword || detectKeyWord.matchtype || detectKeyWord.page || detectKeyWord.position){
+    //   if(detectKeyWord.campaignType == 'Google search')
+    //   {
+    //     if(googleUrls.includes(referrerURL.hostname.replace('www.', '')))
+    //     {
+    //       type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
+    //     }
+    //   }
+    //   else
+    //   {
+    //     if(referrerURL.hostname)
+    //     {
+    //       type = UserBehaviorLogConstant.LOGGING_TYPES.CLICK;
+    //     }
+    //   }
+    // }
+
+    // const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
+    // const ua = parser(userAgent);
+
+    // key = await UserBehaviorLogService.detectCampaignId(key, accountOfKey, detectKeyWord);
+
+    // const data = {
+    //   uuid,
+    //   ip,
+    //   href,
+    //   referrer,
+    //   type,
+    //   screenResolution,
+    //   browserResolution,
+    //   userAgent,
+    //   location: location,
+    //   accountKey: key,
+    //   localIp,
+    //   isPrivateBrowsing,
+    //   domain: hrefURL.origin,
+    //   pathname: hrefURL.pathname,
+    //   gclid: hrefQuery.gclid || null,
+    //   utmCampaign: hrefQuery.utm_campaign || null,
+    //   utmMedium: hrefQuery.utm_medium || null,
+    //   utmSource: hrefQuery.utm_source || null,
+    //   keyword: detectKeyWord.keyword,
+    //   page: detectKeyWord.page,
+    //   matchType: detectKeyWord.matchtype,
+    //   position: detectKeyWord.position,
+    //   campaignType: detectKeyWord.campaignType,
+    //   campaignId: detectKeyWord.campaignId,
+    //   trafficSource,
+    //   msisdn,
+    //   ...ua
+    // };
+
+    // const log = await UserBehaviorLogService.createUserBehaviorLog(data);
+    // logger.info('UserBehaviorController::logTrackingBehavior::log', JSON.stringify(log));
+
+    // RabbitMQService.detectSession(log._id);
+
+    // if(type === UserBehaviorLogConstant.LOGGING_TYPES.CLICK)
+    // {
+    //   if(hrefQuery.gclid || detectKeyWord.campaignId || detectKeyWord.campaignType || detectKeyWord.keyword || detectKeyWord.matchtype || detectKeyWord.page || detectKeyWord.position)
+    //   {
+    //     if(key && website && accountOfKey && !accountOfKey.isDisabled && website.accountAd.toString() === accountOfKey._id.toString())
+    //     {
+    //       await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+    //       const sendData = UserBehaviorLogService.getInfoSend(log, accountOfKey, isPrivateBrowsing);
+    //       SocketService.sendDashboardLog(sendData);
+    //       // await RabbitMQService.sendMessages(rabbitChannels.SEND_INFO_DASHBOARD, JSON.stringify(sendData));
+    //     }
+    //     else
+    //     {
+    //       log.reason = UserBehaviorLogService.filterReason(website, accountOfKey, key);
+    //       await log.save();
+    //     }
+    //   }
+    //   else
+    //   {
+    //     log.reason = { 
+    //       message: UserBehaviorLogConstant.MESSAGE.gclidNotFound
+    //     };
+  
+    //     await log.save();
+    //   }
+    // }
+    // else{
+    //   log.reason = { 
+    //     message: UserBehaviorLogConstant.MESSAGE.isTrack
+    //   };
+  
+    //   await log.save();
+    // }
+
+    // return res.json({
+    //   status: HttpStatus.OK,
+    //   data: {
+    //     logId: log._id ? log._id.toString() : null
+    //   },
+    //   messages: [messages.ResponseMessages.SUCCESS]
+    // });
   } catch (e) {
     logger.error('UserBehaviorController::logTrackingBehavior::error', e);
     return next(e);
