@@ -30,7 +30,7 @@ const addCustomerInfomation = async(req, res, next) => {
     }
 
     const uuid = req.params.uuid;
-    const { name, phoneNumber, email, domain, key } = req.body;
+    const { name, phoneNumber, email, domain, key, gclid } = req.body;
     const accountAd = await AccountAdsModel.findOne({key});
 
     if(!accountAd)
@@ -58,7 +58,7 @@ const addCustomerInfomation = async(req, res, next) => {
 
     if(!customer)
     {
-      await CustomerInfomationsServices.createdCustomerInfo({uuid, name, splitNumber, email, domain, key});
+      await CustomerInfomationsServices.createdCustomerInfo({uuid, name, splitNumber, email, domain, key, gclid});
 
       logger.info("CustomerInfomationsControllers::addCustomerInfomation::success");
       return res.status(HttpStatus.OK).json({
@@ -81,6 +81,7 @@ const addCustomerInfomation = async(req, res, next) => {
       name,
       phoneNumber: splitNumber,
       email,
+      gclid,
       domain,
       createdAt: new Date()
     });

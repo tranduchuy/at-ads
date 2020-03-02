@@ -6,7 +6,8 @@ const AddCustomerInfomationValidationSchema = Joi.object().keys({
     name: Joi.string().required(),
     phoneNumber: Joi.string().required().regex(/((09|03|07|08|05)+([0-9]{8})\b)/),
     domain: Joi.string().required(),
-    key: Joi.string().required()
+    key: Joi.string().required(),
+    gclid: Joi.string().allow('')
   }
 );
 
