@@ -16,6 +16,8 @@ const FireBaseConfig = config.get('fireBase');
 const { TOPIC } = require('../fire-base-tokens/fire-base-tokens.constant');
 const { ERROR } = require('../fire-base-tokens/fire-base-tokens.constant');
 const admin = require('firebase-admin');
+const TrackingServices = require('../tracking/tracking.service');
+
 admin.initializeApp({
     credential: admin.credential.cert(FireBaseConfig.CREDENTIAL),
     databaseURL: FireBaseConfig.DATABASEURL
@@ -548,25 +550,44 @@ const detectCampaignId = async(key, accountOfKey, detectKeyWord) => {
   }
 };
 
-const createdUserBehaviorLogForTracking = async (data) => {
+const createdUserBehaviorLogForTracking = async (req, data) => {
   logger.info('UserBihaviorLogService::createdUserBehaviorLogForTracking::is called');
   try{
+    const newUserBehaviorLog = new UserBehaviorLogModel(data);
+    let log = await newUserBehaviorLog.save();
+  
+    const ipInfo = TrackingServices.getGeoIp(req);
+    const company = await IPLookupService.getNetworkCompanyByIP(ipInfo.ip);
     const userAgent = data.userAgent;
     const ua = parser(userAgent);
-    const company = await IPLookupService.getNetworkCompanyByIP(data.ip);
     const hrefURL = new Url(data.href);
-    
-    data['domain'] = hrefURL.origin,
-    data['pathname'] = hrefURL.pathname,
-    data['networkCompany'] = company || null;
-    data['browser'] = ua.browser || null;
-    data['engine'] = ua.engine || null;
-    data['device'] = ua.device || null;
-    data['os'] = ua.os || null;
-    data['cpu'] = ua.cpu || null;
+    let localIp = req.ip; // trust proxy sets ip to the remote client (not to the ip of the last reverse proxy server)
 
-    const newUserBehaviorLog = new UserBehaviorLogModel(data);
-    return await newUserBehaviorLog.save();
+    if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
+      localIp = localIp.substr(7);
+    }
+
+    log['ip'] = ipInfo.ip;
+    log['localIp'] = localIp;
+    log['location'] = {
+      country_code : ipInfo.location ? ipInfo.location.country : null,
+      country_name : null,
+      city : ipInfo.location ? ipInfo.location.city : null,
+      postal : null,
+      latitude : ipInfo.location ? ipInfo.location.ll ? ipInfo.location.ll.length == 2 ? ipInfo.location.ll[0] : null : null : null,
+      longitude : ipInfo.location ? ipInfo.location.ll ? ipInfo.location.ll.length == 2 ? ipInfo.location.ll[1] : null : null : null,
+      state : ipInfo.location ? ipInfo.location.region : null
+    };
+    log['networkCompany'] = company || null;
+    log['domain'] = hrefURL.origin || null,
+    log['pathname'] = hrefURL.pathname || null,
+    log['browser'] = ua.browser || null;
+    log['engine'] = ua.engine || null;
+    log['device'] = ua.device || null;
+    log['os'] = ua.os || null;
+    log['cpu'] = ua.cpu || null;
+
+    return await log.save();
   }catch(e){
     logger.error('UserBihaviorLogService::createdUserBehaviorLogForTracking::error', e);
     throw new Error(e);

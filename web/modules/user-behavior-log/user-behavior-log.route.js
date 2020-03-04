@@ -8,5 +8,6 @@ router.post('/log', UserBehaviorLogController.logTrackingBehavior);
 router.get('/log', UserBehaviorLogController.getlogTrackingBehavior);
 router.get('/log/intro-page', UserBehaviorLogController.getLogForIntroPage);
 router.get('/', UserBehaviorLogController.getInfoTracking);
+router.put('/log', UserBehaviorLogController.updateLogFromClient);
 
 module.exports = router;
