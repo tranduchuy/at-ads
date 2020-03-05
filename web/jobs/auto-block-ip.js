@@ -303,6 +303,32 @@ const countClickIpClassD = async (accountAds, ip) => {
     }
 };
 
+const checkAccountPermissions = (accountAds) => {
+    logger.info('jobs::checkPermissionAccount::checkAccountPermissions::is called');
+    try{
+        if(!accountAds.isConnected)
+        {
+            return { status: true, message: MESSAGE.accountIsNotConnected };
+        }
+
+        if(accountAds.isDeleted)
+        {
+            return { status: true, message: MESSAGE.accountHasBeenDeleted };
+        }
+
+        if(accountAds.isDisabled)
+        {
+            return { status: true, message: MESSAGE.accountIsCurrentlyDisabled };
+        }
+
+        return { status: false, message: '' };
+    }catch(e){
+        logger.error('jobs::checkAccountPermissions::Error',  e);
+        console.log(e);
+        throw new Error(e);
+    }
+}
+
 module.exports = async (channel, msg) => {
     logger.info('jobs::autoBlockIp is called');
     try {
@@ -325,6 +351,19 @@ module.exports = async (channel, msg) => {
             logger.info('jobs::autoBlockIp::accountAdsNotFound.', { id });
             log.reason = {
                 message: MESSAGE.accountNotFound
+            };
+            await log.save();
+            channel.ack(msg);
+            return;
+        }
+
+        const checkUserPermissonsResult = checkAccountPermissions(accountAds);
+
+        if(checkUserPermissonsResult.status)
+        {
+            logger.info('jobs::autoBlockIp::accountAd Permissons denied.', { id });
+            log.reason = {
+                message: checkUserPermissonsResult.message
             };
             await log.save();
             channel.ack(msg);

@@ -5,6 +5,7 @@ const log4js = require('log4js');
 const logger = log4js.getLogger('Controllers');
 const Joi = require('@hapi/joi');
 const { LogTrackingBehaviorValidationSchema } = require('./validations/log-tracking-behavior.schema');
+const { updateLogFromClientValidationSchema } = require('./validations/update-log-form-client.schema');
 const HttpStatus = require("http-status-codes");
 const parser = require('ua-parser-js');
 const Url = require('url-parse');
@@ -12,7 +13,9 @@ const queryString = require('query-string');
 const requestUtil = require('../../utils/RequestUtil');
 const UserBehaviorLogService = require('./user-behavior-log.service');
 const SocketService = require('../../services/socket.service');
+const TrackingServices = require('../tracking/tracking.service');
 
+const BlockingCriterionsModel = require('../blocking-criterions/blocking-criterions.model');
 const AdAccountModel = require('../account-adwords/account-ads.model');
 
 const UserBehaviorLogModel = require('../user-behavior-log/user-behavior-log.model');
@@ -206,20 +209,24 @@ const updateTimeOutOfPage = async (req, res, next) => {
   const timeMillisecond = new Date().getTime();
   logger.info('UserBehaviorController::updateTimeOutOfPage::called', {logId, timeMillisecond});
   try {
-    const log = await UserBehaviorLogModel.findOne({_id: logId});
-    if (!log) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        messages: ['Not found log']
-      });
-    }
-
-    log.timeUnLoad = timeMillisecond;
-    log.timeOnPage = timeMillisecond - log.createdAt.getTime();
-    await log.save();
-
     return res.status(HttpStatus.OK).json({
       messages: ['Success']
     });
+
+    // const log = await UserBehaviorLogModel.findOne({_id: logId});
+    // if (!log) {
+    //   return res.status(HttpStatus.BAD_REQUEST).json({
+    //     messages: ['Not found log']
+    //   });
+    // }
+
+    // log.timeUnLoad = timeMillisecond;
+    // log.timeOnPage = timeMillisecond - log.createdAt.getTime();
+    // await log.save();
+
+    // return res.status(HttpStatus.OK).json({
+    //   messages: ['Success']
+    // });
   } catch (e) {
     logger.error('UserBehaviorController::updateTimeOutOfPage::error', e);
     return next(e);
@@ -231,36 +238,38 @@ const scrollPercentage = async (req, res, next) => {
   const scroll = req.body.scroll;
   logger.info('UserBehaviorController::scrollPercentage::called', {logId, scroll});
   try {
-    const log = await UserBehaviorLogModel.findOne({_id: logId});
-    if (!log) {
-      logger.info('UserBehaviorController::scrollPercentage::LOG_NOT_FOUND')
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        messages: ['Not found log']
-      });
-    }
-
-    log.scrollPercentage = scroll;
-    await log.save();
-
     return res.status(HttpStatus.OK).json({
       messages: ['Success']
     });
+
+    // const log = await UserBehaviorLogModel.findOne({_id: logId});
+    // if (!log) {
+    //   logger.info('UserBehaviorController::scrollPercentage::LOG_NOT_FOUND')
+    //   return res.status(HttpStatus.BAD_REQUEST).json({
+    //     messages: ['Not found log']
+    //   });
+    // }
+
+    // log.scrollPercentage = scroll;
+    // await log.save();
+
+    // return res.status(HttpStatus.OK).json({
+    //   messages: ['Success']
+    // });
   } catch (e) {
     logger.error('UserBehaviorController::scrollPercentage::error', e);
     return next(e);
   }
 };
 
-const TrackingServices = require('../tracking/tracking.service');
-const BlockingCriterions = require('../blocking-criterions/blocking-criterions.model');
 const getInfoTracking = async (req, res, next) => {
   logger.info('UserBehaviorController::getInfoTracking::called');
   try{
     const detectAdsInfo = TrackingServices.detectAdsInfo(req);
 
-    if(detectAdsInfo.gclid && detectAdsInfo != '{gclid}')
+    if(detectAdsInfo.gclid && detectAdsInfo.gclid != '{gclid}')
     {
-      const campaign = await BlockingCriterions.findOne({'campaignId': detectAdsInfo.campaignId});
+      const campaign = await BlockingCriterionsModel.findOne({'campaignId': detectAdsInfo.campaignId});
 
       if(campaign)
       {
@@ -268,30 +277,12 @@ const getInfoTracking = async (req, res, next) => {
 
         if(adAccount)
         {
-          const ipInfo = TrackingServices.getGeoIp(req);
-          let localIp = req.ip; // trust proxy sets ip to the remote client (not to the ip of the last reverse proxy server)
-
-          if (localIp.substr(0,7) == '::ffff:') { // fix for if you have both ipv4 and ipv6
-            localIp = localIp.substr(7);
-          }
-
           let data = {
-            ip: ipInfo.ip,
-            localIp,
             campaignId: detectAdsInfo.campaignId,
             accountKey: adAccount.key,
             type: 1,
             href: detectAdsInfo.url,
             userAgent: req.useragent.source,
-            location: {
-              country_code : ipInfo.location ? ipInfo.location.country : null,
-              country_name : null,
-              city : ipInfo.location ? ipInfo.location.city : null,
-              postal : null,
-              latitude : ipInfo.location ? ipInfo.location.ll.length == 2 ? ipInfo.location.ll[0] : null : null,
-              longitude : ipInfo.location ? ipInfo.location.ll.length == 2 ? ipInfo.location.ll[1] : null : null,
-              state : ipInfo.location ? ipInfo.location.region : null
-            },
             matchType : detectAdsInfo.matchType,
             keyword: detectAdsInfo.keyword,
             page : detectAdsInfo.page,
@@ -300,7 +291,7 @@ const getInfoTracking = async (req, res, next) => {
             gclid : detectAdsInfo.gclid,
           };
          
-          const log = await UserBehaviorLogService.createdUserBehaviorLogForTracking(data);
+          const log = await UserBehaviorLogService.createdUserBehaviorLogForTracking(req, data);
           await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
         }
       }
@@ -315,11 +306,59 @@ const getInfoTracking = async (req, res, next) => {
   }
 };
 
+const updateLogFromClient = async(req, res, next) => {
+  logger.info('UserBehaviorController::updateLogFromClient::is called');
+  try{
+    const { error } = Joi.validate(req.body, updateLogFromClientValidationSchema);
+
+    if (error) {
+      return requestUtil.joiValidationResponse(error, res);
+    }
+
+    const { uuid, gclid, browserResolution, screenResolution, referrer, href, isPrivateBrowsing } = req.body;
+    const log = await UserBehaviorLogModel.findOne({gclid, 'uuid': null});
+
+    if(log)
+    {
+      const hrefURL = new Url(href);
+      const trafficSource = UserBehaviorLogService.mappingTrafficSource(referrer,href);
+      log.uuid = uuid;
+      log.trafficSource = trafficSource;
+      log.browserResolution = browserResolution;
+      log.screenResolution = screenResolution;
+      log.referrer = referrer;
+      log.isPrivateBrowsing = isPrivateBrowsing;
+
+      if(hrefURL && log.href.indexOf('//www.google.com/asnc') >= 0)
+      {
+        log.href = href;
+        log.domain = hrefURL.origin;
+        log.pathname = hrefURL.pathname;
+      }
+
+      if(isPrivateBrowsing){
+        await RabbitMQService.sendMessages(rabbitChannels.BLOCK_IP, log._id);
+      }
+
+      await log.save();
+      await RabbitMQService.detectSession(log._id);
+    }
+
+    return res.status(HttpStatus.OK).json({
+      messages: ['Success']
+    });
+  }catch(e){
+    logger.error('UserBehaviorController::updateLogFromClient::error', e);
+    return next(e);
+  }
+}
+
 module.exports = {
   logTrackingBehavior,
   getlogTrackingBehavior,
   getLogForIntroPage,
   updateTimeOutOfPage,
   scrollPercentage,
-  getInfoTracking
+  getInfoTracking,
+  updateLogFromClient
 };
