@@ -70,6 +70,10 @@ const accountAdsSchema = new Schema(
         type: Array,
         default: AccountAdsConstant.setting.customBlackList
       },
+      networkCompanyBlackList: {
+        type: Array,
+        default: AccountAdsConstant.setting.netWorkCompanyBlackList
+      },
       customWhiteList: {
         type: Array,
         default: AccountAdsConstant.setting.customWhiteList

@@ -9,6 +9,7 @@ const blockingCriterionsSchema = new Schema({
     sampleBlockingIp: {type: Object, default: null},
     customBlackList: {type: Array, default: []},
     autoBlackListIp: {type: Array, default: []},
+    networkCompanyBlackList : {type: Array, default: []},
     isOriginalDeleted : {type: Boolean, default: false}
 }, { timestamps: true });
 

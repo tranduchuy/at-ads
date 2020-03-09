@@ -21,7 +21,6 @@ const requestUtil = require('../../utils/RequestUtil');
 const BlockingCriterionsConstant = require('../blocking-criterions/blocking-criterions.constant');
 const BlockIpServices = require('../../services//block-ip.service');
 const RemoveIpServices = require('../../services/remove-ip.service');
-
 const UserBehaviorLogService = require('../user-behavior-log/user-behavior-log.service');
 const ClickReportService = require('../click-report/click-report.service');
 
@@ -636,36 +635,66 @@ const autoBlocking3g4g = (req, res, next) => {
 
 		const { viettel, mobifone, vinafone, vietnammobile, fpt } = req.body;
 		const mobiNetworks = { viettel, mobifone, vinafone, vietnammobile, fpt };
-
+		const mapNetworkCompanyIps = AccountAdsService.mapNetworkIps({viettel, mobifone, vinafone, vietnammobile, fpt, accountAds: req.adsAccount});
 		req.adsAccount.setting.mobileNetworks = mobiNetworks;
+		const campaignIds = req.campaignIds || [];
 
-		req.adsAccount.save(async (err) => {
-			if (err) {
-				logger.error('AccountAdsController::autoBlocking3g4g::error', e, '\n', info);
-				return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-					messages: ["Thiết lập chặn ip theo 3G/4G không thành công"]
+		Async.series([
+			(cb) => {
+				if (mapNetworkCompanyIps.companyIpsUnselected.length <= 0) {
+					return cb()
+				} 
+
+				RemoveIpServices.removeIp(req.adsAccount, campaignIds, mapNetworkCompanyIps.companyIpsUnselected, BlockingCriterionsConstant.positionBlockIp.NETWORK_COMPANY_BLACKLIST, AdAccountConstant.positionBlockIp.NETWORK_COMPANY_BLACKLIST)
+				.then(result => {
+					logger.info('AccountAdsController::autoBlock3g4g::removeIpsOfNetworkCompany::success', info);
+					return cb();
+				}).catch( error => {
+					logger.info('AccountAdsController::autoBlock3g4g::removeIpsOfNetworkCompany::error', error, info);
+					return cb(error);
+				});
+			},
+			(cb) => {
+				if (mapNetworkCompanyIps.companyIpsSelected.length <= 0) {
+					return cb()
+				} 
+
+				BlockIpServices.blockIp(req.adsAccount, campaignIds, mapNetworkCompanyIps.companyIpsSelected, BlockingCriterionsConstant.positionBlockIp.NETWORK_COMPANY_BLACKLIST, AdAccountConstant.positionBlockIp.NETWORK_COMPANY_BLACKLIST)
+				.then(result => {
+					logger.info('AccountAdsController::autoBlock3g4g::blockIpsOfNetworkCompany::success', info);
+					return cb();
+				}).catch( error => {
+					logger.info('AccountAdsController::autoBlock3g4g::blockIpsOfNetworkCompany::error', error, info);
+					return cb(error);
 				});
 			}
+		],async (err) => {
+			if(err){
+				logger.error('AccountAdsController::autoBlock3g4g::error', err, info);
+				return res.status(HttpStatus.BAD_REQUEST).json({
+					messages: ["Thiết lập chặn ip theo 3G/4G không thành công."]
+				});
+			}
+
+			await req.adsAccount.save();
 			logger.info('AccountAdsController::autoBlocking3g4g::success\n', info);
-
-
 			// log action history
 			const mobiNetworksNames = [];
-
+	
 			for (let [key, value] of Object.entries(mobiNetworks)) {
 				if (value) {
 					mobiNetworksNames.push(key);
 				}
 			}
-
+	
 			const actionHistory = {
 				userId : req.user._id,
 				content: "Thay đổi cấu hình chặn 3g,4g: " + mobiNetworksNames.join(', '),
 				param  : mobiNetworks
 			};
-
+	
 			await userActionHistoryService.createUserActionHistory(actionHistory);
-
+	
 			return res.status(HttpStatus.OK).json({
 				messages: ["Thiết lập chặn ip theo 3G/4G thành công"]
 			});
