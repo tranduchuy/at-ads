@@ -30,6 +30,7 @@ const BlockIpService = require('../../services/block-ip.service');
 const RemoveIpService = require('../../services/remove-ip.service');
 const BlockingCriterionsConstant =  require('../blocking-criterions/blocking-criterions.constant');
 const UrlTrackingTemplateConstant = require('../../constants/url-tracking-template.constant');
+const NetworkCampanyIpsConstant = require('../../constants/network-company-ips.constant');
 /**
  *
  * @param {string} userId
@@ -1813,6 +1814,55 @@ const getAccessTokenFromGoogle = (refreshToken) => {
   });
 };
 
+const mapNetworkIps = ({viettel, mobifone, vinafone, vietnammobile, fpt, accountAds}) => {
+  logger.info('AccountAdService::mapNetworkIps::is called ');
+  try{
+    let companyIpsSelected = [];
+    let companyIpsUnselected = [];
+    const networkCompanyIpsBlackList = accountAds.setting.networkCompanyBlackList || [];
+    const checkVIETTELNetworkCompany = checkIpsOfNetworkCompany(viettel, NetworkCampanyIpsConstant.VIETTEL, networkCompanyIpsBlackList);
+    const checkVNPTNetworkCompany = checkIpsOfNetworkCompany(mobifone, NetworkCampanyIpsConstant.MOBIFONE, networkCompanyIpsBlackList);
+    const checkMOBIFONENetworkCompany = checkIpsOfNetworkCompany(vinafone, NetworkCampanyIpsConstant.VNPT, networkCompanyIpsBlackList);
+    const checkFPTNetworkCompany = checkIpsOfNetworkCompany(fpt, NetworkCampanyIpsConstant.FPT, networkCompanyIpsBlackList);
+    const checkVIETNAMMOBILENetworkCompany = checkIpsOfNetworkCompany(vietnammobile, NetworkCampanyIpsConstant.VIETNAMOBILE, networkCompanyIpsBlackList);
+
+    companyIpsSelected = companyIpsSelected.concat(checkVIETTELNetworkCompany.companyIpsSelected, checkVNPTNetworkCompany.companyIpsSelected, checkMOBIFONENetworkCompany.companyIpsSelected, checkFPTNetworkCompany.companyIpsSelected, checkVIETNAMMOBILENetworkCompany.companyIpsSelected);
+    companyIpsUnselected = companyIpsUnselected.concat(checkVIETTELNetworkCompany.companyIpsUnselected, checkVNPTNetworkCompany.companyIpsUnselected, checkMOBIFONENetworkCompany.companyIpsUnselected, checkFPTNetworkCompany.companyIpsUnselected, checkVIETNAMMOBILENetworkCompany.companyIpsUnselected);
+
+    return {companyIpsSelected, companyIpsUnselected};
+  }catch(e){
+    logger.error('AccountAdService::mapNetworkIps::Error ', e);
+    throw new Error(e);
+  }
+};
+
+const checkIpsOfNetworkCompany = (networkCompany, ipsOfNetworkCompany, networkCompanyBlackList) => {
+  logger.info('AccountAdService::checkIpsOfNetworkCompany::is called');
+  try{
+    const ipsExistsInNetworkCompanyBlacklist = _.intersection(networkCompanyBlackList, ipsOfNetworkCompany);
+    let companyIpsSelected = [];
+    let companyIpsUnselected = []
+
+    if(networkCompany){
+      if(ipsExistsInNetworkCompanyBlacklist.length <= 0)
+      {
+        companyIpsSelected = companyIpsSelected.concat(ipsOfNetworkCompany);
+      }
+    }
+    else{
+      if(ipsExistsInNetworkCompanyBlacklist.length > 0)
+      {
+        companyIpsUnselected = companyIpsUnselected.concat(ipsOfNetworkCompany);
+      }
+    }
+
+    return { companyIpsSelected, companyIpsUnselected };
+  }catch(e){
+    logger.error('AccountAdService::checkIpsOfNetworkCompany::Error ', e);
+    throw new Error(e);
+  }
+}
+
 module.exports = {
   createAccountAds,
   createAccountAdsHaveIsConnectedStatus,
@@ -1849,5 +1899,6 @@ module.exports = {
   checkDomainHasTracking,
   createAccountAdsHaveIsConnectedStatusAndConnectType,
   getAccessTokenFromGoogle,
-  updateIsDeletedStatusIsTrueForCampaign
+  updateIsDeletedStatusIsTrueForCampaign,
+  mapNetworkIps
 };

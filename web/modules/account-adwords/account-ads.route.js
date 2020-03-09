@@ -13,7 +13,7 @@ router.post('/:accountId/ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, C
 router.get('/:accountId/ips', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.getIpsInCustomBlackList);
 router.post('/:accountId/auto-blocking-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockIp);
 router.post('/:accountId/auto-blocking-range-ip', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlockingRangeIp);
-router.post('/:accountId/auto-blocking-3g4g', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.autoBlocking3g4g);
+router.post('/:accountId/auto-blocking-3g4g', CheckTokenMiddleware, CheckAccountIdMiddleWare, CheckEmptyCampaignMiddleWare, AccountAdsController.autoBlocking3g4g);
 router.put('/:accountId/block-by-private-browser', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.blockByPrivateBrowser);
 router.post('/:accountId/campaigns', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.addCampaignsForAAccountAds);
 router.put('/:accountId/white-list', CheckTokenMiddleware, CheckAccountIdMiddleWare, AccountAdsController.updateWhiteList);

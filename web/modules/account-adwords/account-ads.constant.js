@@ -18,6 +18,7 @@ module.exports = {
     autoBlackListIp: [],
     autoBlackListIpRanges: false,
     customBlackList: [],
+    netWorkCompanyBlackList: [],
     mobileNetworks: {
       viettel: false,
       mobifone: false,
@@ -26,7 +27,7 @@ module.exports = {
       fpt: false
     },
     sampleBlockingIp: '',
-    maxIps: 400,
+    maxIps: 500,
   },
   isConnected: false,
   campaignStatus: {
@@ -52,7 +53,8 @@ module.exports = {
   positionBlockIp: {
     CUSTOM_BLACKLIST:'customBlackList',
     AUTO_BLACKLIST: 'autoBlackListIp',
-    SAMPLE_BLACKLIST: 'sampleBlockingIp'
+    SAMPLE_BLACKLIST: 'sampleBlockingIp',
+    NETWORK_COMPANY_BLACKLIST: 'networkCompanyBlackList'
   },
   configStep: {
     CONNECT_GOOGLE_ADS: 1,
@@ -62,7 +64,8 @@ module.exports = {
     SUCCESS: 5
   },
   MAX_IP: {
-    AUTO_BLACKLIST: 350,
-    CUSTOM_BLACKLIST: 99
+    AUTO_BLACKLIST: 345,
+    CUSTOM_BLACKLIST: 49,
+    NETWORK_IP: 100,
   }
 };
